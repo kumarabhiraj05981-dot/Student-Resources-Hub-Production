@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const connectDB = require("./config/db");
 
@@ -11,8 +12,10 @@ const uploadRoutes = require("./routes/uploadRoutes");
 
 const app = express();
 
+
 // Connect MongoDB
 connectDB();
+
 
 // Middleware
 app.use(
@@ -26,30 +29,43 @@ app.use(
 );
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/resources", resourceRoutes);
-
-// IMPORTANT: frontend uses /api/upload
 app.use("/api/upload", uploadRoutes);
 
-// Static uploads (optional)
-app.use("/uploads", express.static("uploads"));
+
+// Upload folder access
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"))
+);
+
 
 // Test Route
 app.get("/", (req, res) => {
-  res.send("🚀 Student Resources Hub Backend Running");
+  res.json({
+    success: true,
+    message: "🚀 Student Resources Hub Backend Running"
+  });
 });
 
+
+// 404 Route
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route Not Found"
+  });
+});
+
+
+// Server Start
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);

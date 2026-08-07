@@ -13,6 +13,11 @@ const resourceSchema = new mongoose.Schema(
       default: "",
     },
 
+    semester: {
+      type: String,
+      required: true,
+    },
+
     category: {
       type: String,
       required: true,
