@@ -26,7 +26,7 @@ export default function Notes() {
 
       try {
 
-        const res = await api.get("/api/resources");
+        const res = await api.get("/api/resources/category/Notes");
 
         console.log("Resources:", res.data);
 
