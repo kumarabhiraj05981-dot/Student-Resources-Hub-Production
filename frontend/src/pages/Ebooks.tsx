@@ -1,84 +1,160 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
-import Navbar from "../components/layout/Navbar";
-import Footer from "../components/layout/Footer";
+
+interface Resource {
+  _id: string;
+  title: string;
+  description: string;
+  category: string;
+  semester: string;
+  subject: string;
+  fileUrl: string;
+  fileName: string;
+  createdAt: string;
+}
 
 export default function Ebooks() {
-  const [ebooks, setEbooks] = useState<any[]>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchEbooks = async () => {
+    const loadEbooks = async () => {
       try {
-        const res = await api.get("/api/resources");
+        setLoading(true);
+        setError("");
 
-        const onlyEbooks = res.data.filter(
-          (item: any) => item.type === "ebooks"
+        const res = await api.get(
+          "/api/resources/category/Ebooks"
         );
 
-        setEbooks(onlyEbooks);
-      } catch (err) {
-        console.log(err);
+        console.log("E-books:", res.data);
+
+        setResources(res.data.resources || []);
+      } catch (err: any) {
+        console.error("E-books loading error:", err);
+
+        setError(
+          err.response?.data?.message ||
+            "Unable to load e-books"
+        );
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchEbooks();
+    loadEbooks();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-xl font-semibold">
+          Loading e-books...
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <Navbar />
+    <div className="min-h-screen bg-blue-50 py-10 px-4">
+      <div className="max-w-7xl mx-auto">
 
-      <section className="bg-blue-600 text-white py-16">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h1 className="text-5xl font-bold">📖 E-Books</h1>
-          <p className="mt-4 text-xl">
-            Download Free Study Books
-          </p>
-        </div>
-      </section>
+        <h1 className="text-4xl font-bold text-blue-700 mb-2">
+          📚 Student E-Books
+        </h1>
 
-      <section className="max-w-7xl mx-auto py-12 px-6">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <p className="text-gray-600 mb-8">
+          Semester-wise books and study materials
+        </p>
 
-          {ebooks.length > 0 ? (
-            ebooks.map((item: any) => (
+        {error && (
+          <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+
+        {resources.length === 0 ? (
+          <div className="bg-white rounded-xl shadow p-8 text-center">
+            <p className="text-xl text-gray-600">
+              No e-books uploaded yet.
+            </p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            {resources.map((resource) => (
               <div
-                key={item._id}
-                className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition"
+                key={resource._id}
+                className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition"
               >
-                <h2 className="text-2xl font-bold text-blue-700">
-                  {item.title}
-                </h2>
 
-                <p className="mt-3 text-gray-600">
-                  📚 {item.subject}
-                </p>
+                <div className="flex justify-between items-start gap-3">
 
-                <p className="text-gray-600">
-                  🎓 Semester {item.semester}
-                </p>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {resource.title}
+                  </h2>
 
-                <a
-                  href={item.pdfUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <button className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                    📖 Read Book
-                  </button>
-                </a>
+                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                    E-Book
+                  </span>
+
+                </div>
+
+                {resource.semester && (
+                  <p className="mt-3 text-sm font-semibold text-blue-600">
+                    🎓 Semester: {resource.semester}
+                  </p>
+                )}
+
+                {resource.subject && (
+                  <p className="mt-2 text-sm font-semibold text-gray-500">
+                    📚 Subject: {resource.subject}
+                  </p>
+                )}
+
+                {resource.description && (
+                  <p className="mt-3 text-gray-600">
+                    {resource.description}
+                  </p>
+                )}
+
+                {resource.fileName && (
+                  <p className="mt-4 text-sm text-gray-500 truncate">
+                    📄 {resource.fileName}
+                  </p>
+                )}
+
+                <div className="flex gap-3 mt-6">
+
+                  <a
+                    href={resource.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg"
+                  >
+                    👁️ Open
+                  </a>
+
+                  <a
+                    href={resource.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                    className="flex-1 text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg"
+                  >
+                    ⬇️ Download
+                  </a>
+
+                </div>
+
               </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center text-xl text-gray-500">
-              No E-books Available
-            </div>
-          )}
+            ))}
 
-        </div>
-      </section>
+          </div>
+        )}
 
-      <Footer />
-    </>
+      </div>
+    </div>
   );
 }
