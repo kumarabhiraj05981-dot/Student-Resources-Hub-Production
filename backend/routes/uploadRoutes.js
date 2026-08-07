@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 const multer = require("multer");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 const cloudinary = require("../config/cloudinary");
 const Resource = require("../models/Resource");
@@ -10,159 +9,223 @@ const Resource = require("../models/Resource");
 const adminAuth = require("../middleware/adminAuth");
 
 
-// Cloudinary Storage
-const storage = new CloudinaryStorage({
+// ======================================
+// MULTER - MEMORY STORAGE
+// ======================================
 
-  cloudinary,
-
-  params:{
-    folder:"student-resources",
-    resource_type:"auto",
-  }
-
-});
-
-
-// Multer Upload
 const upload = multer({
+  storage: multer.memoryStorage(),
 
-  storage,
+  limits: {
+    fileSize: 20 * 1024 * 1024,
+  },
 
-  limits:{
-    fileSize:20 * 1024 * 1024,
-  }
+  fileFilter: (req, file, cb) => {
 
+    if (file.mimetype === "application/pdf") {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF files are allowed"));
+    }
+
+  },
 });
 
 
+// ======================================
+// TEST ROUTE
+// ======================================
 
-// Test Route
-router.get("/test",(req,res)=>{
+router.get("/test", (req, res) => {
 
   res.json({
-    success:true,
-    message:"Upload route is working"
+    success: true,
+    message: "Upload route is working",
   });
 
 });
 
 
+// ======================================
+// UPLOAD PDF
+// ADMIN ONLY
+// ======================================
 
-
-// Upload Resource (Admin Only)
 router.post(
   "/",
   adminAuth,
   upload.single("file"),
 
-  async(req,res)=>{
+  async (req, res) => {
 
-  try{
+    try {
+
+      console.log("=================================");
+      console.log("UPLOAD BODY:", req.body);
+      console.log("UPLOAD FILE:", req.file?.originalname);
+      console.log("UPLOAD MIME:", req.file?.mimetype);
+      console.log("=================================");
 
 
-    console.log("UPLOAD BODY:",req.body);
-    console.log("UPLOAD FILE:",req.file);
+      // Check file
+      if (!req.file) {
+
+        return res.status(400).json({
+          success: false,
+          message: "Please select a PDF file",
+        });
+
+      }
 
 
+      const {
+        title,
+        description,
+        semester,
+        category,
+        subject,
+      } = req.body;
 
-    if(!req.file){
 
-      return res.status(400).json({
+      // Validate
+      if (!title || !semester || !category) {
 
-        success:false,
-        message:"Please select a file"
+        return res.status(400).json({
+          success: false,
+          message:
+            "Title, semester and category are required",
+        });
+
+      }
+
+
+      // ======================================
+      // CLOUDINARY RAW PDF UPLOAD
+      // ======================================
+
+      const uploadToCloudinary = () => {
+
+        return new Promise((resolve, reject) => {
+
+          const stream = cloudinary.uploader.upload_stream(
+
+            {
+              folder: "student-resources",
+
+              resource_type: "raw",
+
+              use_filename: true,
+
+              unique_filename: true,
+
+              overwrite: false,
+
+            },
+
+            (error, result) => {
+
+              if (error) {
+                reject(error);
+              } else {
+                resolve(result);
+              }
+
+            }
+
+          );
+
+
+          stream.end(req.file.buffer);
+
+        });
+
+      };
+
+
+      const cloudinaryResult =
+        await uploadToCloudinary();
+
+
+      console.log(
+        "CLOUDINARY RESULT:",
+        cloudinaryResult
+      );
+
+
+      // ======================================
+      // SAVE TO MONGODB
+      // ======================================
+
+      const resource = new Resource({
+
+        title: title.trim(),
+
+        description: description || "",
+
+        semester: semester,
+
+        category: category,
+
+        subject: subject || "",
+
+        fileUrl: cloudinaryResult.secure_url,
+
+        filePublicId: cloudinaryResult.public_id,
+
+        fileName: req.file.originalname,
+
+        uploadedBy: req.user._id,
+
+      });
+
+
+      await resource.save();
+
+
+      console.log(
+        "RESOURCE SAVED:",
+        resource
+      );
+
+
+      // ======================================
+      // RESPONSE
+      // ======================================
+
+      return res.status(201).json({
+
+        success: true,
+
+        message:
+          "PDF uploaded successfully!",
+
+        resource,
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "RESOURCE UPLOAD ERROR:",
+        error
+      );
+
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          error.message ||
+          "PDF upload failed",
 
       });
 
     }
-
-
-
-    const {
-      title,
-      description,
-      semester,
-      category,
-      subject
-    } = req.body;
-
-
-
-    if(!title || !semester || !category){
-
-      return res.status(400).json({
-
-        success:false,
-        message:"Title, semester and category are required"
-
-      });
-
-    }
-
-
-
-    const resource = new Resource({
-
-      title:title.trim(),
-
-      description:description || "",
-
-      semester,
-
-      category,
-
-      subject:subject || "",
-
-      fileUrl:req.file.path,
-
-      filePublicId:req.file.filename || "",
-
-      fileName:req.file.originalname || "",
-
-      uploadedBy:req.user._id
-
-    });
-
-
-
-    await resource.save();
-
-
-
-    console.log("RESOURCE SAVED:",resource);
-
-
-
-    return res.status(201).json({
-
-      success:true,
-
-      message:"Resource uploaded and saved successfully!",
-
-      resource
-
-    });
-
-
-
-  }catch(error){
-
-
-    console.error("RESOURCE UPLOAD ERROR:",error);
-
-
-    return res.status(500).json({
-
-      success:false,
-
-      message:error.message || "Resource upload failed"
-
-    });
-
 
   }
-
-});
+);
 
 
 module.exports = router;

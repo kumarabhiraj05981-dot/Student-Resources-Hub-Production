@@ -4,6 +4,7 @@ import api from "../services/api";
 export default function Admin() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [semester, setSemester] = useState("");
   const [category, setCategory] = useState("Notes");
   const [subject, setSubject] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -17,6 +18,16 @@ export default function Admin() {
       return;
     }
 
+    if (!semester) {
+      alert("Please select semester");
+      return;
+    }
+
+    if (!category) {
+      alert("Please select category");
+      return;
+    }
+
     if (!file) {
       alert("Please select a file");
       return;
@@ -25,20 +36,30 @@ export default function Admin() {
     try {
       setLoading(true);
 
-      const formData = new FormData();
-
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("category", category);
-      formData.append("subject", subject);
-      formData.append("file", file);
-
       const token = localStorage.getItem("token");
 
       if (!token) {
         alert("Please login first");
         return;
       }
+
+      const formData = new FormData();
+
+      formData.append("title", title.trim());
+      formData.append("description", description.trim());
+      formData.append("semester", semester);
+      formData.append("category", category);
+      formData.append("subject", subject.trim());
+      formData.append("file", file);
+
+      console.log("UPLOAD DATA:", {
+        title,
+        description,
+        semester,
+        category,
+        subject,
+        file: file.name,
+      });
 
       const res = await api.post("/api/upload", formData, {
         headers: {
@@ -48,27 +69,25 @@ export default function Admin() {
 
       console.log("UPLOAD RESPONSE:", res.data);
 
-      alert(
-        res.data?.message ||
-          (res.data?.fileUrl
-            ? "File uploaded successfully!"
-            : "Upload completed successfully!")
-      );
+      if (res.data?.success) {
+        alert("✅ Resource uploaded successfully!");
 
-      // Reset form
-      setTitle("");
-      setDescription("");
-      setSubject("");
-      setCategory("Notes");
-      setFile(null);
+        setTitle("");
+        setDescription("");
+        setSemester("");
+        setCategory("Notes");
+        setSubject("");
+        setFile(null);
 
-      // Reset file input
-      const fileInput = document.getElementById(
-        "resource-file"
-      ) as HTMLInputElement | null;
+        const fileInput = document.getElementById(
+          "resource-file"
+        ) as HTMLInputElement | null;
 
-      if (fileInput) {
-        fileInput.value = "";
+        if (fileInput) {
+          fileInput.value = "";
+        }
+      } else {
+        alert(res.data?.message || "Upload failed");
       }
     } catch (error: any) {
       console.error(
@@ -81,7 +100,7 @@ export default function Admin() {
         error.message ||
         "File upload failed";
 
-      alert(message);
+      alert(`❌ ${message}`);
     } finally {
       setLoading(false);
     }
@@ -115,13 +134,12 @@ export default function Admin() {
                 type="text"
                 placeholder="Example: DBMS Unit 1 Notes"
                 value={title}
-                onChange={(e) =>
-                  setTitle(e.target.value)
-                }
+                onChange={(e) => setTitle(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
+
 
             {/* Description */}
             <div>
@@ -132,13 +150,55 @@ export default function Admin() {
               <textarea
                 placeholder="Enter resource description"
                 value={description}
-                onChange={(e) =>
-                  setDescription(e.target.value)
-                }
+                onChange={(e) => setDescription(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
                 rows={4}
               />
             </div>
+
+
+            {/* Semester */}
+            <div>
+              <label className="block font-semibold mb-2">
+                Semester
+              </label>
+
+              <select
+                value={semester}
+                onChange={(e) => setSemester(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">
+                  Select Semester
+                </option>
+
+                <option value="1st Semester">
+                  1st Semester
+                </option>
+
+                <option value="2nd Semester">
+                  2nd Semester
+                </option>
+
+                <option value="3rd Semester">
+                  3rd Semester
+                </option>
+
+                <option value="4th Semester">
+                  4th Semester
+                </option>
+
+                <option value="5th Semester">
+                  5th Semester
+                </option>
+
+                <option value="6th Semester">
+                  6th Semester
+                </option>
+              </select>
+            </div>
+
 
             {/* Subject */}
             <div>
@@ -150,12 +210,11 @@ export default function Admin() {
                 type="text"
                 placeholder="Example: DBMS"
                 value={subject}
-                onChange={(e) =>
-                  setSubject(e.target.value)
-                }
+                onChange={(e) => setSubject(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
 
             {/* Category */}
             <div>
@@ -165,10 +224,9 @@ export default function Admin() {
 
               <select
                 value={category}
-                onChange={(e) =>
-                  setCategory(e.target.value)
-                }
+                onChange={(e) => setCategory(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                required
               >
                 <option value="Notes">
                   Notes
@@ -192,6 +250,7 @@ export default function Admin() {
               </select>
             </div>
 
+
             {/* File */}
             <div>
               <label className="block font-semibold mb-2">
@@ -201,11 +260,9 @@ export default function Admin() {
               <input
                 id="resource-file"
                 type="file"
-                accept=".pdf,.doc,.docx,.ppt,.pptx"
+                accept=".pdf"
                 onChange={(e) =>
-                  setFile(
-                    e.target.files?.[0] || null
-                  )
+                  setFile(e.target.files?.[0] || null)
                 }
                 className="w-full border border-gray-300 rounded-lg p-3"
                 required
@@ -213,12 +270,17 @@ export default function Admin() {
 
               {file && (
                 <p className="text-sm text-gray-600 mt-2">
-                  Selected: {file.name}
+                  📄 Selected: {file.name}
                 </p>
               )}
+
+              <p className="text-xs text-gray-500 mt-2">
+                Maximum file size: 20MB. PDF only.
+              </p>
             </div>
 
-            {/* Upload button */}
+
+            {/* Upload Button */}
             <button
               type="submit"
               disabled={loading}
@@ -229,7 +291,7 @@ export default function Admin() {
               }`}
             >
               {loading
-                ? "Uploading..."
+                ? "⏳ Uploading..."
                 : "🚀 Upload Resource"}
             </button>
 
