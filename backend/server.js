@@ -13,59 +13,222 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const app = express();
 
 
-// Connect MongoDB
+// ======================================
+// CONNECT MONGODB
+// ======================================
+
 connectDB();
 
 
-// Middleware
+// ======================================
+// CORS
+// ======================================
+
+const allowedOrigins = [
+  "http://localhost:5173",
+
+  // Vercel main domain
+  "https://student-resources-hub-live-y438.vercel.app",
+
+  // Current Vercel deployment URL
+  "https://student-resources-hub-live-y438-puhj1vkih-student-resource-hub1.vercel.app",
+];
+
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://student-resources-hub.vercel.app",
-    ],
+
+    origin: function (origin, callback) {
+
+      // Allow requests without origin
+      // (Postman, server-to-server etc.)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+
+      // Exact allowed origins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+
+      // Allow Vercel preview/deployment URLs
+      if (
+        origin.endsWith(".vercel.app")
+      ) {
+        return callback(null, true);
+      }
+
+
+      console.log(
+        "CORS BLOCKED ORIGIN:",
+        origin
+      );
+
+      return callback(
+        new Error("Not allowed by CORS")
+      );
+
+    },
+
     credentials: true,
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
+
   })
 );
 
+
+// ======================================
+// BODY PARSER
+// ======================================
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-
-// Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/resources", resourceRoutes);
-app.use("/api/upload", uploadRoutes);
-
-
-// Upload folder access
 app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "uploads"))
+  express.urlencoded({
+    extended: true,
+  })
 );
 
 
-// Test Route
+// ======================================
+// API ROUTES
+// ======================================
+
+app.use(
+  "/api/auth",
+  authRoutes
+);
+
+app.use(
+  "/api/resources",
+  resourceRoutes
+);
+
+app.use(
+  "/api/upload",
+  uploadRoutes
+);
+
+
+// ======================================
+// UPLOADS
+// ======================================
+
+app.use(
+  "/uploads",
+  express.static(
+    path.join(__dirname, "uploads")
+  )
+);
+
+
+// ======================================
+// TEST ROUTE
+// ======================================
+
 app.get("/", (req, res) => {
+
+  res.status(200).send(
+    "🚀 Student Resources Hub Backend Running"
+  );
+
+});
+
+
+// ======================================
+// API TEST
+// ======================================
+
+app.get("/api/test", (req, res) => {
+
   res.json({
+
     success: true,
-    message: "🚀 Student Resources Hub Backend Running"
+
+    message:
+      "Student Resources Hub API is working",
+
   });
+
 });
 
 
-// 404 Route
+// ======================================
+// 404 HANDLER
+// ======================================
+
 app.use((req, res) => {
+
   res.status(404).json({
+
     success: false,
-    message: "Route Not Found"
+
+    message: "Route Not Found",
+
+    path: req.originalUrl,
+
   });
+
 });
 
 
-// Server Start
-const PORT = process.env.PORT || 5000;
+// ======================================
+// ERROR HANDLER
+// ======================================
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+app.use((err, req, res, next) => {
+
+  console.error(
+    "SERVER ERROR:",
+    err
+  );
+
+
+  res.status(
+    err.status || 500
+  ).json({
+
+    success: false,
+
+    message:
+      err.message ||
+      "Internal Server Error",
+
+  });
+
 });
+
+
+// ======================================
+// START SERVER
+// ======================================
+
+const PORT =
+  process.env.PORT || 5000;
+
+
+app.listen(
+  PORT,
+  () => {
+
+    console.log(
+      `🚀 Server running on port ${PORT}`
+    );
+
+  }
+);
