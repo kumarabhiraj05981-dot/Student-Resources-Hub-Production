@@ -4,12 +4,12 @@ import api from "../services/api";
 interface Resource {
   _id: string;
   title: string;
-  description: string;
+  description?: string;
   category: string;
-  subject: string;
+  subject?: string;
   semester: string;
   fileUrl: string;
-  fileName: string;
+  fileName?: string;
   createdAt: string;
 }
 
@@ -24,21 +24,21 @@ export default function Notes() {
         setLoading(true);
         setError("");
 
-        // Backend se sirf Notes category mangao
-        const res = await api.get(
-          "/api/resources/category/Notes"
-        );
+        // Get resources
+        const res = await api.get("/api/resources/category/Notes");
 
-        // Extra safety filter
+        console.log("NOTES RESPONSE:", res.data);
+
+        // Extra protection:
+        // Only Notes will be displayed.
         const notesOnly = (res.data.resources || []).filter(
           (resource: Resource) =>
             resource.category?.trim().toLowerCase() === "notes"
         );
 
-     
+        console.log("FINAL NOTES:", notesOnly);
 
         setResources(notesOnly);
-
       } catch (err: any) {
         console.error("Notes loading error:", err);
 
@@ -46,7 +46,6 @@ export default function Notes() {
           err.response?.data?.message ||
             "Unable to load notes"
         );
-
       } finally {
         setLoading(false);
       }
@@ -55,45 +54,26 @@ export default function Notes() {
     loadNotes();
   }, []);
 
-
-  // ==============================
-  // LOADING
-  // ==============================
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-blue-50">
-
+      <div className="min-h-screen bg-blue-50 flex items-center justify-center">
         <div className="text-center">
-
-          <div className="text-5xl mb-4">
-            📚
-          </div>
+          <div className="text-6xl mb-4">📚</div>
 
           <p className="text-xl font-semibold text-gray-700">
             Loading Notes...
           </p>
-
         </div>
-
       </div>
     );
   }
 
-
-  // ==============================
-  // PAGE
-  // ==============================
-
   return (
     <div className="min-h-screen bg-blue-50 py-10 px-4">
-
       <div className="max-w-7xl mx-auto">
 
-        {/* ================= HEADER ================= */}
-
+        {/* HEADER */}
         <div className="mb-8">
-
           <h1 className="text-4xl font-bold text-blue-700 mb-2">
             📚 Student Notes
           </h1>
@@ -101,23 +81,17 @@ export default function Notes() {
           <p className="text-gray-600">
             Semester-wise study notes and learning materials
           </p>
-
         </div>
 
-
-        {/* ================= ERROR ================= */}
-
+        {/* ERROR */}
         {error && (
           <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-xl mb-6">
             ❌ {error}
           </div>
         )}
 
-
-        {/* ================= EMPTY ================= */}
-
+        {/* NO NOTES */}
         {resources.length === 0 ? (
-
           <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
 
             <div className="text-6xl mb-4">
@@ -133,11 +107,9 @@ export default function Notes() {
             </p>
 
           </div>
-
         ) : (
 
-          /* ================= CARDS ================= */
-
+          /* NOTES CARDS */
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             {resources.map((resource) => (
@@ -147,8 +119,7 @@ export default function Notes() {
                 className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition duration-300"
               >
 
-                {/* TITLE + CATEGORY */}
-
+                {/* TITLE */}
                 <div className="flex justify-between items-start gap-3">
 
                   <h2 className="text-xl font-bold text-gray-800 break-words">
@@ -161,48 +132,36 @@ export default function Notes() {
 
                 </div>
 
-
                 {/* SEMESTER */}
-
                 {resource.semester && (
                   <p className="mt-4 text-sm font-semibold text-blue-600">
                     🎓 Semester: {resource.semester}
                   </p>
                 )}
 
-
                 {/* SUBJECT */}
-
                 {resource.subject && (
                   <p className="mt-2 text-sm font-semibold text-gray-500">
                     📖 Subject: {resource.subject}
                   </p>
                 )}
 
-
                 {/* DESCRIPTION */}
-
                 {resource.description && (
                   <p className="mt-3 text-gray-600">
                     {resource.description}
                   </p>
                 )}
 
-
                 {/* FILE NAME */}
-
                 {resource.fileName && (
                   <p className="mt-4 text-sm text-gray-500 truncate">
                     📄 {resource.fileName}
                   </p>
                 )}
 
-
                 {/* BUTTONS */}
-
                 <div className="flex gap-3 mt-6">
-
-                  {/* VIEW */}
 
                   <a
                     href={resource.fileUrl}
@@ -212,9 +171,6 @@ export default function Notes() {
                   >
                     👁️ View PDF
                   </a>
-
-
-                  {/* DOWNLOAD */}
 
                   <a
                     href={resource.fileUrl}
@@ -233,11 +189,9 @@ export default function Notes() {
             ))}
 
           </div>
-
         )}
 
       </div>
-
     </div>
   );
 }
