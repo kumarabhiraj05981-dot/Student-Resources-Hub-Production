@@ -4,11 +4,79 @@ const Resource = require("../models/Resource");
 const router = express.Router();
 
 
-// Get All Resources
+// ==========================================
+// GET ALL RESOURCES
+// ==========================================
 router.get("/", async (req, res) => {
   try {
-
     const resources = await Resource.find()
+      .populate("uploadedBy", "name email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: resources.length,
+      resources,
+    });
+
+  } catch (error) {
+    console.error("Get resources error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to load resources",
+    });
+  }
+});
+
+
+// ======================================
+// GET RESOURCES BY CATEGORY
+// ======================================
+
+router.get("/category/:category", async (req, res) => {
+  try {
+    const category = req.params.category.trim();
+
+    const resources = await Resource.find({
+      category: {
+        $regex: `^${category}$`,
+        $options: "i",
+      },
+    }).sort({
+      createdAt: -1,
+    });
+
+    res.status(200).json({
+      success: true,
+      count: resources.length,
+      resources,
+    });
+
+  } catch (error) {
+    console.error("Get category resources error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to load category resources",
+    });
+  }
+});
+
+// ==========================================
+// GET RESOURCES BY SEMESTER
+// ==========================================
+router.get("/semester/:semester", async (req, res) => {
+  try {
+
+    const semester = decodeURIComponent(req.params.semester).trim();
+
+    const resources = await Resource.find({
+      semester: {
+        $regex: `^${semester}$`,
+        $options: "i",
+      },
+    })
       .populate("uploadedBy", "name email")
       .sort({ createdAt: -1 });
 
@@ -16,125 +84,63 @@ router.get("/", async (req, res) => {
     res.status(200).json({
       success: true,
       count: resources.length,
-      resources
+      resources,
     });
 
+  } catch (error) {
 
-  } catch(error){
-
-    console.error("Get resources error:", error);
+    console.error("Semester resources error:", error);
 
     res.status(500).json({
-      success:false,
-      message:"Failed to load resources"
+      success: false,
+      message: "Failed to load semester resources",
     });
-
   }
 });
 
 
+// ==========================================
+// SEARCH RESOURCES
+// ==========================================
+router.get("/search/:keyword", async (req, res) => {
+  try {
+
+    const keyword = decodeURIComponent(req.params.keyword).trim();
+
+    const resources = await Resource.find({
+      $or: [
+        {
+          title: {
+            $regex: keyword,
+            $options: "i",
+          },
+        },
+        {
+          subject: {
+            $regex: keyword,
+            $options: "i",
+          },
+        },
+      ],
+    }).sort({ createdAt: -1 });
 
 
-// Get By Category
-router.get("/category/:category", async(req,res)=>{
+    res.status(200).json({
+      success: true,
+      count: resources.length,
+      resources,
+    });
 
-try{
+  } catch (error) {
 
-const resources = await Resource.find({
- category:req.params.category
-})
-.sort({
- createdAt:-1
+    console.error("Search resources error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Search failed",
+    });
+  }
 });
-
-
-res.json({
- success:true,
- count:resources.length,
- resources
-});
-
-
-}catch(error){
-
-res.status(500).json({
- success:false,
- message:error.message
-});
-
-}
-
-});
-
-
-
-
-// Get By Semester
-router.get("/semester/:semester", async(req,res)=>{
-
-try{
-
-const resources = await Resource.find({
- semester:req.params.semester
-})
-.sort({
- createdAt:-1
-});
-
-
-res.json({
- success:true,
- count:resources.length,
- resources
-});
-
-
-}catch(error){
-
-res.status(500).json({
- success:false,
- message:error.message
-});
-
-}
-
-});
-
-
-
-
-// Search Resource
-router.get("/search/:keyword", async(req,res)=>{
-
-try{
-
-const resources = await Resource.find({
-
-title:{
- $regex:req.params.keyword,
- $options:"i"
-}
-
-});
-
-
-res.json({
- success:true,
- resources
-});
-
-
-}catch(error){
-
-res.status(500).json({
- success:false,
- message:error.message
-});
-
-}
-
-});
-
 
 
 module.exports = router;
