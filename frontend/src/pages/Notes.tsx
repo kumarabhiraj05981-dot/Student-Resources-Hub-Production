@@ -1,73 +1,148 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
-import Navbar from "../components/layout/Navbar";
-import Footer from "../components/layout/Footer";
+
+interface Resource {
+  _id: string;
+  title: string;
+  description: string;
+  category: string;
+  subject: string;
+  fileUrl: string;
+  fileName: string;
+  createdAt: string;
+}
 
 export default function Notes() {
-  const [notes, setNotes] = useState<any[]>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchNotes = async () => {
+    const loadResources = async () => {
       try {
         const res = await api.get("/api/resources");
 
-        const onlyNotes = res.data.filter(
-          (item: any) => item.type === "notes"
-        );
+        console.log("Resources:", res.data);
 
-        setNotes(onlyNotes);
-      } catch (err) {
-        console.log(err);
+        setResources(res.data.resources || []);
+      } catch (err: any) {
+        console.error("Resource loading error:", err);
+
+        setError(
+          err.response?.data?.message ||
+            "Unable to load resources"
+        );
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchNotes();
+    loadResources();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-xl font-semibold">
+          Loading resources...
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <Navbar />
+    <div className="min-h-screen bg-blue-50 py-10 px-4">
+      <div className="max-w-7xl mx-auto">
 
-      <section className="bg-blue-600 text-white py-16">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h1 className="text-5xl font-bold">📄 Notes</h1>
-          <p className="mt-4 text-xl">
-            Download Semester-wise Notes
-          </p>
-        </div>
-      </section>
+        <h1 className="text-4xl font-bold text-blue-700 mb-2">
+          📚 Student Resources
+        </h1>
 
-      <section className="max-w-7xl mx-auto py-12 px-6">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <p className="text-gray-600 mb-8">
+          Notes, PYQs, Syllabus and E-books
+        </p>
 
-          {notes.map((note: any) => (
-            <div
-              key={note._id}
-              className="bg-white rounded-2xl shadow-lg p-6"
-            >
-              <h2 className="text-2xl font-bold text-blue-700">
-                {note.title}
-              </h2>
+        {error && (
+          <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
 
-              <p className="mt-3">📚 {note.subject}</p>
+        {resources.length === 0 ? (
+          <div className="bg-white rounded-xl shadow p-8 text-center">
+            <p className="text-xl text-gray-600">
+              No resources uploaded yet.
+            </p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-              <p>🎓 Semester {note.semester}</p>
-
-              <a
-                href={note.pdfUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block mt-5 bg-blue-600 text-white px-5 py-2 rounded"
+            {resources.map((resource) => (
+              <div
+                key={resource._id}
+                className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition"
               >
-                View PDF
-              </a>
-            </div>
-          ))}
 
-        </div>
-      </section>
+                <div className="flex justify-between items-start gap-3">
 
-      <Footer />
-    </>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {resource.title}
+                  </h2>
+
+                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                    {resource.category}
+                  </span>
+
+                </div>
+
+                {resource.subject && (
+                  <p className="mt-3 text-sm font-semibold text-gray-500">
+                    Subject: {resource.subject}
+                  </p>
+                )}
+
+                {resource.description && (
+                  <p className="mt-3 text-gray-600">
+                    {resource.description}
+                  </p>
+                )}
+
+                {resource.fileName && (
+                  <p className="mt-4 text-sm text-gray-500 truncate">
+                    📄 {resource.fileName}
+                  </p>
+                )}
+
+                <div className="flex gap-3 mt-6">
+
+                  <a
+                    href={resource.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg"
+                  >
+                    👁️ View
+                  </a>
+
+                  <a
+                    href={resource.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                    className="flex-1 text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg"
+                  >
+                    ⬇️ Download
+                  </a>
+
+                </div>
+
+              </div>
+            ))}
+
+          </div>
+        )}
+
+      </div>
+    </div>
   );
 }

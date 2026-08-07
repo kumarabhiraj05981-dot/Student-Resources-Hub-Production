@@ -6,49 +6,41 @@ const router = express.Router();
 // Get all resources
 router.get("/", async (req, res) => {
   try {
-    const resources = await Resource.find();
-    res.json(resources);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+    const resources = await Resource.find()
+      .sort({ createdAt: -1 });
 
-// Add resource
-router.post("/", async (req, res) => {
-  try {
-    const resource = await Resource.create(req.body);
-    res.status(201).json(resource);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Update Resource
-router.put("/:id", async (req, res) => {
-  try {
-    const resource = await Resource.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-
-    res.json(resource);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Delete Resource
-router.delete("/:id", async (req, res) => {
-  try {
-    await Resource.findByIdAndDelete(req.params.id);
-
-    res.json({
+    res.status(200).json({
       success: true,
-      message: "Resource Deleted",
+      resources,
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error("Get resources error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to load resources",
+    });
+  }
+});
+
+// Get resources by category
+router.get("/category/:category", async (req, res) => {
+  try {
+    const resources = await Resource.find({
+      category: req.params.category,
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      resources,
+    });
+  } catch (error) {
+    console.error("Category resources error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to load resources",
+    });
   }
 });
 

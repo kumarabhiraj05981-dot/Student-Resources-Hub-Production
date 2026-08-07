@@ -5,27 +5,43 @@ const resourceSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
+      trim: true,
     },
 
-    type: {
+    description: {
       type: String,
-      enum: ["notes", "pyq", "syllabus", "ebooks"],
-      required: true,
+      default: "",
     },
 
-    semester: {
-      type: Number,
+    category: {
+      type: String,
       required: true,
+      enum: ["Notes", "PYQ", "Syllabus", "Ebooks", "Other"],
     },
 
     subject: {
       type: String,
+      default: "",
+    },
+
+    fileUrl: {
+      type: String,
       required: true,
     },
 
-    pdfUrl: {
+    filePublicId: {
       type: String,
-      required: true,
+      default: "",
+    },
+
+    fileName: {
+      type: String,
+      default: "",
+    },
+
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   {

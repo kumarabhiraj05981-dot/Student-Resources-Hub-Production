@@ -1,193 +1,241 @@
-
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import api from "../services/api";
-import Navbar from "../components/layout/Navbar";
-import Footer from "../components/layout/Footer";
 
 export default function Admin() {
   const [title, setTitle] = useState("");
-  const [type, setType] = useState("notes");
-  const [semester, setSemester] = useState(1);
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Notes");
   const [subject, setSubject] = useState("");
-  const [pdfUrl, setPdfUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
 
-
-  const [resources, setResources] = useState<any[]>([]);
-
-  const fetchResources = async () => {
-    try {
-      const res = await api.get("/api/resources");
-      setResources(res.data);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  useEffect(() => {
-    fetchResources();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!title.trim()) {
+      alert("Please enter resource title");
+      return;
+    }
+
+    if (!file) {
+      alert("Please select a file");
+      return;
+    }
+
     try {
-      await api.post("/api/resources", {
-        title,
-        type,
-        semester,
-        subject,
-        pdfUrl,
+      setLoading(true);
+
+      const formData = new FormData();
+
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("category", category);
+      formData.append("subject", subject);
+      formData.append("file", file);
+
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("Please login first");
+        return;
+      }
+
+      const res = await api.post("/api/upload", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      alert("✅ Resource Added Successfully");
+      console.log("UPLOAD RESPONSE:", res.data);
 
+      alert(
+        res.data?.message ||
+          (res.data?.fileUrl
+            ? "File uploaded successfully!"
+            : "Upload completed successfully!")
+      );
+
+      // Reset form
       setTitle("");
-      setType("notes");
-      setSemester(1);
+      setDescription("");
       setSubject("");
-      setPdfUrl("");
+      setCategory("Notes");
+      setFile(null);
 
-      fetchResources();
-    } catch (err) {
-      alert("❌ Failed to Add Resource");
-    }
-  };
+      // Reset file input
+      const fileInput = document.getElementById(
+        "resource-file"
+      ) as HTMLInputElement | null;
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this resource?")) return;
+      if (fileInput) {
+        fileInput.value = "";
+      }
+    } catch (error: any) {
+      console.error(
+        "UPLOAD ERROR:",
+        error.response?.data || error
+      );
 
-    try {
-      await api.delete(`/api/resources/${id}`);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "File upload failed";
 
-      alert("✅ Resource Deleted");
-
-      fetchResources();
-    } catch (err) {
-      alert("❌ Delete Failed");
+      alert(message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      <Navbar />
+    <div className="min-h-screen bg-blue-50 py-10 px-4">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
 
-      <div className="max-w-2xl mx-auto py-10 px-6">
-        <h1 className="text-4xl font-bold text-blue-700 mb-8">
-          Admin Panel
-        </h1>
+          <h1 className="text-3xl font-bold text-blue-700 mb-2">
+            📚 Admin Resource Upload
+          </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          <p className="text-gray-600 mb-8">
+            Upload Notes, PYQs, Syllabus and E-books.
+          </p>
 
-          <input
-            className="w-full border p-3 rounded"
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-
-          <select
-            className="w-full border p-3 rounded"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
+          <form
+            onSubmit={handleUpload}
+            className="space-y-5"
           >
-            <option value="notes">Notes</option>
-            <option value="pyq">PYQ</option>
-            <option value="syllabus">Syllabus</option>
-            <option value="ebooks">E-books</option>
-          </select>
 
-          <input
-            className="w-full border p-3 rounded"
-            type="number"
-            placeholder="Semester"
-            value={semester}
-            onChange={(e) => setSemester(Number(e.target.value))}
-            required
-          />
+            {/* Title */}
+            <div>
+              <label className="block font-semibold mb-2">
+                Resource Title
+              </label>
 
-          <input
-            className="w-full border p-3 rounded"
-            placeholder="Subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            required
-          />
+              <input
+                type="text"
+                placeholder="Example: DBMS Unit 1 Notes"
+                value={title}
+                onChange={(e) =>
+                  setTitle(e.target.value)
+                }
+                className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
 
-          <input
-            className="w-full border p-3 rounded"
-            placeholder="PDF URL"
-            value={pdfUrl}
-            onChange={(e) => setPdfUrl(e.target.value)}
-            required
-          />
+            {/* Description */}
+            <div>
+              <label className="block font-semibold mb-2">
+                Description
+              </label>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700"
-          >
-            ➕ Add Resource
-          </button>
+              <textarea
+                placeholder="Enter resource description"
+                value={description}
+                onChange={(e) =>
+                  setDescription(e.target.value)
+                }
+                className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                rows={4}
+              />
+            </div>
 
-        </form>
-      </div>
+            {/* Subject */}
+            <div>
+              <label className="block font-semibold mb-2">
+                Subject
+              </label>
 
-      <div className="max-w-6xl mx-auto px-6 pb-10">
-        <h2 className="text-3xl font-bold text-blue-700 mb-6">
-          All Resources
-        </h2>
+              <input
+                type="text"
+                placeholder="Example: DBMS"
+                value={subject}
+                onChange={(e) =>
+                  setSubject(e.target.value)
+                }
+                className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
 
-        {resources.length === 0 ? (
-          <p className="text-gray-500">No Resources Found</p>
-        ) : (
-          <div className="grid gap-4">
-            {resources.map((item: any) => (
-              <div
-                key={item._id}
-                className="bg-white shadow-lg rounded-xl p-5 flex justify-between items-center"
+            {/* Category */}
+            <div>
+              <label className="block font-semibold mb-2">
+                Category
+              </label>
+
+              <select
+                value={category}
+                onChange={(e) =>
+                  setCategory(e.target.value)
+                }
+                className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <div>
-                  <h3 className="text-xl font-bold">
-                    {item.title}
-                  </h3>
+                <option value="Notes">
+                  Notes
+                </option>
 
-                  <p className="text-gray-600">
-                    📚 {item.subject}
-                  </p>
+                <option value="PYQ">
+                  PYQ
+                </option>
 
-                  <p className="text-gray-600">
-                    🎓 Semester {item.semester}
-                  </p>
+                <option value="Syllabus">
+                  Syllabus
+                </option>
 
-                  <p className="text-blue-600 font-semibold">
-                    {item.type.toUpperCase()}
-                  </p>
-                </div>
+                <option value="Ebooks">
+                  E-books
+                </option>
 
-                <div className="flex gap-3">
-                  <a
-                    href={item.pdfUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-green-600 text-white px-4 py-2 rounded"
-                  >
-                    View
-                  </a>
+                <option value="Other">
+                  Other
+                </option>
+              </select>
+            </div>
 
-                  <button
-                    onClick={() => handleDelete(item._id)}
-                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+            {/* File */}
+            <div>
+              <label className="block font-semibold mb-2">
+                Select File
+              </label>
+
+              <input
+                id="resource-file"
+                type="file"
+                accept=".pdf,.doc,.docx,.ppt,.pptx"
+                onChange={(e) =>
+                  setFile(
+                    e.target.files?.[0] || null
+                  )
+                }
+                className="w-full border border-gray-300 rounded-lg p-3"
+                required
+              />
+
+              {file && (
+                <p className="text-sm text-gray-600 mt-2">
+                  Selected: {file.name}
+                </p>
+              )}
+            </div>
+
+            {/* Upload button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-3 rounded-lg text-white font-bold text-lg transition ${
+                loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {loading
+                ? "Uploading..."
+                : "🚀 Upload Resource"}
+            </button>
+
+          </form>
+        </div>
       </div>
-
-      <Footer />
-    </>
+    </div>
   );
 }
