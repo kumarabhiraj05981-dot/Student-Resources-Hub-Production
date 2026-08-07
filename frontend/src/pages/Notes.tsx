@@ -29,15 +29,13 @@ export default function Notes() {
           "/api/resources/category/Notes"
         );
 
-        console.log("NOTES API RESPONSE:", res.data);
-
         // Extra safety filter
         const notesOnly = (res.data.resources || []).filter(
           (resource: Resource) =>
             resource.category?.trim().toLowerCase() === "notes"
         );
 
-        console.log("NOTES ONLY:", notesOnly);
+     
 
         setResources(notesOnly);
 
