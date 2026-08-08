@@ -26,6 +26,14 @@ interface ApiResponse {
   paper?: Paper;
 }
 
+// ======================================
+// API BASE URL
+// ======================================
+
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000";
+
 export default function AIQuestionPaper() {
   const [subject, setSubject] = useState("");
   const [unit, setUnit] = useState("Full Syllabus");
@@ -34,7 +42,9 @@ export default function AIQuestionPaper() {
   const [questionType, setQuestionType] = useState("Mixed");
 
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<ApiResponse | null>(null);
+  const [result, setResult] =
+    useState<ApiResponse | null>(null);
+
   const [error, setError] = useState("");
 
   // ======================================
@@ -52,13 +62,11 @@ export default function AIQuestionPaper() {
 
     try {
       // ======================================
-      // GET LOGIN TOKEN
+      // GET ONLY CURRENT LOGIN TOKEN
       // ======================================
 
       const token =
-        localStorage.getItem("token") ||
-        localStorage.getItem("authToken") ||
-        localStorage.getItem("accessToken");
+        localStorage.getItem("token");
 
       if (!token) {
         throw new Error(
@@ -67,11 +75,26 @@ export default function AIQuestionPaper() {
       }
 
       // ======================================
+      // API URL CHECK
+      // ======================================
+
+      if (!API_URL) {
+        throw new Error(
+          "Backend API URL is not configured."
+        );
+      }
+
+      console.log(
+        "AI API URL:",
+        `${API_URL}/api/ai/generate-paper`
+      );
+
+      // ======================================
       // API REQUEST
       // ======================================
 
       const response = await fetch(
-        "http://localhost:5000/api/ai/generate-paper",
+        `${API_URL}/api/ai/generate-paper`,
         {
           method: "POST",
 
@@ -84,29 +107,73 @@ export default function AIQuestionPaper() {
             subject,
             unit,
             difficulty,
-            questionCount: Number(questionCount),
+            questionCount:
+              Number(questionCount),
             questionType,
           }),
         }
       );
 
-      const data: ApiResponse =
-        await response.json();
+      // ======================================
+      // READ RESPONSE
+      // ======================================
+
+      let data: ApiResponse;
+
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error(
+          `Server returned an invalid response. Status: ${response.status}`
+        );
+      }
+
+      console.log(
+        "AI PAPER RESPONSE:",
+        data
+      );
 
       // ======================================
-      // API ERROR
+      // AUTH ERROR
+      // ======================================
+
+      if (response.status === 401) {
+        // Remove invalid/expired token
+        localStorage.removeItem("token");
+
+        throw new Error(
+          data.message ||
+            "Your login session has expired. Please login again."
+        );
+      }
+
+      // ======================================
+      // OTHER API ERRORS
       // ======================================
 
       if (!response.ok) {
         throw new Error(
           data.message ||
-            "Failed to generate question paper"
+            `Failed to generate question paper. Server status: ${response.status}`
         );
       }
 
       // ======================================
-      // SAVE RESULT IN STATE
+      // SUCCESS
       // ======================================
+
+      if (!data.success) {
+        throw new Error(
+          data.message ||
+            "Question paper generation failed."
+        );
+      }
+
+      if (!data.paper) {
+        throw new Error(
+          "Question paper was not returned by the server."
+        );
+      }
 
       setResult(data);
 
@@ -116,11 +183,19 @@ export default function AIQuestionPaper() {
         err
       );
 
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to connect to server"
-      );
+      if (
+        err instanceof TypeError
+      ) {
+        setError(
+          "Unable to connect to the backend server. Please check the backend URL and CORS settings."
+        );
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to connect to server."
+        );
+      }
 
     } finally {
       setLoading(false);
@@ -128,7 +203,7 @@ export default function AIQuestionPaper() {
   };
 
   // ======================================
-  // DOWNLOAD / PRINT PAPER
+  // PRINT / SAVE PDF
   // ======================================
 
   const handlePrint = () => {
@@ -232,12 +307,29 @@ export default function AIQuestionPaper() {
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
 
-                <option>Full Syllabus</option>
-                <option>Unit 1</option>
-                <option>Unit 2</option>
-                <option>Unit 3</option>
-                <option>Unit 4</option>
-                <option>Unit 5</option>
+                <option>
+                  Full Syllabus
+                </option>
+
+                <option>
+                  Unit 1
+                </option>
+
+                <option>
+                  Unit 2
+                </option>
+
+                <option>
+                  Unit 3
+                </option>
+
+                <option>
+                  Unit 4
+                </option>
+
+                <option>
+                  Unit 5
+                </option>
 
               </select>
 
@@ -259,9 +351,17 @@ export default function AIQuestionPaper() {
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
 
-                <option>Easy</option>
-                <option>Medium</option>
-                <option>Hard</option>
+                <option>
+                  Easy
+                </option>
+
+                <option>
+                  Medium
+                </option>
+
+                <option>
+                  Hard
+                </option>
 
               </select>
 
@@ -278,7 +378,9 @@ export default function AIQuestionPaper() {
               <select
                 value={questionCount}
                 onChange={(e) =>
-                  setQuestionCount(e.target.value)
+                  setQuestionCount(
+                    e.target.value
+                  )
                 }
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -314,15 +416,28 @@ export default function AIQuestionPaper() {
               <select
                 value={questionType}
                 onChange={(e) =>
-                  setQuestionType(e.target.value)
+                  setQuestionType(
+                    e.target.value
+                  )
                 }
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
 
-                <option>Mixed</option>
-                <option>MCQ</option>
-                <option>Short Answer</option>
-                <option>Long Answer</option>
+                <option>
+                  Mixed
+                </option>
+
+                <option>
+                  MCQ
+                </option>
+
+                <option>
+                  Short Answer
+                </option>
+
+                <option>
+                  Long Answer
+                </option>
 
               </select>
 
@@ -391,7 +506,8 @@ export default function AIQuestionPaper() {
                   <div className="text-left md:text-right">
 
                     <p>
-                      Unit: {result.paper.unit}
+                      Unit:{" "}
+                      {result.paper.unit}
                     </p>
 
                     <p>
@@ -425,7 +541,10 @@ export default function AIQuestionPaper() {
                     <div className="flex gap-3">
 
                       <span className="flex-shrink-0 bg-blue-100 text-blue-700 font-bold w-9 h-9 rounded-full flex items-center justify-center">
-                        {q.number || index + 1}
+
+                        {q.number ||
+                          index + 1}
+
                       </span>
 
                       <div className="flex-1">
@@ -433,34 +552,45 @@ export default function AIQuestionPaper() {
                         {/* TYPE */}
 
                         <span className="inline-block text-xs font-semibold bg-gray-100 text-gray-600 px-3 py-1 rounded-full mb-3">
+
                           {q.type}
+
                         </span>
 
                         {/* QUESTION */}
 
                         <h3 className="text-lg font-semibold text-gray-800 leading-relaxed">
+
                           {q.question}
+
                         </h3>
 
                         {/* OPTIONS */}
 
                         {q.options &&
-                          q.options.length > 0 && (
+                          q.options.length >
+                            0 && (
 
                           <div className="grid md:grid-cols-2 gap-3 mt-4">
 
                             {q.options.map(
-                              (option, optionIndex) => (
+                              (
+                                option,
+                                optionIndex
+                              ) => (
 
                               <div
-                                key={optionIndex}
+                                key={
+                                  optionIndex
+                                }
                                 className="border border-gray-200 rounded-lg p-3 bg-gray-50"
                               >
 
                                 <span className="font-bold text-blue-600 mr-2">
 
                                   {String.fromCharCode(
-                                    65 + optionIndex
+                                    65 +
+                                      optionIndex
                                   )}
 
                                   .
@@ -520,7 +650,9 @@ export default function AIQuestionPaper() {
                   onClick={handlePrint}
                   className="flex-1 bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-lg"
                 >
+
                   🖨️ Print / Save as PDF
+
                 </button>
 
               </div>
