@@ -1,40 +1,54 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../services/api";
 
+interface Resource {
+  _id: string;
+  title: string;
+  description?: string;
+  category: string;
+  semester: string;
+  subject?: string;
+  fileUrl: string;
+  fileName?: string;
+  createdAt: string;
+}
+
 export default function Admin() {
+  // ==========================================
+  // UPLOAD STATES
+  // ==========================================
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [semester, setSemester] = useState("");
   const [category, setCategory] = useState("Notes");
   const [subject, setSubject] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [uploading, setUploading] = useState(false);
 
-    if (!title.trim()) {
-      alert("Please enter resource title");
-      return;
-    }
+  // ==========================================
+  // RESOURCE STATES
+  // ==========================================
 
-    if (!semester) {
-      alert("Please select semester");
-      return;
-    }
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loadingResources, setLoadingResources] =
+    useState(true);
 
-    if (!category) {
-      alert("Please select category");
-      return;
-    }
+  const [search, setSearch] = useState("");
+  const [filterCategory, setFilterCategory] =
+    useState("All");
 
-    if (!file) {
-      alert("Please select a file");
-      return;
-    }
+  const [deletingId, setDeletingId] =
+    useState<string | null>(null);
 
+  // ==========================================
+  // LOAD RESOURCES
+  // ==========================================
+
+  const loadResources = async () => {
     try {
-      setLoading(true);
+      setLoadingResources(true);
 
       const token = localStorage.getItem("token");
 
@@ -43,16 +57,139 @@ export default function Admin() {
         return;
       }
 
+      const res = await api.get("/api/resources", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("RESOURCES:", res.data);
+
+      setResources(
+        Array.isArray(res.data?.resources)
+          ? res.data.resources
+          : []
+      );
+    } catch (error: any) {
+      console.error(
+        "LOAD RESOURCES ERROR:",
+        error.response?.data || error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          "Unable to load resources"
+      );
+    } finally {
+      setLoadingResources(false);
+    }
+  };
+
+  // ==========================================
+  // LOAD WHEN PAGE OPENS
+  // ==========================================
+
+  useEffect(() => {
+    loadResources();
+  }, []);
+
+  // ==========================================
+  // UPLOAD RESOURCE
+  // ==========================================
+
+  const handleUpload = async (
+    e: React.FormEvent
+  ) => {
+    e.preventDefault();
+
+    // TITLE
+    if (!title.trim()) {
+      alert("Please enter resource title");
+      return;
+    }
+
+    // SEMESTER
+    if (!semester) {
+      alert("Please select semester");
+      return;
+    }
+
+    // CATEGORY
+    if (!category) {
+      alert("Please select category");
+      return;
+    }
+
+    // FILE
+    if (!file) {
+      alert("Please select a PDF file");
+      return;
+    }
+
+    // PDF CHECK
+    if (
+      file.type !== "application/pdf" &&
+      !file.name.toLowerCase().endsWith(".pdf")
+    ) {
+      alert("Only PDF files are allowed");
+      return;
+    }
+
+    // SIZE CHECK
+    const maxSize = 100 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      alert("File size must be less than 100MB");
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("Please login first");
+        return;
+      }
+
+      // ======================================
+      // FORM DATA
+      // ======================================
+
       const formData = new FormData();
 
-      formData.append("title", title.trim());
-      formData.append("description", description.trim());
-      formData.append("semester", semester);
-      formData.append("category", category);
-      formData.append("subject", subject.trim());
-      formData.append("file", file);
+      formData.append(
+        "title",
+        title.trim()
+      );
 
-      console.log("UPLOAD DATA:", {
+      formData.append(
+        "description",
+        description.trim()
+      );
+
+      formData.append(
+        "semester",
+        semester
+      );
+
+      formData.append(
+        "category",
+        category
+      );
+
+      formData.append(
+        "subject",
+        subject.trim()
+      );
+
+      formData.append(
+        "file",
+        file
+      );
+
+      console.log("UPLOADING:", {
         title,
         description,
         semester,
@@ -61,62 +198,211 @@ export default function Admin() {
         file: file.name,
       });
 
-      const res = await api.post("/api/upload", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // ======================================
+      // API REQUEST
+      // ======================================
 
-      console.log("UPLOAD RESPONSE:", res.data);
+      const res = await api.post(
+        "/api/upload",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-      if (res.data?.success) {
-        alert("✅ Resource uploaded successfully!");
+      console.log(
+        "UPLOAD RESPONSE:",
+        res.data
+      );
 
-        setTitle("");
-        setDescription("");
-        setSemester("");
-        setCategory("Notes");
-        setSubject("");
-        setFile(null);
+      if (!res.data?.success) {
+        throw new Error(
+          res.data?.message ||
+            "Upload failed"
+        );
+      }
 
-        const fileInput = document.getElementById(
+      alert(
+        "✅ Resource uploaded successfully!"
+      );
+
+      // ======================================
+      // RESET FORM
+      // ======================================
+
+      setTitle("");
+      setDescription("");
+      setSemester("");
+      setCategory("Notes");
+      setSubject("");
+      setFile(null);
+
+      const fileInput =
+        document.getElementById(
           "resource-file"
         ) as HTMLInputElement | null;
 
-        if (fileInput) {
-          fileInput.value = "";
-        }
-      } else {
-        alert(res.data?.message || "Upload failed");
+      if (fileInput) {
+        fileInput.value = "";
       }
+
+      // Reload resources
+      await loadResources();
+
     } catch (error: any) {
       console.error(
         "UPLOAD ERROR:",
         error.response?.data || error
       );
 
-      const message =
+      alert(
         error.response?.data?.message ||
-        error.message ||
-        "File upload failed";
-
-      alert(`❌ ${message}`);
+          error.message ||
+          "File upload failed"
+      );
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
   };
 
+  // ==========================================
+  // DELETE RESOURCE
+  // ==========================================
+
+  const handleDelete = async (
+    id: string
+  ) => {
+    const resource = resources.find(
+      (item) => item._id === id
+    );
+
+    if (!resource) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${resource.title}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingId(id);
+
+      const token =
+        localStorage.getItem("token");
+
+      if (!token) {
+        alert("Please login first");
+        return;
+      }
+
+      const res = await api.delete(
+        `/api/resources/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log(
+        "DELETE RESPONSE:",
+        res.data
+      );
+
+      if (!res.data?.success) {
+        throw new Error(
+          res.data?.message ||
+            "Delete failed"
+        );
+      }
+
+      alert(
+        "🗑️ Resource deleted successfully!"
+      );
+
+      setResources((prev) =>
+        prev.filter(
+          (item) => item._id !== id
+        )
+      );
+
+    } catch (error: any) {
+      console.error(
+        "DELETE ERROR:",
+        error.response?.data || error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to delete resource"
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+  
+  // ==========================================
+  // FILTER RESOURCES
+  // ==========================================
+
+  const filteredResources =
+    resources.filter((resource) => {
+      const searchText =
+        search.trim().toLowerCase();
+
+      const matchesSearch =
+        !searchText ||
+        resource.title
+          ?.toLowerCase()
+          .includes(searchText) ||
+        resource.subject
+          ?.toLowerCase()
+          .includes(searchText) ||
+        resource.description
+          ?.toLowerCase()
+          .includes(searchText);
+
+      const matchesCategory =
+        filterCategory === "All" ||
+        resource.category
+          ?.toLowerCase() ===
+          filterCategory.toLowerCase();
+
+      return (
+        matchesSearch &&
+        matchesCategory
+      );
+    });
+
+  // ==========================================
+  // PAGE
+  // ==========================================
+
   return (
     <div className="min-h-screen bg-blue-50 py-10 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+
+      <div className="max-w-7xl mx-auto">
+
+        {/* ======================================
+            UPLOAD SECTION
+        ====================================== */}
+
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-10">
 
           <h1 className="text-3xl font-bold text-blue-700 mb-2">
             📚 Admin Resource Upload
           </h1>
 
           <p className="text-gray-600 mb-8">
-            Upload Notes, PYQs, Syllabus and E-books.
+            Upload Notes, PYQs, Syllabus and
+            E-books.
           </p>
 
           <form
@@ -124,7 +410,8 @@ export default function Admin() {
             className="space-y-5"
           >
 
-            {/* Title */}
+            {/* TITLE */}
+
             <div>
               <label className="block font-semibold mb-2">
                 Resource Title
@@ -134,14 +421,16 @@ export default function Admin() {
                 type="text"
                 placeholder="Example: DBMS Unit 1 Notes"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) =>
+                  setTitle(e.target.value)
+                }
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
 
+            {/* DESCRIPTION */}
 
-            {/* Description */}
             <div>
               <label className="block font-semibold mb-2">
                 Description
@@ -150,14 +439,16 @@ export default function Admin() {
               <textarea
                 placeholder="Enter resource description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) =>
+                  setDescription(e.target.value)
+                }
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
                 rows={4}
               />
             </div>
 
+            {/* SEMESTER */}
 
-            {/* Semester */}
             <div>
               <label className="block font-semibold mb-2">
                 Semester
@@ -165,7 +456,9 @@ export default function Admin() {
 
               <select
                 value={semester}
-                onChange={(e) => setSemester(e.target.value)}
+                onChange={(e) =>
+                  setSemester(e.target.value)
+                }
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
@@ -199,8 +492,8 @@ export default function Admin() {
               </select>
             </div>
 
+            {/* SUBJECT */}
 
-            {/* Subject */}
             <div>
               <label className="block font-semibold mb-2">
                 Subject
@@ -210,13 +503,15 @@ export default function Admin() {
                 type="text"
                 placeholder="Example: DBMS"
                 value={subject}
-                onChange={(e) => setSubject(e.target.value)}
+                onChange={(e) =>
+                  setSubject(e.target.value)
+                }
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
+            {/* CATEGORY */}
 
-            {/* Category */}
             <div>
               <label className="block font-semibold mb-2">
                 Category
@@ -224,7 +519,9 @@ export default function Admin() {
 
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) =>
+                  setCategory(e.target.value)
+                }
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
@@ -250,19 +547,22 @@ export default function Admin() {
               </select>
             </div>
 
+            {/* FILE */}
 
-            {/* File */}
             <div>
               <label className="block font-semibold mb-2">
-                Select File
+                Select PDF
               </label>
 
               <input
                 id="resource-file"
                 type="file"
-                accept=".pdf"
+                accept=".pdf,application/pdf"
                 onChange={(e) =>
-                  setFile(e.target.files?.[0] || null)
+                  setFile(
+                    e.target.files?.[0] ||
+                      null
+                  )
                 }
                 className="w-full border border-gray-300 rounded-lg p-3"
                 required
@@ -275,28 +575,288 @@ export default function Admin() {
               )}
 
               <p className="text-xs text-gray-500 mt-2">
-                Maximum file size: 100MB. PDF only.
+                Maximum file size: 100MB.
+                PDF only.
               </p>
             </div>
 
+            {/* UPLOAD BUTTON */}
 
-            {/* Upload Button */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={uploading}
               className={`w-full py-3 rounded-lg text-white font-bold text-lg transition ${
-                loading
+                uploading
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
-              {loading
+              {uploading
                 ? "⏳ Uploading..."
                 : "🚀 Upload Resource"}
             </button>
 
           </form>
         </div>
+
+        {/* ======================================
+            RESOURCE MANAGEMENT
+        ====================================== */}
+
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">
+                📋 Manage Resources
+              </h2>
+
+              <p className="text-gray-500 mt-1">
+                Total resources:{" "}
+                <span className="font-bold">
+                  {resources.length}
+                </span>
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={loadResources}
+              disabled={loadingResources}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold px-5 py-2.5 rounded-lg transition"
+            >
+              {loadingResources
+                ? "⏳ Loading..."
+                : "🔄 Refresh"}
+            </button>
+            
+
+          </div>
+          
+
+          {/* ======================================
+    FILTER RESOURCES
+====================================== */}
+
+<div className="mb-6">
+
+  <h3 className="text-xl font-bold text-gray-800">
+    🔎 Filter Resources
+  </h3>
+
+  <p className="text-gray-500 mt-1">
+    Search and filter your uploaded resources
+  </p>
+
+</div>
+
+
+{/* ======================================
+    SEARCH + FILTER
+====================================== */}
+
+<div className="grid md:grid-cols-2 gap-4 mb-8">
+
+  <input
+    type="text"
+    placeholder="🔎 Search title, subject..."
+    value={search}
+    onChange={(e) =>
+      setSearch(e.target.value)
+    }
+    className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+  />
+
+
+  <select
+    value={filterCategory}
+    onChange={(e) =>
+      setFilterCategory(e.target.value)
+    }
+    className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+  >
+
+    <option value="All">
+      All Categories
+    </option>
+
+    <option value="Notes">
+      Notes
+    </option>
+
+    <option value="PYQ">
+      PYQ
+    </option>
+
+    <option value="Syllabus">
+      Syllabus
+    </option>
+
+    <option value="Ebooks">
+      E-books
+    </option>
+
+    <option value="Other">
+      Other
+    </option>
+
+  </select>
+
+</div>
+
+          {/* LOADING */}
+
+          {loadingResources ? (
+
+            <div className="text-center py-12">
+
+              <div className="text-5xl mb-4">
+                ⏳
+              </div>
+
+              <p className="text-lg font-semibold text-gray-600">
+                Loading resources...
+              </p>
+
+            </div>
+
+          ) : filteredResources.length === 0 ? (
+
+            <div className="text-center py-12 bg-gray-50 rounded-xl">
+
+              <div className="text-5xl mb-4">
+                📂
+              </div>
+
+              <p className="text-xl font-semibold text-gray-700">
+                No resources found
+              </p>
+
+              <p className="text-gray-500 mt-2">
+                Try another search or upload a
+                resource.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+              {filteredResources.map(
+                (resource) => (
+                  <div
+                    key={resource._id}
+                    className="border border-gray-200 rounded-xl p-5 hover:shadow-lg transition"
+                  >
+
+                    {/* TITLE */}
+
+                    <div className="flex justify-between items-start gap-3">
+
+                      <h3 className="text-lg font-bold text-gray-800 break-words">
+                        {resource.title}
+                      </h3>
+
+                      <span className="shrink-0 bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold">
+                        {resource.category}
+                      </span>
+
+                    </div>
+
+                    {/* SEMESTER */}
+
+                    {resource.semester && (
+                      <p className="mt-3 text-sm text-blue-600 font-semibold">
+                        🎓 {resource.semester}
+                      </p>
+                    )}
+
+                    {/* SUBJECT */}
+
+                    {resource.subject && (
+                      <p className="mt-2 text-sm text-gray-600">
+                        📚 {resource.subject}
+                      </p>
+                    )}
+
+                    {/* DESCRIPTION */}
+
+                    {resource.description && (
+                      <p className="mt-3 text-sm text-gray-500 line-clamp-3">
+                        {resource.description}
+                      </p>
+                    )}
+
+                    {/* FILE */}
+
+                    {resource.fileName && (
+                      <p
+                        className="mt-3 text-sm text-gray-500 truncate"
+                        title={resource.fileName}
+                      >
+                        📄 {resource.fileName}
+                      </p>
+                    )}
+
+                    {/* DATE */}
+
+                    {resource.createdAt && (
+                      <p className="mt-2 text-xs text-gray-400">
+                        Uploaded:{" "}
+                        {new Date(
+                          resource.createdAt
+                        ).toLocaleDateString()}
+                      </p>
+                    )}
+                    {/* ACTION BUTTONS */}
+
+                    <div className="flex gap-3 mt-5">
+
+                      {/* VIEW PDF */}
+
+                      <a
+                        href={resource.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition"
+                      >
+                        📄 View PDF
+                      </a>
+
+                      {/* DELETE */}
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDelete(
+                            resource._id
+                          )
+                        }
+                        disabled={
+                          deletingId ===
+                          resource._id
+                        }
+                        className="bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white font-semibold px-4 py-2.5 rounded-lg transition"
+                      >
+                        {deletingId ===
+                        resource._id
+                          ? "⏳"
+                          : "🗑️"}
+                      </button>
+
+                    </div>
+
+                  </div>
+                )
+              )}
+
+            </div>
+          )}
+
+        </div>
+
       </div>
     </div>
   );

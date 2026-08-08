@@ -2,52 +2,129 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 
+interface User {
+  _id?: string;
+  name?: string;
+  email?: string;
+  role?: string;
+}
+
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email.trim() || !password) {
-      alert("Please enter email and password");
+    // ==============================
+    // VALIDATION
+    // ==============================
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail) {
+      alert("Please enter your email");
+      return;
+    }
+
+    if (!password) {
+      alert("Please enter your password");
       return;
     }
 
     try {
       setLoading(true);
 
+      // ==============================
+      // LOGIN API
+      // ==============================
+
       const res = await api.post("/api/auth/login", {
-        email: email.trim(),
+        email: cleanEmail,
         password,
       });
 
-      if (!res.data?.success || !res.data?.token) {
+      console.log("LOGIN RESPONSE:", res.data);
+
+      // ==============================
+      // CHECK RESPONSE
+      // ==============================
+
+      if (!res.data?.success) {
         throw new Error(
           res.data?.message || "Login failed"
         );
       }
 
-      localStorage.setItem("token", res.data.token);
+      if (!res.data?.token) {
+        throw new Error(
+          "Login successful but authentication token was not received"
+        );
+      }
+
+      // ==============================
+      // USER DATA
+      // ==============================
+
+      const user: User = res.data.user || {};
+
+      console.log("LOGGED IN USER:", user);
+      console.log("USER ROLE:", user.role);
+
+      // ==============================
+      // SAVE TOKEN
+      // ==============================
+
+      localStorage.setItem(
+        "token",
+        res.data.token
+      );
+
+      // ==============================
+      // SAVE USER
+      // ==============================
+
       localStorage.setItem(
         "user",
-        JSON.stringify(res.data.user)
+        JSON.stringify(user)
       );
 
-      alert("Login Successful 🎉");
-      navigate("/");
-
-    } catch (err: any) {
-      console.error("LOGIN ERROR:", err.response?.data || err);
+      // ==============================
+      // SUCCESS
+      // ==============================
 
       alert(
+        user.role?.toLowerCase() === "admin"
+          ? "Admin Login Successful 🎉"
+          : "Login Successful 🎉"
+      );
+
+      // ==============================
+      // REDIRECT
+      // ==============================
+
+      navigate("/", {
+        replace: true,
+      });
+
+    } catch (err: any) {
+
+      console.error(
+        "LOGIN ERROR:",
+        err.response?.data || err
+      );
+
+      const message =
         err.response?.data?.message ||
         err.message ||
-        "Login Failed"
-      );
+        "Login failed. Please try again.";
+
+      alert(`❌ ${message}`);
+
     } finally {
       setLoading(false);
     }
@@ -58,12 +135,16 @@ export default function Login() {
 
       <div className="w-full max-w-md">
 
-        {/* Logo / Heading */}
+        {/* ==============================
+            LOGO
+        ============================== */}
 
         <div className="text-center text-white mb-8">
 
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-3xl shadow-2xl mb-5">
-            <span className="text-4xl">📚</span>
+            <span className="text-4xl">
+              📚
+            </span>
           </div>
 
           <h1 className="text-3xl md:text-4xl font-extrabold">
@@ -77,7 +158,9 @@ export default function Login() {
         </div>
 
 
-        {/* Login Card */}
+        {/* ==============================
+            LOGIN CARD
+        ============================== */}
 
         <div className="bg-white rounded-3xl shadow-2xl p-7 md:p-9">
 
@@ -94,12 +177,16 @@ export default function Login() {
           </div>
 
 
+          {/* ==============================
+              LOGIN FORM
+          ============================== */}
+
           <form
             onSubmit={handleLogin}
             className="space-y-5"
           >
 
-            {/* Email */}
+            {/* EMAIL */}
 
             <div>
 
@@ -120,6 +207,7 @@ export default function Login() {
                   onChange={(e) =>
                     setEmail(e.target.value)
                   }
+                  autoComplete="email"
                   className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition"
                   required
                 />
@@ -129,7 +217,7 @@ export default function Login() {
             </div>
 
 
-            {/* Password */}
+            {/* PASSWORD */}
 
             <div>
 
@@ -144,22 +232,44 @@ export default function Login() {
                 </span>
 
                 <input
-                  type="password"
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
+                  }
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) =>
                     setPassword(e.target.value)
                   }
-                  className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition"
+                  autoComplete="current-password"
+                  className="w-full pl-12 pr-14 py-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition"
                   required
                 />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword(!showPassword)
+                  }
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xl"
+                  aria-label={
+                    showPassword
+                      ? "Hide password"
+                      : "Show password"
+                  }
+                >
+                  {showPassword
+                    ? "🙈"
+                    : "👁️"}
+                </button>
 
               </div>
 
             </div>
 
 
-            {/* Login Button */}
+            {/* LOGIN BUTTON */}
 
             <button
               type="submit"
@@ -172,7 +282,7 @@ export default function Login() {
             >
 
               {loading
-                ? "Logging in..."
+                ? "⏳ Logging in..."
                 : "🔐 Login"}
 
             </button>
@@ -180,7 +290,9 @@ export default function Login() {
           </form>
 
 
-          {/* Register */}
+          {/* ==============================
+              REGISTER
+          ============================== */}
 
           <div className="relative my-7">
 
@@ -196,6 +308,7 @@ export default function Login() {
 
           </div>
 
+
           <Link
             to="/register"
             className="block w-full text-center border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-bold py-3 rounded-xl transition"
@@ -206,8 +319,10 @@ export default function Login() {
         </div>
 
 
+        {/* FOOTER */}
+
         <p className="text-center text-blue-100 text-sm mt-6">
-          © Student Resources Hub
+          © {new Date().getFullYear()} Student Resources Hub
         </p>
 
       </div>

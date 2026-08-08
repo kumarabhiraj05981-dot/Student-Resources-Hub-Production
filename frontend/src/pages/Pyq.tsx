@@ -4,13 +4,13 @@ import api from "../services/api";
 interface Resource {
   _id: string;
   title: string;
-  description: string;
+  description?: string;
   category: string;
-  semester: string;
-  subject: string;
+  semester?: string;
+  subject?: string;
   fileUrl: string;
-  fileName: string;
-  createdAt: string;
+  fileName?: string;
+  createdAt?: string;
 }
 
 export default function PYQ() {
@@ -19,52 +19,80 @@ export default function PYQ() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadPYQ = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        // Only PYQ resources
-        const res = await api.get(
-          "/api/resources/category/PYQ"
-        );
-
-        console.log("PYQ API RESPONSE:", res.data);
-
-        // Extra safety:
-        // Only show resources whose category is actually PYQ
-        const pyqOnly = (res.data.resources || []).filter(
-          (item: Resource) =>
-            item.category?.trim().toLowerCase() === "pyq"
-        );
-
-        console.log("PYQ FILTERED:", pyqOnly);
-
-        setResources(pyqOnly);
-
-      } catch (err: any) {
-        console.error("PYQ loading error:", err);
-
-        setError(
-          err.response?.data?.message ||
-            "Unable to load PYQs"
-        );
-
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadPYQ();
   }, []);
 
-  // Loading
+  const loadPYQ = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await api.get(
+        "/api/resources/category/PYQ"
+      );
+
+      console.log("PYQ API RESPONSE:", response.data);
+
+      const data = response.data;
+
+      if (!data?.success) {
+        throw new Error(
+          data?.message || "Unable to load PYQs"
+        );
+      }
+
+      const apiResources = Array.isArray(data.resources)
+        ? data.resources
+        : [];
+
+      /*
+       * Extra safety:
+       * Sirf PYQ category ke resources show honge.
+       */
+      const pyqResources = apiResources.filter(
+        (resource: Resource) =>
+          String(resource.category || "")
+            .trim()
+            .toLowerCase() === "pyq"
+      );
+
+      console.log(
+        "PYQ RESOURCES:",
+        pyqResources
+      );
+
+      setResources(pyqResources);
+
+    } catch (error: any) {
+      console.error(
+        "PYQ loading error:",
+        error.response?.data || error
+      );
+
+      setResources([]);
+
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "Unable to load PYQs"
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==========================================
+  // LOADING
+  // ==========================================
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-blue-50 flex items-center justify-center px-4">
+
         <div className="text-center">
 
-          <div className="text-5xl mb-4">
+          <div className="text-6xl mb-4">
             📝
           </div>
 
@@ -72,17 +100,29 @@ export default function PYQ() {
             Loading PYQs...
           </p>
 
+          <p className="text-sm text-gray-500 mt-2">
+            Please wait
+          </p>
+
         </div>
+
       </div>
     );
   }
+
+  // ==========================================
+  // PAGE
+  // ==========================================
 
   return (
     <div className="min-h-screen bg-blue-50 py-10 px-4">
 
       <div className="max-w-7xl mx-auto">
 
-        {/* Header */}
+        {/* ======================================
+            HEADER
+        ====================================== */}
+
         <div className="mb-8">
 
           <h1 className="text-4xl font-bold text-orange-600 mb-2">
@@ -93,20 +133,41 @@ export default function PYQ() {
             Semester-wise previous year question papers
           </p>
 
+          {resources.length > 0 && (
+            <p className="text-sm text-gray-500 mt-2">
+              📚 {resources.length} PYQ
+              {resources.length !== 1 ? "s" : ""} available
+            </p>
+          )}
+
         </div>
 
+        {/* ======================================
+            ERROR
+        ====================================== */}
 
-        {/* Error */}
         {error && (
           <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-xl mb-6">
-            ❌ {error}
+
+            <p className="font-semibold">
+              ❌ {error}
+            </p>
+
+            <button
+              onClick={loadPYQ}
+              className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold"
+            >
+              🔄 Try Again
+            </button>
+
           </div>
         )}
 
+        {/* ======================================
+            NO PYQ
+        ====================================== */}
 
-        {/* Empty */}
-        {resources.length === 0 ? (
-
+        {!error && resources.length === 0 && (
           <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
 
             <div className="text-6xl mb-4">
@@ -118,25 +179,29 @@ export default function PYQ() {
             </p>
 
             <p className="text-gray-500 mt-2">
-              Previous year question papers will appear here
-              after the admin uploads them.
+              Previous year question papers uploaded
+              by the admin will appear here.
             </p>
 
           </div>
+        )}
 
-        ) : (
+        {/* ======================================
+            PYQ CARDS
+        ====================================== */}
 
-          /* Resources */
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {resources.length > 0 && (
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             {resources.map((resource) => (
 
               <div
                 key={resource._id}
-                className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition duration-300"
+                className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl hover:-translate-y-1 transition duration-300 flex flex-col"
               >
 
-                {/* Title + Category */}
+                {/* TITLE + CATEGORY */}
+
                 <div className="flex justify-between items-start gap-3">
 
                   <h2 className="text-xl font-bold text-gray-800 break-words">
@@ -149,60 +214,88 @@ export default function PYQ() {
 
                 </div>
 
+                {/* SEMESTER */}
 
-                {/* Semester */}
                 {resource.semester && (
-                  <p className="mt-4 text-sm font-semibold text-blue-600">
-                    🎓 Semester: {resource.semester}
-                  </p>
+                  <div className="mt-4">
+
+                    <p className="text-sm font-semibold text-blue-600">
+                      🎓 Semester
+                    </p>
+
+                    <p className="text-gray-700 mt-1">
+                      {resource.semester}
+                    </p>
+
+                  </div>
                 )}
 
+                {/* SUBJECT */}
 
-                {/* Subject */}
                 {resource.subject && (
-                  <p className="mt-2 text-sm font-semibold text-gray-500">
-                    📚 Subject: {resource.subject}
-                  </p>
+                  <div className="mt-3">
+
+                    <p className="text-sm font-semibold text-gray-500">
+                      📚 Subject
+                    </p>
+
+                    <p className="text-gray-700 mt-1">
+                      {resource.subject}
+                    </p>
+
+                  </div>
                 )}
 
+                {/* DESCRIPTION */}
 
-                {/* Description */}
                 {resource.description && (
                   <p className="mt-3 text-gray-600 line-clamp-3">
                     {resource.description}
                   </p>
                 )}
 
+                {/* FILE */}
 
-                {/* File Name */}
                 {resource.fileName && (
-                  <p className="mt-4 text-sm text-gray-500 truncate">
-                    📄 {resource.fileName}
-                  </p>
+                  <div className="mt-4 bg-gray-50 rounded-lg p-3">
+
+                    <p className="text-xs text-gray-500 mb-1">
+                      PDF FILE
+                    </p>
+
+                    <p
+                      className="text-sm text-gray-700 truncate"
+                      title={resource.fileName}
+                    >
+                      📄 {resource.fileName}
+                    </p>
+
+                  </div>
                 )}
 
+                {/* BUTTONS */}
 
-                {/* Buttons */}
                 <div className="flex gap-3 mt-6">
 
-                  {/* Open */}
+                  {/* OPEN */}
+
                   <a
                     href={resource.fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg transition"
+                    className="flex-1 text-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2.5 px-3 rounded-lg transition"
                   >
                     👁️ Open
                   </a>
 
+                  {/* DOWNLOAD */}
 
-                  {/* Download */}
                   <a
                     href={resource.fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    download={resource.fileName || true}
-                    className="flex-1 text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-4 rounded-lg transition"
+                    download={resource.fileName || undefined}
+                    className="flex-1 text-center bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-2.5 px-3 rounded-lg transition"
                   >
                     ⬇️ Download
                   </a>
@@ -214,7 +307,6 @@ export default function PYQ() {
             ))}
 
           </div>
-
         )}
 
       </div>

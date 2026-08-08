@@ -6,7 +6,7 @@ export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -16,57 +16,98 @@ export default function Register() {
   ) => {
     e.preventDefault();
 
-    if (!name.trim()) {
+    // ==============================
+    // VALIDATION
+    // ==============================
+
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanName) {
       alert("Please enter your name");
       return;
     }
 
-    if (!email.trim()) {
+    if (cleanName.length < 2) {
+      alert("Name must contain at least 2 characters");
+      return;
+    }
+
+    if (!cleanEmail) {
       alert("Please enter your email");
       return;
     }
 
     if (password.length < 6) {
-      alert("Password must be at least 6 characters");
+      alert(
+        "Password must be at least 6 characters"
+      );
       return;
     }
 
     try {
       setLoading(true);
 
+      // ==============================
+      // REGISTER API
+      // ==============================
+
       const res = await api.post(
         "/api/auth/register",
         {
-          name: name.trim(),
-          email: email.trim(),
+          name: cleanName,
+          email: cleanEmail,
           password,
         }
       );
 
+      console.log(
+        "REGISTER RESPONSE:",
+        res.data
+      );
+
+      // ==============================
+      // CHECK RESPONSE
+      // ==============================
+
       if (!res.data?.success) {
         throw new Error(
           res.data?.message ||
-          "Registration failed"
+            "Registration failed"
         );
       }
 
+      // ==============================
+      // IMPORTANT
+      // ==============================
+      // Registration ke time token/user
+      // save nahi kar rahe.
+      //
+      // User ko normal Login page par
+      // bheja jayega.
+      // ==============================
+
       alert(
-        "Registration Successful 🎉 Please login."
+        "Registration Successful 🎉\n\nPlease login to continue."
       );
 
-      navigate("/login");
+      navigate("/login", {
+        replace: true,
+      });
 
     } catch (err: any) {
+
       console.error(
         "REGISTER ERROR:",
         err.response?.data || err
       );
 
-      alert(
+      const message =
         err.response?.data?.message ||
         err.message ||
-        "Registration Failed"
-      );
+        "Registration failed. Please try again.";
+
+      alert(`❌ ${message}`);
 
     } finally {
       setLoading(false);
@@ -78,12 +119,16 @@ export default function Register() {
 
       <div className="w-full max-w-md">
 
-        {/* Logo */}
+        {/* ==============================
+            LOGO
+        ============================== */}
 
         <div className="text-center text-white mb-8">
 
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-3xl shadow-2xl mb-5">
-            <span className="text-4xl">🎓</span>
+            <span className="text-4xl">
+              🎓
+            </span>
           </div>
 
           <h1 className="text-3xl md:text-4xl font-extrabold">
@@ -97,7 +142,9 @@ export default function Register() {
         </div>
 
 
-        {/* Register Card */}
+        {/* ==============================
+            REGISTER CARD
+        ============================== */}
 
         <div className="bg-white rounded-3xl shadow-2xl p-7 md:p-9">
 
@@ -114,12 +161,16 @@ export default function Register() {
           </div>
 
 
+          {/* ==============================
+              FORM
+          ============================== */}
+
           <form
             onSubmit={handleRegister}
             className="space-y-5"
           >
 
-            {/* Name */}
+            {/* NAME */}
 
             <div>
 
@@ -140,6 +191,7 @@ export default function Register() {
                   onChange={(e) =>
                     setName(e.target.value)
                   }
+                  autoComplete="name"
                   className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition"
                   required
                 />
@@ -149,7 +201,7 @@ export default function Register() {
             </div>
 
 
-            {/* Email */}
+            {/* EMAIL */}
 
             <div>
 
@@ -170,6 +222,7 @@ export default function Register() {
                   onChange={(e) =>
                     setEmail(e.target.value)
                   }
+                  autoComplete="email"
                   className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition"
                   required
                 />
@@ -179,7 +232,7 @@ export default function Register() {
             </div>
 
 
-            {/* Password */}
+            {/* PASSWORD */}
 
             <div>
 
@@ -194,15 +247,37 @@ export default function Register() {
                 </span>
 
                 <input
-                  type="password"
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
+                  }
                   placeholder="Create a password"
                   value={password}
                   onChange={(e) =>
                     setPassword(e.target.value)
                   }
-                  className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition"
+                  autoComplete="new-password"
+                  className="w-full pl-12 pr-14 py-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition"
                   required
                 />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword(!showPassword)
+                  }
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xl"
+                  aria-label={
+                    showPassword
+                      ? "Hide password"
+                      : "Show password"
+                  }
+                >
+                  {showPassword
+                    ? "🙈"
+                    : "👁️"}
+                </button>
 
               </div>
 
@@ -213,7 +288,7 @@ export default function Register() {
             </div>
 
 
-            {/* Register Button */}
+            {/* REGISTER BUTTON */}
 
             <button
               type="submit"
@@ -226,7 +301,7 @@ export default function Register() {
             >
 
               {loading
-                ? "Creating Account..."
+                ? "⏳ Creating Account..."
                 : "🚀 Create Account"}
 
             </button>
@@ -234,7 +309,9 @@ export default function Register() {
           </form>
 
 
-          {/* Login */}
+          {/* ==============================
+              LOGIN LINK
+          ============================== */}
 
           <div className="relative my-7">
 
@@ -250,6 +327,7 @@ export default function Register() {
 
           </div>
 
+
           <Link
             to="/login"
             className="block w-full text-center border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-bold py-3 rounded-xl transition"
@@ -260,8 +338,10 @@ export default function Register() {
         </div>
 
 
+        {/* FOOTER */}
+
         <p className="text-center text-blue-100 text-sm mt-6">
-          © Student Resources Hub
+          © {new Date().getFullYear()} Student Resources Hub
         </p>
 
       </div>

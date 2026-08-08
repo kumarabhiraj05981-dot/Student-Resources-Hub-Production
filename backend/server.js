@@ -27,49 +27,36 @@ connectDB();
 const allowedOrigins = [
   "http://localhost:5173",
 
-  // Vercel main domain
   "https://student-resources-hub-live-y438.vercel.app",
 
-  // Current Vercel deployment URL
   "https://student-resources-hub-live-y438-puhj1vkih-student-resource-hub1.vercel.app",
 ];
 
 
 app.use(
   cors({
-
     origin: function (origin, callback) {
 
-      // Allow requests without origin
-      // (Postman, server-to-server etc.)
+      // Allow Postman / server-to-server requests
       if (!origin) {
         return callback(null, true);
       }
 
-
-      // Exact allowed origins
+      // Allow exact origins
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-
-      // Allow Vercel preview/deployment URLs
-      if (
-        origin.endsWith(".vercel.app")
-      ) {
+      // Allow Vercel deployments
+      if (origin.endsWith(".vercel.app")) {
         return callback(null, true);
       }
 
-
-      console.log(
-        "CORS BLOCKED ORIGIN:",
-        origin
-      );
+      console.log("CORS BLOCKED ORIGIN:", origin);
 
       return callback(
         new Error("Not allowed by CORS")
       );
-
     },
 
     credentials: true,
@@ -87,7 +74,6 @@ app.use(
       "Content-Type",
       "Authorization",
     ],
-
   })
 );
 
@@ -126,7 +112,7 @@ app.use(
 
 
 // ======================================
-// UPLOADS
+// STATIC UPLOADS
 // ======================================
 
 app.use(
@@ -138,7 +124,7 @@ app.use(
 
 
 // ======================================
-// TEST ROUTE
+// HOME TEST
 // ======================================
 
 app.get("/", (req, res) => {
@@ -156,16 +142,33 @@ app.get("/", (req, res) => {
 
 app.get("/api/test", (req, res) => {
 
-  res.json({
-
+  res.status(200).json({
     success: true,
-
-    message:
-      "Student Resources Hub API is working",
-
+    message: "Student Resources Hub API is working",
   });
 
 });
+
+
+// ======================================
+// RESOURCE DELETE TEST
+// ======================================
+
+app.delete(
+  "/api/resources/test-delete",
+  (req, res) => {
+
+    console.log(
+      "DELETE TEST ROUTE HIT"
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "DELETE route is working",
+    });
+
+  }
+);
 
 
 // ======================================
@@ -174,11 +177,19 @@ app.get("/api/test", (req, res) => {
 
 app.use((req, res) => {
 
+  console.log(
+    "404 ROUTE NOT FOUND:",
+    req.method,
+    req.originalUrl
+  );
+
   res.status(404).json({
 
     success: false,
 
     message: "Route Not Found",
+
+    method: req.method,
 
     path: req.originalUrl,
 
@@ -191,27 +202,36 @@ app.use((req, res) => {
 // ERROR HANDLER
 // ======================================
 
-app.use((err, req, res, next) => {
+app.use(
+  (err, req, res, next) => {
 
-  console.error(
-    "SERVER ERROR:",
-    err
-  );
+    console.error(
+      "================================="
+    );
 
+    console.error(
+      "SERVER ERROR:",
+      err
+    );
 
-  res.status(
-    err.status || 500
-  ).json({
+    console.error(
+      "================================="
+    );
 
-    success: false,
+    res.status(
+      err.status || 500
+    ).json({
 
-    message:
-      err.message ||
-      "Internal Server Error",
+      success: false,
 
-  });
+      message:
+        err.message ||
+        "Internal Server Error",
 
-});
+    });
+
+  }
+);
 
 
 // ======================================
