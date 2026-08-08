@@ -275,7 +275,7 @@ export default function Admin() {
               )}
 
               <p className="text-xs text-gray-500 mt-2">
-                Maximum file size: 20MB. PDF only.
+                Maximum file size: 500MB. PDF only.
               </p>
             </div>
 
