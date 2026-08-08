@@ -9,6 +9,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const resourceRoutes = require("./routes/resourceRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 const app = express();
 
@@ -108,6 +109,16 @@ app.use(
 app.use(
   "/api/upload",
   uploadRoutes
+);
+
+
+// ======================================
+// AI QUESTION PAPER ROUTES
+// ======================================
+
+app.use(
+  "/api/ai",
+  aiRoutes
 );
 
 

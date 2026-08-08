@@ -8,6 +8,7 @@ import Ebooks from "./pages/Ebooks";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Admin from "./pages/Admin";
+import AIQuestionPaper from "./pages/AIQuestionPaper";
 
 function App() {
   return (
@@ -21,6 +22,12 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<Admin />} />
+
+        {/* AI Question Paper */}
+        <Route
+          path="/ai-question-paper"
+          element={<AIQuestionPaper />}
+        />
       </Routes>
     </BrowserRouter>
   );

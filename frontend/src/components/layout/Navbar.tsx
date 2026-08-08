@@ -140,6 +140,17 @@ export default function Navbar() {
               📖 E-books
             </Link>
 
+            {/* ==============================
+                AI QUESTION PAPER
+            ============================== */}
+
+            <Link
+              to="/ai-question-paper"
+              className="bg-white text-blue-600 px-4 py-2 rounded-lg font-bold hover:bg-blue-50 transition shadow"
+            >
+              🤖 AI Paper
+            </Link>
+
 
             {/* ==============================
                 ADMIN ONLY
@@ -266,6 +277,18 @@ export default function Navbar() {
                 className="px-4 py-3 rounded-lg hover:bg-blue-700 transition"
               >
                 📖 E-books
+              </Link>
+
+              {/* ==============================
+                  AI QUESTION PAPER MOBILE
+              ============================== */}
+
+              <Link
+                to="/ai-question-paper"
+                onClick={closeMenu}
+                className="px-4 py-3 rounded-lg bg-white text-blue-600 font-bold hover:bg-blue-50 transition"
+              >
+                🤖 AI Question Paper
               </Link>
 
 

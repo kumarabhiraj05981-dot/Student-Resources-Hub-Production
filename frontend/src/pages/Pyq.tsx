@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 
 interface Resource {
@@ -18,9 +18,17 @@ export default function PYQ() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    loadPYQ();
-  }, []);
+  // ==========================================
+  // FILTER STATES
+  // ==========================================
+
+  const [search, setSearch] = useState("");
+  const [semesterFilter, setSemesterFilter] = useState("All");
+  const [subjectFilter, setSubjectFilter] = useState("All");
+
+  // ==========================================
+  // LOAD PYQ
+  // ==========================================
 
   const loadPYQ = async () => {
     try {
@@ -45,10 +53,6 @@ export default function PYQ() {
         ? data.resources
         : [];
 
-      /*
-       * Extra safety:
-       * Sirf PYQ category ke resources show honge.
-       */
       const pyqResources = apiResources.filter(
         (resource: Resource) =>
           String(resource.category || "")
@@ -56,10 +60,7 @@ export default function PYQ() {
             .toLowerCase() === "pyq"
       );
 
-      console.log(
-        "PYQ RESOURCES:",
-        pyqResources
-      );
+      console.log("PYQ RESOURCES:", pyqResources);
 
       setResources(pyqResources);
 
@@ -81,6 +82,104 @@ export default function PYQ() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadPYQ();
+  }, []);
+
+  // ==========================================
+  // UNIQUE SEMESTERS
+  // ==========================================
+
+  const semesters = useMemo(() => {
+    const values = resources
+      .map((resource) => resource.semester?.trim())
+      .filter(Boolean);
+
+    return Array.from(new Set(values));
+  }, [resources]);
+
+  // ==========================================
+  // UNIQUE SUBJECTS
+  // ==========================================
+
+  const subjects = useMemo(() => {
+    const values = resources
+      .map((resource) => resource.subject?.trim())
+      .filter(Boolean);
+
+    return Array.from(new Set(values)).sort();
+  }, [resources]);
+
+  // ==========================================
+  // FILTER PYQs
+  // ==========================================
+
+  const filteredResources = useMemo(() => {
+    const searchText = search.trim().toLowerCase();
+
+    return resources.filter((resource) => {
+      const title =
+        resource.title?.toLowerCase() || "";
+
+      const description =
+        resource.description?.toLowerCase() || "";
+
+      const subject =
+        resource.subject?.toLowerCase() || "";
+
+      const semester =
+        resource.semester?.toLowerCase() || "";
+
+      const fileName =
+        resource.fileName?.toLowerCase() || "";
+
+      // SEARCH
+      const matchesSearch =
+        !searchText ||
+        title.includes(searchText) ||
+        description.includes(searchText) ||
+        subject.includes(searchText) ||
+        semester.includes(searchText) ||
+        fileName.includes(searchText);
+
+      // SEMESTER
+      const matchesSemester =
+        semesterFilter === "All" ||
+        resource.semester === semesterFilter;
+
+      // SUBJECT
+      const matchesSubject =
+        subjectFilter === "All" ||
+        resource.subject === subjectFilter;
+
+      return (
+        matchesSearch &&
+        matchesSemester &&
+        matchesSubject
+      );
+    });
+  }, [
+    resources,
+    search,
+    semesterFilter,
+    subjectFilter,
+  ]);
+
+  // ==========================================
+  // CLEAR FILTERS
+  // ==========================================
+
+  const clearFilters = () => {
+    setSearch("");
+    setSemesterFilter("All");
+    setSubjectFilter("All");
+  };
+
+  const filtersActive =
+    search.trim() !== "" ||
+    semesterFilter !== "All" ||
+    subjectFilter !== "All";
 
   // ==========================================
   // LOADING
@@ -119,9 +218,7 @@ export default function PYQ() {
 
       <div className="max-w-7xl mx-auto">
 
-        {/* ======================================
-            HEADER
-        ====================================== */}
+        {/* HEADER */}
 
         <div className="mb-8">
 
@@ -135,16 +232,15 @@ export default function PYQ() {
 
           {resources.length > 0 && (
             <p className="text-sm text-gray-500 mt-2">
-              📚 {resources.length} PYQ
+              📚 {filteredResources.length} of{" "}
+              {resources.length} PYQ
               {resources.length !== 1 ? "s" : ""} available
             </p>
           )}
 
         </div>
 
-        {/* ======================================
-            ERROR
-        ====================================== */}
+        {/* ERROR */}
 
         {error && (
           <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-xl mb-6">
@@ -164,10 +260,129 @@ export default function PYQ() {
         )}
 
         {/* ======================================
-            NO PYQ
+            SEARCH + FILTERS
         ====================================== */}
 
-        {!error && resources.length === 0 && (
+        {resources.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-lg p-5 mb-8">
+
+            <div className="grid md:grid-cols-3 gap-4">
+
+              {/* SEARCH */}
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  🔎 Search PYQs
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="Search title, subject..."
+                  value={search}
+                  onChange={(e) =>
+                    setSearch(e.target.value)
+                  }
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+
+              {/* SEMESTER */}
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  🎓 Semester
+                </label>
+
+                <select
+                  value={semesterFilter}
+                  onChange={(e) =>
+                    setSemesterFilter(e.target.value)
+                  }
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="All">
+                    All Semesters
+                  </option>
+
+                  {semesters.map((semester) => (
+                    <option
+                      key={semester}
+                      value={semester}
+                    >
+                      {semester}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* SUBJECT */}
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  📚 Subject
+                </label>
+
+                <select
+                  value={subjectFilter}
+                  onChange={(e) =>
+                    setSubjectFilter(e.target.value)
+                  }
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="All">
+                    All Subjects
+                  </option>
+
+                  {subjects.map((subject) => (
+                    <option
+                      key={subject}
+                      value={subject}
+                    >
+                      {subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+            </div>
+
+            {/* FILTER INFO */}
+
+            <div className="flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t">
+
+              <p className="text-gray-600">
+                Showing{" "}
+                <span className="font-bold text-orange-600">
+                  {filteredResources.length}
+                </span>{" "}
+                of{" "}
+                <span className="font-bold">
+                  {resources.length}
+                </span>{" "}
+                PYQs
+              </p>
+
+              {filtersActive && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-lg transition"
+                >
+                  ✖ Clear Filters
+                </button>
+              )}
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ======================================
+            NO PYQ AT ALL
+        ====================================== */}
+
+        {!error && resources.length === 0 ? (
+
           <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
 
             <div className="text-6xl mb-4">
@@ -184,16 +399,44 @@ export default function PYQ() {
             </p>
 
           </div>
-        )}
 
-        {/* ======================================
-            PYQ CARDS
-        ====================================== */}
+        ) : filteredResources.length === 0 ? (
 
-        {resources.length > 0 && (
+          /* NO SEARCH RESULT */
+
+          <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
+
+            <div className="text-6xl mb-4">
+              🔎
+            </div>
+
+            <p className="text-xl font-semibold text-gray-700">
+              No matching PYQs found.
+            </p>
+
+            <p className="text-gray-500 mt-2">
+              Try another search, semester or subject.
+            </p>
+
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="mt-5 bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-xl transition"
+            >
+              🔄 Show All PYQs
+            </button>
+
+          </div>
+
+        ) : (
+
+          /* ======================================
+             PYQ CARDS
+          ====================================== */
+
           <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            {resources.map((resource) => (
+            {filteredResources.map((resource) => (
 
               <div
                 key={resource._id}
@@ -277,8 +520,6 @@ export default function PYQ() {
 
                 <div className="flex gap-3 mt-6">
 
-                  {/* OPEN */}
-
                   <a
                     href={resource.fileUrl}
                     target="_blank"
@@ -287,8 +528,6 @@ export default function PYQ() {
                   >
                     👁️ Open
                   </a>
-
-                  {/* DOWNLOAD */}
 
                   <a
                     href={resource.fileUrl}
@@ -307,6 +546,7 @@ export default function PYQ() {
             ))}
 
           </div>
+
         )}
 
       </div>
