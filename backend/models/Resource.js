@@ -13,6 +13,24 @@ const resourceSchema = new mongoose.Schema(
       default: "",
     },
 
+    // ======================================
+    // BRANCH
+    // ======================================
+
+    branch: {
+      type: String,
+      enum: [
+        "Computer Science",
+        "Electrical",
+        "Mechanical",
+        "Civil & CTM",
+        "Electronics",
+        "Leather Technology",
+      ],
+      default: "Computer Science",
+      trim: true,
+    },
+
     semester: {
       type: String,
       required: true,
@@ -21,7 +39,13 @@ const resourceSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
-      enum: ["Notes", "PYQ", "Syllabus", "Ebooks", "Other"],
+      enum: [
+        "Notes",
+        "PYQ",
+        "Syllabus",
+        "Ebooks",
+        "Other",
+      ],
     },
 
     subject: {
@@ -54,4 +78,7 @@ const resourceSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Resource", resourceSchema);
+module.exports = mongoose.model(
+  "Resource",
+  resourceSchema
+);
