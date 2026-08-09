@@ -5,6 +5,7 @@ interface Resource {
   _id: string;
   title: string;
   description?: string;
+  branch?: string;
   category: string;
   semester: string;
   subject?: string;
@@ -20,6 +21,10 @@ export default function Admin() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+
+  // BRANCH
+  const [branch, setBranch] = useState("Computer Science");
+
   const [semester, setSemester] = useState("");
   const [category, setCategory] = useState("Notes");
   const [subject, setSubject] = useState("");
@@ -36,6 +41,7 @@ export default function Admin() {
 
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
+  const [filterBranch, setFilterBranch] = useState("All");
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -127,7 +133,9 @@ export default function Admin() {
     // SIZE CHECK
     if (selectedFile.size > MAX_FILE_SIZE) {
       alert(
-        `❌ File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`
+        `❌ File size must be less than ${
+          MAX_FILE_SIZE / 1024 / 1024
+        }MB`
       );
 
       e.target.value = "";
@@ -151,6 +159,12 @@ export default function Admin() {
     // TITLE
     if (!title.trim()) {
       alert("Please enter resource title");
+      return;
+    }
+
+    // BRANCH
+    if (!branch) {
+      alert("Please select branch");
       return;
     }
 
@@ -184,7 +198,9 @@ export default function Admin() {
     // SIZE CHECK
     if (file.size > MAX_FILE_SIZE) {
       alert(
-        `File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`
+        `File size must be less than ${
+          MAX_FILE_SIZE / 1024 / 1024
+        }MB`
       );
       return;
     }
@@ -215,6 +231,13 @@ export default function Admin() {
         description.trim()
       );
 
+      // IMPORTANT
+      // BRANCH IS SENT TO BACKEND
+      formData.append(
+        "branch",
+        branch
+      );
+
       formData.append(
         "semester",
         semester
@@ -238,6 +261,7 @@ export default function Admin() {
       console.log("UPLOADING:", {
         title,
         description,
+        branch,
         semester,
         category,
         subject,
@@ -260,7 +284,7 @@ export default function Admin() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          // 500MB upload support
+
           maxContentLength:
             500 * 1024 * 1024,
 
@@ -282,7 +306,7 @@ export default function Admin() {
       }
 
       alert(
-        "✅ Resource uploaded successfully!"
+        `✅ Resource uploaded successfully!\n\nBranch: ${branch}`
       );
 
       // ======================================
@@ -291,6 +315,10 @@ export default function Admin() {
 
       setTitle("");
       setDescription("");
+
+      // Default branch back to CSE
+      setBranch("Computer Science");
+
       setSemester("");
       setCategory("Notes");
       setSubject("");
@@ -424,6 +452,9 @@ export default function Admin() {
           .includes(searchText) ||
         resource.description
           ?.toLowerCase()
+          .includes(searchText) ||
+        resource.branch
+          ?.toLowerCase()
           .includes(searchText);
 
       const matchesCategory =
@@ -432,9 +463,14 @@ export default function Admin() {
           ?.toLowerCase() ===
           filterCategory.toLowerCase();
 
+      const matchesBranch =
+        filterBranch === "All" ||
+        resource.branch === filterBranch;
+
       return (
         matchesSearch &&
-        matchesCategory
+        matchesCategory &&
+        matchesBranch
       );
     });
 
@@ -463,6 +499,37 @@ export default function Admin() {
   };
 
   // ==========================================
+  // GET BRANCH ICON
+  // ==========================================
+
+  const getBranchIcon = (
+    branchName?: string
+  ) => {
+    switch (branchName) {
+      case "Computer Science":
+        return "💻";
+
+      case "Electrical":
+        return "⚡";
+
+      case "Mechanical":
+        return "🔧";
+
+      case "Civil & CTM":
+        return "🏗️";
+
+      case "Electronics":
+        return "📡";
+
+      case "Leather Technology":
+        return "👞";
+
+      default:
+        return "🎓";
+    }
+  };
+
+  // ==========================================
   // PAGE
   // ==========================================
 
@@ -483,7 +550,7 @@ export default function Admin() {
 
           <p className="text-gray-600 mb-8">
             Upload Notes, PYQs, Syllabus and
-            E-books.
+            E-books branch-wise.
           </p>
 
           <form
@@ -510,6 +577,53 @@ export default function Admin() {
               />
             </div>
 
+
+            {/* ==================================
+                BRANCH
+            ================================== */}
+
+            <div>
+              <label className="block font-semibold mb-2">
+                🎓 Branch
+              </label>
+
+              <select
+                value={branch}
+                onChange={(e) =>
+                  setBranch(e.target.value)
+                }
+                className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+
+                <option value="Computer Science">
+                  💻 Computer Science
+                </option>
+
+                <option value="Electrical">
+                  ⚡ Electrical
+                </option>
+
+                <option value="Mechanical">
+                  🔧 Mechanical
+                </option>
+
+                <option value="Civil & CTM">
+                  🏗️ Civil & CTM
+                </option>
+
+                <option value="Electronics">
+                  📡 Electronics
+                </option>
+
+                <option value="Leather Technology">
+                  👞 Leather Technology
+                </option>
+
+              </select>
+            </div>
+
+
             {/* DESCRIPTION */}
 
             <div>
@@ -528,6 +642,7 @@ export default function Admin() {
               />
             </div>
 
+
             {/* SEMESTER */}
 
             <div>
@@ -543,6 +658,7 @@ export default function Admin() {
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
+
                 <option value="">
                   Select Semester
                 </option>
@@ -570,8 +686,10 @@ export default function Admin() {
                 <option value="6th Semester">
                   6th Semester
                 </option>
+
               </select>
             </div>
+
 
             {/* SUBJECT */}
 
@@ -591,6 +709,7 @@ export default function Admin() {
               />
             </div>
 
+
             {/* CATEGORY */}
 
             <div>
@@ -606,6 +725,7 @@ export default function Admin() {
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
+
                 <option value="Notes">
                   Notes
                 </option>
@@ -625,8 +745,10 @@ export default function Admin() {
                 <option value="Other">
                   Other
                 </option>
+
               </select>
             </div>
+
 
             {/* FILE */}
 
@@ -652,7 +774,8 @@ export default function Admin() {
                   </p>
 
                   <p className="text-sm text-gray-600 mt-1">
-                    📦 Size: {formatFileSize(file.size)}
+                    📦 Size:{" "}
+                    {formatFileSize(file.size)}
                   </p>
 
                 </div>
@@ -665,6 +788,7 @@ export default function Admin() {
               </p>
 
             </div>
+
 
             {/* UPLOAD BUTTON */}
 
@@ -744,17 +868,22 @@ export default function Admin() {
               SEARCH + FILTER
           ====================================== */}
 
-          <div className="grid md:grid-cols-2 gap-4 mb-8">
+          <div className="grid md:grid-cols-3 gap-4 mb-8">
+
+            {/* SEARCH */}
 
             <input
               type="text"
-              placeholder="🔎 Search title, subject..."
+              placeholder="🔎 Search title, subject, branch..."
               value={search}
               onChange={(e) =>
                 setSearch(e.target.value)
               }
               className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
             />
+
+
+            {/* CATEGORY FILTER */}
 
             <select
               value={filterCategory}
@@ -786,6 +915,47 @@ export default function Admin() {
 
               <option value="Other">
                 Other
+              </option>
+
+            </select>
+
+
+            {/* BRANCH FILTER */}
+
+            <select
+              value={filterBranch}
+              onChange={(e) =>
+                setFilterBranch(e.target.value)
+              }
+              className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+            >
+
+              <option value="All">
+                All Branches
+              </option>
+
+              <option value="Computer Science">
+                💻 Computer Science
+              </option>
+
+              <option value="Electrical">
+                ⚡ Electrical
+              </option>
+
+              <option value="Mechanical">
+                🔧 Mechanical
+              </option>
+
+              <option value="Civil & CTM">
+                🏗️ Civil & CTM
+              </option>
+
+              <option value="Electronics">
+                📡 Electronics
+              </option>
+
+              <option value="Leather Technology">
+                👞 Leather Technology
               </option>
 
             </select>
@@ -839,67 +1009,87 @@ export default function Admin() {
 
                   <div
                     key={resource._id}
-                    className="border border-gray-200 rounded-xl p-5 hover:shadow-lg transition"
+                    className="border border-gray-200 rounded-xl p-5 hover:shadow-lg transition bg-white"
                   >
 
-                    {/* TITLE */}
+                    {/* RESOURCE ICON */}
 
-                    <div className="flex justify-between items-start gap-3">
+                    <div className="flex items-start justify-between gap-3">
 
-                      <h3 className="text-lg font-bold text-gray-800 break-words">
-                        {resource.title}
-                      </h3>
+                      <div className="text-4xl">
+                        📄
+                      </div>
 
-                      <span className="shrink-0 bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold">
+                      <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
                         {resource.category}
                       </span>
 
                     </div>
 
 
-                    {/* SEMESTER */}
+                    {/* TITLE */}
 
-                    {resource.semester && (
-                      <p className="mt-3 text-sm text-blue-600 font-semibold">
-                        🎓 {resource.semester}
-                      </p>
-                    )}
+                    <h3 className="text-lg font-bold text-gray-800 mt-4 break-words">
+                      {resource.title}
+                    </h3>
 
 
-                    {/* SUBJECT */}
+                    {/* BRANCH */}
 
-                    {resource.subject && (
-                      <p className="mt-2 text-sm text-gray-600">
-                        📚 {resource.subject}
-                      </p>
-                    )}
+                    <div className="mt-3">
+
+                      <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold">
+                        {getBranchIcon(resource.branch)}
+                        {resource.branch || "Computer Science"}
+                      </span>
+
+                    </div>
 
 
                     {/* DESCRIPTION */}
 
                     {resource.description && (
-                      <p className="mt-3 text-sm text-gray-500 line-clamp-3">
+                      <p className="text-sm text-gray-600 mt-3 line-clamp-3">
                         {resource.description}
                       </p>
                     )}
 
 
-                    {/* FILE */}
+                    {/* DETAILS */}
 
-                    {resource.fileName && (
-                      <p
-                        className="mt-3 text-sm text-gray-500 truncate"
-                        title={resource.fileName}
-                      >
-                        📄 {resource.fileName}
+                    <div className="mt-4 space-y-2 text-sm">
+
+                      <p className="text-gray-600">
+                        🎓{" "}
+                        <strong>
+                          Semester:
+                        </strong>{" "}
+                        {resource.semester}
                       </p>
-                    )}
+
+                      <p className="text-gray-600">
+                        📚{" "}
+                        <strong>
+                          Subject:
+                        </strong>{" "}
+                        {resource.subject ||
+                          "N/A"}
+                      </p>
+
+                      {resource.fileName && (
+                        <p className="text-gray-500 break-all">
+                          📎{" "}
+                          {resource.fileName}
+                        </p>
+                      )}
+
+                    </div>
 
 
                     {/* DATE */}
 
                     {resource.createdAt && (
-                      <p className="mt-2 text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 mt-4">
                         Uploaded:{" "}
                         {new Date(
                           resource.createdAt
@@ -908,23 +1098,18 @@ export default function Admin() {
                     )}
 
 
-                    {/* ACTION BUTTONS */}
+                    {/* ACTIONS */}
 
                     <div className="flex gap-3 mt-5">
-
-                      {/* VIEW PDF */}
 
                       <a
                         href={resource.fileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition"
+                        className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition"
                       >
-                        📄 View PDF
+                        👁️ Open PDF
                       </a>
-
-
-                      {/* DELETE */}
 
                       <button
                         type="button"
@@ -937,11 +1122,16 @@ export default function Admin() {
                           deletingId ===
                           resource._id
                         }
-                        className="bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white font-semibold px-4 py-2.5 rounded-lg transition"
+                        className={`px-4 py-2 rounded-lg text-white font-semibold transition ${
+                          deletingId ===
+                          resource._id
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-red-500 hover:bg-red-600"
+                        }`}
                       >
                         {deletingId ===
                         resource._id
-                          ? "⏳"
+                          ? "..."
                           : "🗑️"}
                       </button>
 
