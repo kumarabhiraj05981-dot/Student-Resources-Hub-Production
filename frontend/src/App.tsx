@@ -50,6 +50,12 @@ function App() {
           element={<BranchResources />}
         />
 
+        {/* INDIVIDUAL BRANCH */}
+        <Route
+          path="/branch/:branchId"
+          element={<BranchResources />}
+        />
+
         {/* AUTH */}
         <Route
           path="/login"
@@ -70,9 +76,7 @@ function App() {
         {/* AI QUESTION PAPER */}
         <Route
           path="/ai-question-paper"
-          element={
-            <AIQuestionPaper />
-          }
+          element={<AIQuestionPaper />}
         />
 
       </Routes>
