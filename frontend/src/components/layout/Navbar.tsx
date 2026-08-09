@@ -8,6 +8,39 @@ interface User {
   role?: string;
 }
 
+const branches = [
+  {
+    id: "cse",
+    name: "Computer Science Engineering",
+    shortName: "CSE",
+    icon: "💻",
+  },
+  {
+    id: "electrical",
+    name: "Electrical Engineering",
+    shortName: "Electrical",
+    icon: "⚡",
+  },
+  {
+    id: "mechanical",
+    name: "Mechanical Engineering",
+    shortName: "Mechanical",
+    icon: "🔧",
+  },
+  {
+    id: "civil-ctm",
+    name: "Civil Engineering / CTM",
+    shortName: "Civil / CTM",
+    icon: "🏗️",
+  },
+  {
+    id: "leather",
+    name: "Leather Technology",
+    shortName: "Leather",
+    icon: "👞",
+  },
+];
+
 export default function Navbar() {
   const navigate = useNavigate();
 
@@ -18,6 +51,8 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
 
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const [branchOpen, setBranchOpen] = useState(false);
 
   // ======================================
   // LOAD LOGIN USER
@@ -61,6 +96,7 @@ export default function Navbar() {
     setToken(null);
     setUser(null);
     setMenuOpen(false);
+    setBranchOpen(false);
 
     navigate("/login");
   };
@@ -71,6 +107,18 @@ export default function Navbar() {
 
   const closeMenu = () => {
     setMenuOpen(false);
+    setBranchOpen(false);
+  };
+
+  // ======================================
+  // OPEN BRANCH
+  // ======================================
+
+  const openBranch = (branchId: string) => {
+    setBranchOpen(false);
+    setMenuOpen(false);
+
+    navigate(`/branch/${branchId}`);
   };
 
   return (
@@ -112,6 +160,88 @@ export default function Navbar() {
               🏠 Home
             </Link>
 
+
+            {/* ==============================
+                BRANCH DROPDOWN
+            ============================== */}
+
+            <div className="relative">
+
+              <button
+                type="button"
+                onClick={() => setBranchOpen(!branchOpen)}
+                className="hover:text-blue-200 transition font-medium flex items-center gap-1"
+              >
+                🎓 Branch
+                <span
+                  className={`transition-transform duration-200 ${
+                    branchOpen ? "rotate-180" : ""
+                  }`}
+                >
+                  ▼
+                </span>
+              </button>
+
+
+              {branchOpen && (
+
+                <div className="absolute top-full left-0 mt-3 w-72 bg-white text-gray-800 rounded-xl shadow-2xl overflow-hidden border border-blue-100">
+
+                  <div className="px-4 py-3 bg-blue-50 border-b">
+                    <p className="font-bold text-blue-700">
+                      🎓 Select Your Branch
+                    </p>
+
+                    <p className="text-xs text-gray-500 mt-1">
+                      Choose your engineering branch
+                    </p>
+                  </div>
+
+
+                  <div className="py-2">
+
+                    {branches.map((branch) => (
+
+                      <button
+                        key={branch.id}
+                        type="button"
+                        onClick={() => openBranch(branch.id)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-blue-50 transition"
+                      >
+
+                        <span className="text-2xl">
+                          {branch.icon}
+                        </span>
+
+                        <span className="flex-1">
+
+                          <span className="block font-bold text-gray-800">
+                            {branch.shortName}
+                          </span>
+
+                          <span className="block text-xs text-gray-500">
+                            {branch.name}
+                          </span>
+
+                        </span>
+
+                        <span className="text-blue-500">
+                          →
+                        </span>
+
+                      </button>
+
+                    ))}
+
+                  </div>
+
+                </div>
+
+              )}
+
+            </div>
+
+
             <Link
               to="/notes"
               className="hover:text-blue-200 transition font-medium"
@@ -139,6 +269,7 @@ export default function Navbar() {
             >
               📖 E-books
             </Link>
+
 
             {/* ==============================
                 AI QUESTION PAPER
@@ -171,6 +302,7 @@ export default function Navbar() {
             ============================== */}
 
             {!token ? (
+
               <div className="flex items-center gap-3">
 
                 <Link
@@ -188,11 +320,10 @@ export default function Navbar() {
                 </Link>
 
               </div>
+
             ) : (
 
               <div className="flex items-center gap-3">
-
-                {/* USER NAME */}
 
                 {user?.name && (
                   <span className="text-sm font-semibold">
@@ -247,6 +378,78 @@ export default function Navbar() {
                 🏠 Home
               </Link>
 
+
+              {/* ==============================
+                  MOBILE BRANCH
+              ============================== */}
+
+              <div>
+
+                <button
+                  type="button"
+                  onClick={() => setBranchOpen(!branchOpen)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-blue-700 transition font-medium"
+                >
+
+                  <span>
+                    🎓 Branch
+                  </span>
+
+                  <span
+                    className={`transition-transform duration-200 ${
+                      branchOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    ▼
+                  </span>
+
+                </button>
+
+
+                {branchOpen && (
+
+                  <div className="mt-2 ml-2 bg-blue-700 rounded-xl overflow-hidden">
+
+                    {branches.map((branch) => (
+
+                      <button
+                        key={branch.id}
+                        type="button"
+                        onClick={() => openBranch(branch.id)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-blue-800 transition"
+                      >
+
+                        <span className="text-2xl">
+                          {branch.icon}
+                        </span>
+
+                        <span className="flex-1">
+
+                          <span className="block font-bold">
+                            {branch.shortName}
+                          </span>
+
+                          <span className="block text-xs text-blue-200">
+                            {branch.name}
+                          </span>
+
+                        </span>
+
+                        <span>
+                          →
+                        </span>
+
+                      </button>
+
+                    ))}
+
+                  </div>
+
+                )}
+
+              </div>
+
+
               <Link
                 to="/notes"
                 onClick={closeMenu}
@@ -278,6 +481,7 @@ export default function Navbar() {
               >
                 📖 E-books
               </Link>
+
 
               {/* ==============================
                   AI QUESTION PAPER MOBILE
@@ -314,6 +518,7 @@ export default function Navbar() {
               {!token ? (
 
                 <>
+
                   <Link
                     to="/login"
                     onClick={closeMenu}
@@ -329,6 +534,7 @@ export default function Navbar() {
                   >
                     📝 Register
                   </Link>
+
                 </>
 
               ) : (
