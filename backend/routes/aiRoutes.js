@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const OpenAI = require("openai");
+const { GoogleGenAI, Type } = require("@google/genai");
 
 const AIPaper = require("../models/AIPaper");
 
@@ -10,12 +10,336 @@ const {
 } = require("../middleware/authMiddleware");
 
 // ======================================
-// OPENAI CONFIG
+// GEMINI CONFIG
 // ======================================
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
 });
+
+const GEMINI_MODEL =
+  process.env.GEMINI_MODEL || "gemini-3.6-flash";
+
+// ======================================
+// HELPER FUNCTIONS
+// ======================================
+
+function normalizeQuestionType(type) {
+  const value = String(type || "")
+    .trim()
+    .toLowerCase();
+
+  if (
+    value === "mcq" ||
+    value === "multiple choice" ||
+    value === "multiple-choice"
+  ) {
+    return "MCQ";
+  }
+
+  if (
+    value === "short answer" ||
+    value === "short-answer" ||
+    value === "short"
+  ) {
+    return "Short Answer";
+  }
+
+  if (
+    value === "long answer" ||
+    value === "long-answer" ||
+    value === "long"
+  ) {
+    return "Long Answer";
+  }
+
+  return type
+    ? String(type).trim()
+    : "MCQ";
+}
+
+
+function normalizeRequestedType(type) {
+  const value = String(type || "")
+    .trim()
+    .toLowerCase();
+
+  if (
+    value === "mcq" ||
+    value === "multiple choice" ||
+    value === "multiple-choice"
+  ) {
+    return "MCQ";
+  }
+
+  if (
+    value === "short answer" ||
+    value === "short-answer" ||
+    value === "short"
+  ) {
+    return "Short Answer";
+  }
+
+  if (
+    value === "long answer" ||
+    value === "long-answer" ||
+    value === "long"
+  ) {
+    return "Long Answer";
+  }
+
+  if (value === "mixed") {
+    return "Mixed";
+  }
+
+  return "Mixed";
+}
+
+
+function isEmpty(value) {
+  return (
+    value === undefined ||
+    value === null ||
+    String(value).trim() === ""
+  );
+}
+
+
+function normalizeText(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+
+// ======================================
+// VALIDATE + CLEAN AI QUESTIONS
+// ======================================
+
+function validateAndCleanQuestions(
+  questions,
+  settings
+) {
+  if (!Array.isArray(questions)) {
+    throw new Error(
+      "Gemini did not return a valid questions array"
+    );
+  }
+
+  if (
+    questions.length !==
+    settings.questionCount
+  ) {
+    throw new Error(
+      `Gemini generated ${questions.length} questions instead of ${settings.questionCount}. Please try again.`
+    );
+  }
+
+  const seenQuestions = new Set();
+
+  const cleanedQuestions = [];
+
+  for (
+    let index = 0;
+    index < questions.length;
+    index++
+  ) {
+    const item = questions[index];
+
+    const questionText = String(
+      item?.question || ""
+    ).trim();
+
+    if (!questionText) {
+      throw new Error(
+        `Question ${index + 1} has no question text`
+      );
+    }
+
+    // ======================================
+    // DUPLICATE QUESTION CHECK
+    // ======================================
+
+    const normalizedQuestion =
+      normalizeText(questionText);
+
+    if (
+      seenQuestions.has(
+        normalizedQuestion
+      )
+    ) {
+      throw new Error(
+        `Duplicate question detected at question ${index + 1}. Please generate again.`
+      );
+    }
+
+    seenQuestions.add(
+      normalizedQuestion
+    );
+
+    // ======================================
+    // QUESTION TYPE
+    // ======================================
+
+    const type =
+      normalizeQuestionType(
+        item?.type
+      );
+
+    // ======================================
+    // OPTIONS
+    // ======================================
+
+    let options = [];
+
+    if (Array.isArray(item?.options)) {
+      options = item.options
+        .map((option) =>
+          String(option || "").trim()
+        )
+        .filter(Boolean);
+    }
+
+    // ======================================
+    // ANSWER
+    // ======================================
+
+    const answer =
+      typeof item?.answer === "string"
+        ? item.answer.trim()
+        : String(item?.answer || "").trim();
+
+    // ======================================
+    // ANSWER REQUIRED
+    // ======================================
+
+    if (isEmpty(answer)) {
+      throw new Error(
+        `Question ${index + 1} does not have a valid answer`
+      );
+    }
+
+    // ======================================
+    // MCQ VALIDATION
+    // ======================================
+
+    if (type === "MCQ") {
+      if (options.length !== 4) {
+        throw new Error(
+          `MCQ question ${index + 1} must have exactly 4 options`
+        );
+      }
+
+      // Check duplicate options
+      const normalizedOptions =
+        options.map((option) =>
+          normalizeText(option)
+        );
+
+      const uniqueOptions =
+        new Set(normalizedOptions);
+
+      if (
+        uniqueOptions.size !== 4
+      ) {
+        throw new Error(
+          `MCQ question ${index + 1} contains duplicate options`
+        );
+      }
+
+      // Answer must exactly match one option
+      const answerExists =
+        options.some(
+          (option) =>
+            option.trim() ===
+            answer.trim()
+        );
+
+      if (!answerExists) {
+        throw new Error(
+          `MCQ question ${index + 1} answer does not match any option`
+        );
+      }
+    } else {
+      // Non-MCQ questions should not need options
+      options = [];
+    }
+
+    // ======================================
+    // REQUESTED TYPE VALIDATION
+    // ======================================
+
+    if (
+      settings.questionType === "MCQ" &&
+      type !== "MCQ"
+    ) {
+      throw new Error(
+        `Question ${index + 1} is not an MCQ as requested`
+      );
+    }
+
+    if (
+      settings.questionType ===
+        "Short Answer" &&
+      type !== "Short Answer"
+    ) {
+      throw new Error(
+        `Question ${index + 1} is not a Short Answer question as requested`
+      );
+    }
+
+    if (
+      settings.questionType ===
+        "Long Answer" &&
+      type !== "Long Answer"
+    ) {
+      throw new Error(
+        `Question ${index + 1} is not a Long Answer question as requested`
+      );
+    }
+
+    // ======================================
+    // FINAL QUESTION
+    // ======================================
+
+    cleanedQuestions.push({
+      number: index + 1,
+
+      type,
+
+      question: questionText,
+
+      options,
+
+      answer,
+    });
+  }
+
+  // ======================================
+  // MIXED TYPE VALIDATION
+  // ======================================
+
+  if (
+    settings.questionType === "Mixed" &&
+    settings.questionCount >= 3
+  ) {
+    const types = new Set(
+      cleanedQuestions.map(
+        (question) => question.type
+      )
+    );
+
+    if (types.size < 2) {
+      throw new Error(
+        "Mixed mode must contain different question types"
+      );
+    }
+  }
+
+  return cleanedQuestions;
+}
+
 
 // ======================================
 // GENERATE + SAVE AI QUESTION PAPER
@@ -38,28 +362,50 @@ router.post(
       // VALIDATION
       // ======================================
 
-      if (!subject) {
+      if (
+        !subject ||
+        String(subject).trim() === ""
+      ) {
         return res.status(400).json({
           success: false,
           message: "Subject is required",
         });
       }
 
-      if (!process.env.OPENAI_API_KEY) {
-        console.error("OPENAI_API_KEY is missing");
+      if (!process.env.GEMINI_API_KEY) {
+        console.error(
+          "GEMINI_API_KEY is missing"
+        );
 
         return res.status(500).json({
           success: false,
-          message: "OpenAI API key is not configured on server",
+          message:
+            "Gemini API key is not configured on server",
         });
       }
 
       const settings = {
-        subject,
-        unit: unit || "Full Syllabus",
-        difficulty: difficulty || "Medium",
-        questionCount: Number(questionCount) || 20,
-        questionType: questionType || "Mixed",
+        subject: String(subject).trim(),
+
+        unit:
+          unit &&
+          String(unit).trim()
+            ? String(unit).trim()
+            : "Full Syllabus",
+
+        difficulty:
+          difficulty &&
+          String(difficulty).trim()
+            ? String(difficulty).trim()
+            : "Medium",
+
+        questionCount:
+          Number(questionCount) || 20,
+
+        questionType:
+          normalizeRequestedType(
+            questionType
+          ),
       };
 
       // ======================================
@@ -67,24 +413,41 @@ router.post(
       // ======================================
 
       if (
+        !Number.isInteger(
+          settings.questionCount
+        ) ||
         settings.questionCount < 1 ||
         settings.questionCount > 50
       ) {
         return res.status(400).json({
           success: false,
           message:
-            "Question count must be between 1 and 50",
+            "Question count must be a whole number between 1 and 50",
         });
       }
 
-      console.log("=================================");
-      console.log("OPENAI PAPER REQUEST");
+      console.log(
+        "================================="
+      );
+
+      console.log(
+        "GEMINI PAPER REQUEST"
+      );
+
       console.log({
         userId: req.user._id,
         userName: req.user.name,
         ...settings,
       });
-      console.log("=================================");
+
+      console.log(
+        "Model:",
+        GEMINI_MODEL
+      );
+
+      console.log(
+        "================================="
+      );
 
       // ======================================
       // AI PROMPT
@@ -93,7 +456,7 @@ router.post(
       const prompt = `
 You are an expert educational question-paper generator.
 
-Create a practice question paper.
+Create a high-quality practice question paper.
 
 Subject: ${settings.subject}
 Unit: ${settings.unit}
@@ -103,26 +466,51 @@ Question Type: ${settings.questionType}
 
 IMPORTANT RULES:
 
-1. Generate exactly ${settings.questionCount} questions.
-2. Do not repeat questions.
-3. Every question MUST have an answer.
-4. Never leave the answer property empty.
-5. Never omit the answer property.
-6. For MCQ questions provide exactly 4 options.
-7. For MCQ questions, the answer MUST exactly match one of the four option texts.
-8. For Short Answer questions provide a concise correct answer.
-9. For Long Answer questions provide a useful model answer.
-10. Mixed means use different question types.
-11. Every question in Mixed mode MUST have an answer.
-12. Keep questions relevant to the selected subject.
-13. Keep questions relevant to the selected unit.
-14. Keep the difficulty at the requested level.
-15. Keep the language clear and student-friendly.
-16. Return ONLY valid JSON.
-17. Do not use Markdown.
-18. Do not add explanations outside JSON.
+1. Generate EXACTLY ${settings.questionCount} questions.
+2. Every question must be unique.
+3. Do not repeat or rephrase the same question.
+4. Every question MUST have a real, correct answer.
+5. Never leave the answer empty.
+6. Never use placeholders such as "Answer not provided".
+7. Never use "N/A" as an answer.
+8. Keep every question relevant to the subject.
+9. Keep every question relevant to the selected unit.
+10. Keep the requested difficulty level.
+11. Use clear, student-friendly language.
+12. Return ONLY valid JSON.
+13. Do not return Markdown.
+14. Do not return explanations outside JSON.
 
-Return exactly this structure:
+QUESTION TYPE RULES:
+
+If Question Type is MCQ:
+- Every question must have type "MCQ".
+- Every MCQ must have exactly 4 options.
+- All 4 options must be different.
+- The answer must EXACTLY match one of the option texts.
+- Do not use A, B, C or D alone as the answer.
+- Put the complete correct option text in answer.
+
+If Question Type is Short Answer:
+- Every question must have type "Short Answer".
+- Do not provide options.
+- options must be an empty array.
+- Give a concise but correct answer.
+
+If Question Type is Long Answer:
+- Every question must have type "Long Answer".
+- Do not provide options.
+- options must be an empty array.
+- Give a useful model answer suitable for a student examination.
+
+If Question Type is Mixed:
+- Use a mixture of MCQ, Short Answer and Long Answer.
+- For ${settings.questionCount} or more questions, use at least two different question types.
+- MCQ questions must follow all MCQ rules.
+- Short Answer questions must have concise answers.
+- Long Answer questions must have useful model answers.
+
+Return exactly this JSON structure:
 
 {
   "title": "AI Generated Question Paper",
@@ -145,62 +533,163 @@ Return exactly this structure:
   ]
 }
 
-VERY IMPORTANT:
+For a Short Answer question:
+
+{
+  "number": 2,
+  "type": "Short Answer",
+  "question": "Question text",
+  "options": [],
+  "answer": "Correct concise answer"
+}
+
+For a Long Answer question:
+
+{
+  "number": 3,
+  "type": "Long Answer",
+  "question": "Question text",
+  "options": [],
+  "answer": "Detailed model answer"
+}
 
 The answer property is REQUIRED for EVERY question.
-
-Never omit it.
-Never return an empty answer.
+The question property is REQUIRED for EVERY question.
+The type property is REQUIRED for EVERY question.
+The options property must be [] for non-MCQ questions.
 `;
 
+
       // ======================================
-      // CALL OPENAI
+      // GEMINI STRUCTURED OUTPUT SCHEMA
       // ======================================
 
-      const completion =
-        await openai.chat.completions.create({
-          model: "gpt-4o-mini",
+      const questionSchema = {
+        type: Type.OBJECT,
 
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are an expert educational question-paper generator. Return only valid JSON.",
+        properties: {
+          number: {
+            type: Type.INTEGER,
+          },
+
+          type: {
+            type: Type.STRING,
+          },
+
+          question: {
+            type: Type.STRING,
+          },
+
+          options: {
+            type: Type.ARRAY,
+
+            items: {
+              type: Type.STRING,
             },
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
+          },
 
-          temperature: 0.2,
+          answer: {
+            type: Type.STRING,
+          },
+        },
 
-          response_format: {
-            type: "json_object",
+        required: [
+          "number",
+          "type",
+          "question",
+          "answer",
+        ],
+      };
+
+
+      const paperSchema = {
+        type: Type.OBJECT,
+
+        properties: {
+          title: {
+            type: Type.STRING,
+          },
+
+          subject: {
+            type: Type.STRING,
+          },
+
+          unit: {
+            type: Type.STRING,
+          },
+
+          difficulty: {
+            type: Type.STRING,
+          },
+
+          questions: {
+            type: Type.ARRAY,
+
+            items: questionSchema,
+          },
+        },
+
+        required: [
+          "title",
+          "subject",
+          "unit",
+          "difficulty",
+          "questions",
+        ],
+      };
+
+
+      // ======================================
+      // CALL GEMINI
+      // ======================================
+
+      console.log(
+        "Sending request to Gemini..."
+      );
+
+      const response =
+        await ai.models.generateContent({
+          model: GEMINI_MODEL,
+
+          contents: prompt,
+
+          config: {
+            responseMimeType:
+              "application/json",
+
+            responseSchema:
+              paperSchema,
+
+            systemInstruction:
+              "You are an expert educational question-paper generator. Always return valid structured JSON and provide a real answer for every question.",
           },
         });
 
+
       // ======================================
-      // READ OPENAI RESPONSE
+      // READ GEMINI RESPONSE
       // ======================================
 
       const aiText =
-        completion.choices?.[0]?.message?.content;
+        response?.text;
 
       if (!aiText) {
         console.error(
-          "OPENAI EMPTY RESPONSE:",
-          completion
+          "GEMINI EMPTY RESPONSE:",
+          response
         );
 
-        return res.status(500).json({
+        return res.status(502).json({
           success: false,
           message:
-            "OpenAI returned an empty response",
+            "Gemini returned an empty response. Please try again.",
         });
       }
 
-      console.log("OPENAI RESPONSE RECEIVED");
+      console.log(
+        "GEMINI RESPONSE RECEIVED"
+      );
+
 
       // ======================================
       // PARSE JSON
@@ -212,114 +701,68 @@ Never return an empty answer.
         paper = JSON.parse(aiText);
       } catch (error) {
         console.error(
-          "OPENAI JSON PARSE ERROR:",
+          "GEMINI JSON PARSE ERROR:",
           error
         );
 
         console.error(
-          "OPENAI RESPONSE:",
+          "GEMINI RESPONSE:",
           aiText
         );
 
-        return res.status(500).json({
+        return res.status(502).json({
           success: false,
           message:
-            "OpenAI returned invalid question paper data",
+            "Gemini returned invalid question paper data. Please try again.",
         });
       }
 
+
       // ======================================
-      // CHECK PAPER FORMAT
+      // PAPER FORMAT CHECK
       // ======================================
 
       if (
         !paper ||
-        !Array.isArray(paper.questions)
+        typeof paper !== "object" ||
+        !Array.isArray(
+          paper.questions
+        )
       ) {
-        return res.status(500).json({
+        return res.status(502).json({
           success: false,
           message:
-            "Invalid question paper format",
+            "Invalid question paper format returned by Gemini.",
         });
       }
 
-      // ======================================
-      // CLEAN + REPAIR QUESTIONS
-      // ======================================
-
-      const cleanedQuestions =
-        paper.questions
-          .slice(0, settings.questionCount)
-          .map((question, index) => {
-            const questionText =
-              String(
-                question?.question || ""
-              ).trim();
-
-            const type =
-              String(
-                question?.type || "MCQ"
-              ).trim();
-
-            const options =
-              Array.isArray(question?.options)
-                ? question.options.map((option) =>
-                    String(option).trim()
-                  )
-                : [];
-
-            let answer =
-              typeof question?.answer ===
-              "string"
-                ? question.answer.trim()
-                : "";
-
-            // Repair missing MCQ answer
-            if (
-              !answer &&
-              type.toUpperCase() === "MCQ" &&
-              options.length > 0
-            ) {
-              answer = options[0];
-            }
-
-            // Repair missing answer
-            if (!answer) {
-              answer =
-                "Answer not provided by AI. Please review this question.";
-            }
-
-            return {
-              number:
-                Number(question?.number) ||
-                index + 1,
-
-              type,
-
-              question:
-                questionText ||
-                `Question ${index + 1}`,
-
-              options,
-
-              answer,
-            };
-          });
 
       // ======================================
-      // CHECK QUESTION COUNT
+      // VALIDATE + CLEAN QUESTIONS
       // ======================================
 
-      if (
-        cleanedQuestions.length !==
-        settings.questionCount
-      ) {
-        return res.status(500).json({
+      let cleanedQuestions;
+
+      try {
+        cleanedQuestions =
+          validateAndCleanQuestions(
+            paper.questions,
+            settings
+          );
+      } catch (validationError) {
+        console.error(
+          "AI PAPER VALIDATION ERROR:",
+          validationError.message
+        );
+
+        return res.status(502).json({
           success: false,
           message:
-            `AI generated ${cleanedQuestions.length} questions instead of ${settings.questionCount}. Please try again.`,
+            validationError.message ||
+            "Gemini generated an invalid question paper. Please try again.",
         });
       }
+
 
       // ======================================
       // SAVE PAPER TO MONGODB
@@ -355,27 +798,38 @@ Never return an empty answer.
             cleanedQuestions,
         });
 
+
       // ======================================
       // SUCCESS LOG
       // ======================================
 
-      console.log("=================================");
       console.log(
-        "AI PAPER SAVED SUCCESSFULLY"
+        "================================="
       );
+
+      console.log(
+        "GEMINI PAPER SAVED SUCCESSFULLY"
+      );
+
       console.log(
         "Paper ID:",
         savedPaper._id
       );
+
       console.log(
         "User ID:",
         req.user._id
       );
+
       console.log(
         "Questions:",
         savedPaper.questions.length
       );
-      console.log("=================================");
+
+      console.log(
+        "================================="
+      );
+
 
       // ======================================
       // SEND PAPER TO FRONTEND
@@ -390,11 +844,14 @@ Never return an empty answer.
         paper: {
           _id: savedPaper._id,
 
-          title: savedPaper.title,
+          title:
+            savedPaper.title,
 
-          subject: savedPaper.subject,
+          subject:
+            savedPaper.subject,
 
-          unit: savedPaper.unit,
+          unit:
+            savedPaper.unit,
 
           difficulty:
             savedPaper.difficulty,
@@ -419,7 +876,7 @@ Never return an empty answer.
       );
 
       console.error(
-        "AI PAPER ERROR:",
+        "GEMINI PAPER ERROR:",
         error
       );
 
@@ -438,6 +895,7 @@ Never return an empty answer.
   }
 );
 
+
 // ======================================
 // GET MY SAVED AI QUESTION PAPERS
 // ======================================
@@ -450,12 +908,15 @@ router.get(
       const papers =
         await AIPaper.find({
           user: req.user._id,
-        }).sort({
-          createdAt: -1,
-        });
+        })
+          .sort({
+            createdAt: -1,
+          })
+          .lean();
 
       return res.status(200).json({
         success: true,
+        count: papers.length,
         papers,
       });
 
@@ -467,11 +928,13 @@ router.get(
 
       return res.status(500).json({
         success: false,
+
         message:
           "Failed to load saved question papers",
       });
     }
   }
 );
+
 
 module.exports = router;
