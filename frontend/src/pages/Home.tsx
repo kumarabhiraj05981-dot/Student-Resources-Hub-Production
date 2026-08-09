@@ -291,7 +291,7 @@ export default function Home() {
 
             <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
               <h3 className="text-4xl md:text-5xl font-bold text-blue-600">
-                30+
+                20+
               </h3>
               <p className="mt-3 text-lg font-semibold">
                 Notes
@@ -301,7 +301,7 @@ export default function Home() {
 
             <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
               <h3 className="text-4xl md:text-5xl font-bold text-orange-500">
-                30+
+                26+
               </h3>
               <p className="mt-3 text-lg font-semibold">
                 PYQs
@@ -311,7 +311,7 @@ export default function Home() {
 
             <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
               <h3 className="text-4xl md:text-5xl font-bold text-green-600">
-                25+
+                11+
               </h3>
               <p className="mt-3 text-lg font-semibold">
                 E-Books
