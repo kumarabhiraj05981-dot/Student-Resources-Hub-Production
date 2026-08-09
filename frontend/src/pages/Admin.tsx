@@ -32,15 +32,19 @@ export default function Admin() {
   // ==========================================
 
   const [resources, setResources] = useState<Resource[]>([]);
-  const [loadingResources, setLoadingResources] =
-    useState(true);
+  const [loadingResources, setLoadingResources] = useState(true);
 
   const [search, setSearch] = useState("");
-  const [filterCategory, setFilterCategory] =
-    useState("All");
+  const [filterCategory, setFilterCategory] = useState("All");
 
-  const [deletingId, setDeletingId] =
-    useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // ==========================================
+  // FILE SIZE
+  // 500 MB
+  // ==========================================
+
+  const MAX_FILE_SIZE = 500 * 1024 * 1024;
 
   // ==========================================
   // LOAD RESOURCES
@@ -94,6 +98,48 @@ export default function Admin() {
   }, []);
 
   // ==========================================
+  // FILE SELECT
+  // ==========================================
+
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selectedFile = e.target.files?.[0] || null;
+
+    if (!selectedFile) {
+      setFile(null);
+      return;
+    }
+
+    // PDF CHECK
+    if (
+      selectedFile.type !== "application/pdf" &&
+      !selectedFile.name.toLowerCase().endsWith(".pdf")
+    ) {
+      alert("❌ Only PDF files are allowed");
+
+      e.target.value = "";
+      setFile(null);
+
+      return;
+    }
+
+    // SIZE CHECK
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      alert(
+        `❌ File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`
+      );
+
+      e.target.value = "";
+      setFile(null);
+
+      return;
+    }
+
+    setFile(selectedFile);
+  };
+
+  // ==========================================
   // UPLOAD RESOURCE
   // ==========================================
 
@@ -136,10 +182,10 @@ export default function Admin() {
     }
 
     // SIZE CHECK
-    const maxSize = 100 * 1024 * 1024;
-
-    if (file.size > maxSize) {
-      alert("File size must be less than 100MB");
+    if (file.size > MAX_FILE_SIZE) {
+      alert(
+        `File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`
+      );
       return;
     }
 
@@ -196,6 +242,11 @@ export default function Admin() {
         category,
         subject,
         file: file.name,
+        size: `${(
+          file.size /
+          1024 /
+          1024
+        ).toFixed(2)} MB`,
       });
 
       // ======================================
@@ -209,6 +260,12 @@ export default function Admin() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          // 500MB upload support
+          maxContentLength:
+            500 * 1024 * 1024,
+
+          maxBodyLength:
+            500 * 1024 * 1024,
         }
       );
 
@@ -347,7 +404,7 @@ export default function Admin() {
       setDeletingId(null);
     }
   };
-  
+
   // ==========================================
   // FILTER RESOURCES
   // ==========================================
@@ -380,6 +437,30 @@ export default function Admin() {
         matchesCategory
       );
     });
+
+  // ==========================================
+  // FORMAT FILE SIZE
+  // ==========================================
+
+  const formatFileSize = (
+    bytes: number
+  ) => {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+      return `${(
+        bytes / 1024
+      ).toFixed(2)} KB`;
+    }
+
+    return `${(
+      bytes /
+      1024 /
+      1024
+    ).toFixed(2)} MB`;
+  };
 
   // ==========================================
   // PAGE
@@ -558,26 +639,31 @@ export default function Admin() {
                 id="resource-file"
                 type="file"
                 accept=".pdf,application/pdf"
-                onChange={(e) =>
-                  setFile(
-                    e.target.files?.[0] ||
-                      null
-                  )
-                }
+                onChange={handleFileChange}
                 className="w-full border border-gray-300 rounded-lg p-3"
                 required
               />
 
               {file && (
-                <p className="text-sm text-gray-600 mt-2">
-                  📄 Selected: {file.name}
-                </p>
+                <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
+
+                  <p className="text-sm text-blue-700 font-semibold">
+                    📄 Selected: {file.name}
+                  </p>
+
+                  <p className="text-sm text-gray-600 mt-1">
+                    📦 Size: {formatFileSize(file.size)}
+                  </p>
+
+                </div>
               )}
 
               <p className="text-xs text-gray-500 mt-2">
-                Maximum file size: 100MB.
+                Maximum file size:{" "}
+                <strong>500MB</strong>.
                 PDF only.
               </p>
+
             </div>
 
             {/* UPLOAD BUTTON */}
@@ -599,6 +685,7 @@ export default function Admin() {
           </form>
         </div>
 
+
         {/* ======================================
             RESOURCE MANAGEMENT
         ====================================== */}
@@ -608,6 +695,7 @@ export default function Admin() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
 
             <div>
+
               <h2 className="text-2xl font-bold text-gray-800">
                 📋 Manage Resources
               </h2>
@@ -618,6 +706,7 @@ export default function Admin() {
                   {resources.length}
                 </span>
               </p>
+
             </div>
 
             <button
@@ -630,82 +719,83 @@ export default function Admin() {
                 ? "⏳ Loading..."
                 : "🔄 Refresh"}
             </button>
-            
 
           </div>
-          
+
 
           {/* ======================================
-    FILTER RESOURCES
-====================================== */}
+              FILTER HEADER
+          ====================================== */}
 
-<div className="mb-6">
+          <div className="mb-6">
 
-  <h3 className="text-xl font-bold text-gray-800">
-    🔎 Filter Resources
-  </h3>
+            <h3 className="text-xl font-bold text-gray-800">
+              🔎 Filter Resources
+            </h3>
 
-  <p className="text-gray-500 mt-1">
-    Search and filter your uploaded resources
-  </p>
+            <p className="text-gray-500 mt-1">
+              Search and filter your uploaded resources
+            </p>
 
-</div>
-
-
-{/* ======================================
-    SEARCH + FILTER
-====================================== */}
-
-<div className="grid md:grid-cols-2 gap-4 mb-8">
-
-  <input
-    type="text"
-    placeholder="🔎 Search title, subject..."
-    value={search}
-    onChange={(e) =>
-      setSearch(e.target.value)
-    }
-    className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
-  />
+          </div>
 
 
-  <select
-    value={filterCategory}
-    onChange={(e) =>
-      setFilterCategory(e.target.value)
-    }
-    className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
-  >
+          {/* ======================================
+              SEARCH + FILTER
+          ====================================== */}
 
-    <option value="All">
-      All Categories
-    </option>
+          <div className="grid md:grid-cols-2 gap-4 mb-8">
 
-    <option value="Notes">
-      Notes
-    </option>
+            <input
+              type="text"
+              placeholder="🔎 Search title, subject..."
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+            />
 
-    <option value="PYQ">
-      PYQ
-    </option>
+            <select
+              value={filterCategory}
+              onChange={(e) =>
+                setFilterCategory(e.target.value)
+              }
+              className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+            >
 
-    <option value="Syllabus">
-      Syllabus
-    </option>
+              <option value="All">
+                All Categories
+              </option>
 
-    <option value="Ebooks">
-      E-books
-    </option>
+              <option value="Notes">
+                Notes
+              </option>
 
-    <option value="Other">
-      Other
-    </option>
+              <option value="PYQ">
+                PYQ
+              </option>
 
-  </select>
+              <option value="Syllabus">
+                Syllabus
+              </option>
 
-</div>
+              <option value="Ebooks">
+                E-books
+              </option>
 
-          {/* LOADING */}
+              <option value="Other">
+                Other
+              </option>
+
+            </select>
+
+          </div>
+
+
+          {/* ======================================
+              LOADING
+          ====================================== */}
 
           {loadingResources ? (
 
@@ -746,6 +836,7 @@ export default function Admin() {
 
               {filteredResources.map(
                 (resource) => (
+
                   <div
                     key={resource._id}
                     className="border border-gray-200 rounded-xl p-5 hover:shadow-lg transition"
@@ -765,6 +856,7 @@ export default function Admin() {
 
                     </div>
 
+
                     {/* SEMESTER */}
 
                     {resource.semester && (
@@ -772,6 +864,7 @@ export default function Admin() {
                         🎓 {resource.semester}
                       </p>
                     )}
+
 
                     {/* SUBJECT */}
 
@@ -781,6 +874,7 @@ export default function Admin() {
                       </p>
                     )}
 
+
                     {/* DESCRIPTION */}
 
                     {resource.description && (
@@ -788,6 +882,7 @@ export default function Admin() {
                         {resource.description}
                       </p>
                     )}
+
 
                     {/* FILE */}
 
@@ -800,6 +895,7 @@ export default function Admin() {
                       </p>
                     )}
 
+
                     {/* DATE */}
 
                     {resource.createdAt && (
@@ -810,6 +906,8 @@ export default function Admin() {
                         ).toLocaleDateString()}
                       </p>
                     )}
+
+
                     {/* ACTION BUTTONS */}
 
                     <div className="flex gap-3 mt-5">
@@ -824,6 +922,7 @@ export default function Admin() {
                       >
                         📄 View PDF
                       </a>
+
 
                       {/* DELETE */}
 
@@ -849,15 +948,18 @@ export default function Admin() {
                     </div>
 
                   </div>
+
                 )
               )}
 
             </div>
+
           )}
 
         </div>
 
       </div>
+
     </div>
   );
 }
