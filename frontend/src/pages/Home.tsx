@@ -70,78 +70,7 @@ export default function Home() {
 
           </div>
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-
-            <a
-              href="/notes"
-              className="group rounded-2xl border border-blue-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl"
-            >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-2xl transition group-hover:bg-blue-600">
-                📄
-              </div>
-
-              <h3 className="font-bold text-gray-900">
-                Notes
-              </h3>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Semester study notes
-              </p>
-            </a>
-
-            <a
-              href="/pyq"
-              className="group rounded-2xl border border-orange-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-orange-300 hover:shadow-xl"
-            >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-2xl transition group-hover:bg-orange-500">
-                📝
-              </div>
-
-              <h3 className="font-bold text-gray-900">
-                PYQ
-              </h3>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Previous year papers
-              </p>
-            </a>
-
-            <a
-              href="/syllabus"
-              className="group rounded-2xl border border-purple-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-purple-300 hover:shadow-xl"
-            >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-2xl transition group-hover:bg-purple-600">
-                📘
-              </div>
-
-              <h3 className="font-bold text-gray-900">
-                Syllabus
-              </h3>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Course syllabus
-              </p>
-            </a>
-
-            <a
-              href="/ebooks"
-              className="group rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-emerald-300 hover:shadow-xl"
-            >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-2xl transition group-hover:bg-emerald-600">
-                📖
-              </div>
-
-              <h3 className="font-bold text-gray-900">
-                E-Books
-              </h3>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Useful study books
-              </p>
-            </a>
-
-          </div>
-        </section>
+       
 
         <section className="bg-slate-50 px-5 py-16">
 
