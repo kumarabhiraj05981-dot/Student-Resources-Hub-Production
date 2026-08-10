@@ -9,10 +9,9 @@ const Resource = require("../models/Resource");
 
 const adminAuth = require("../middleware/adminAuth");
 
-
-// ======================================================
-// ALLOWED BRANCHES
-// ======================================================
+// ======================================
+// BRANCHES
+// ======================================
 
 const ALLOWED_BRANCHES = [
   "Computer Science",
@@ -23,86 +22,44 @@ const ALLOWED_BRANCHES = [
   "Leather Technology",
 ];
 
-
-// ======================================================
-// ALLOWED CATEGORIES
-// ======================================================
-
-const ALLOWED_CATEGORIES = [
-  "Notes",
-  "PYQ",
-  "Syllabus",
-  "Ebooks",
-  "Other",
-];
-
-
-// ======================================================
+// ======================================
 // MULTER - MEMORY STORAGE
-// ======================================================
+// ======================================
 
 const upload = multer({
-
   storage: multer.memoryStorage(),
 
   limits: {
-    // 500 MB
-    fileSize: 500 * 1024 * 1024,
+    fileSize: 500 * 1024 * 1024, // 500MB
   },
 
   fileFilter: (req, file, cb) => {
-
     if (
       file.mimetype === "application/pdf" ||
-      file.originalname
-        .toLowerCase()
-        .endsWith(".pdf")
+      file.originalname.toLowerCase().endsWith(".pdf")
     ) {
-
       cb(null, true);
-
     } else {
-
-      cb(
-        new Error(
-          "Only PDF files are allowed"
-        )
-      );
-
+      cb(new Error("Only PDF files are allowed"));
     }
-
   },
-
 });
 
-
-// ======================================================
+// ======================================
 // TEST ROUTE
-// ======================================================
+// ======================================
 
-router.get(
-  "/test",
-  (req, res) => {
+router.get("/test", (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: "Upload route is working",
+  });
+});
 
-    return res.json({
-
-      success: true,
-
-      message:
-        "Upload route is working",
-
-    });
-
-  }
-);
-
-
-// ======================================================
+// ======================================
 // UPLOAD PDF
 // ADMIN ONLY
-//
-// POST /api/upload
-// ======================================================
+// ======================================
 
 router.post(
   "/",
@@ -110,21 +67,14 @@ router.post(
   upload.single("file"),
 
   async (req, res) => {
-
     try {
+      console.log("=================================");
+      console.log("UPLOAD REQUEST");
+      console.log("=================================");
 
-      console.log(
-        "======================================"
-      );
+      console.log("BODY:", req.body);
 
-      console.log(
-        "📚 RESOURCE UPLOAD REQUEST"
-      );
-
-      console.log(
-        "BODY:",
-        req.body
-      );
+      console.log("BRANCH RECEIVED:", req.body?.branch);
 
       console.log(
         "FILE:",
@@ -136,37 +86,22 @@ router.post(
         req.file?.mimetype
       );
 
-      console.log(
-        "USER:",
-        req.user
-      );
+      console.log("=================================");
 
-      console.log(
-        "======================================"
-      );
-
-
-      // ==================================================
+      // ======================================
       // CHECK FILE
-      // ==================================================
+      // ======================================
 
       if (!req.file) {
-
         return res.status(400).json({
-
           success: false,
-
-          message:
-            "Please select a PDF file",
-
+          message: "Please select a PDF file",
         });
-
       }
 
-
-      // ==================================================
+      // ======================================
       // GET FORM DATA
-      // ==================================================
+      // ======================================
 
       const {
         title,
@@ -177,156 +112,85 @@ router.post(
         subject,
       } = req.body;
 
+      // ======================================
+      // VALIDATE TITLE
+      // ======================================
 
-      // ==================================================
-      // TITLE VALIDATION
-      // ==================================================
-
-      if (
-        !title ||
-        !title.trim()
-      ) {
-
+      if (!title || !title.trim()) {
         return res.status(400).json({
-
           success: false,
-
-          message:
-            "Resource title is required",
-
+          message: "Resource title is required",
         });
-
       }
 
+      // ======================================
+      // VALIDATE BRANCH
+      // ======================================
 
-      // ==================================================
-      // BRANCH VALIDATION
-      // ==================================================
-
-      if (
-        !branch ||
-        !branch.trim()
-      ) {
-
+      if (!branch || !branch.trim()) {
         return res.status(400).json({
-
           success: false,
-
-          message:
-            "Please select a branch",
-
+          message: "Please select a branch",
         });
-
       }
 
+      const cleanBranch = branch.trim();
 
-      const selectedBranch =
-        branch.trim();
-
-
-      // ==================================================
-      // CHECK VALID BRANCH
-      // ==================================================
-
-      if (
-        !ALLOWED_BRANCHES.includes(
-          selectedBranch
-        )
-      ) {
-
+      if (!ALLOWED_BRANCHES.includes(cleanBranch)) {
         return res.status(400).json({
-
           success: false,
-
-          message:
-            `Invalid branch: ${selectedBranch}`,
-
+          message: `Invalid branch. Allowed branches: ${ALLOWED_BRANCHES.join(
+            ", "
+          )}`,
         });
-
       }
 
+      // ======================================
+      // VALIDATE SEMESTER
+      // ======================================
 
-      // ==================================================
-      // SEMESTER VALIDATION
-      // ==================================================
-
-      if (
-        !semester ||
-        !semester.trim()
-      ) {
-
+      if (!semester || !semester.trim()) {
         return res.status(400).json({
-
           success: false,
-
-          message:
-            "Please select semester",
-
+          message: "Please select semester",
         });
-
       }
 
+      // ======================================
+      // VALIDATE CATEGORY
+      // ======================================
 
-      // ==================================================
-      // CATEGORY VALIDATION
-      // ==================================================
+      const ALLOWED_CATEGORIES = [
+        "Notes",
+        "PYQ",
+        "Syllabus",
+        "Ebooks",
+        "Other",
+      ];
 
-      if (
-        !category ||
-        !category.trim()
-      ) {
-
+      if (!category) {
         return res.status(400).json({
-
           success: false,
-
-          message:
-            "Please select category",
-
+          message: "Please select category",
         });
-
       }
 
-
-      const selectedCategory =
-        category.trim();
-
-
-      // ==================================================
-      // CHECK VALID CATEGORY
-      // ==================================================
-
-      if (
-        !ALLOWED_CATEGORIES.includes(
-          selectedCategory
-        )
-      ) {
-
+      if (!ALLOWED_CATEGORIES.includes(category)) {
         return res.status(400).json({
-
           success: false,
-
-          message:
-            `Invalid category: ${selectedCategory}`,
-
+          message: "Invalid resource category",
         });
-
       }
 
-
-      // ==================================================
+      // ======================================
       // CREATE CLEAN FILE NAME
-      // ==================================================
+      // ======================================
 
       const originalFileName =
         req.file.originalname;
 
-
       const extension =
-        path
-          .extname(originalFileName)
-          .toLowerCase();
-
+        path.extname(originalFileName).toLowerCase();
 
       const nameWithoutExtension =
         path.basename(
@@ -334,338 +198,202 @@ router.post(
           extension
         );
 
-
       const cleanFileName =
         nameWithoutExtension
-
           .replace(
             /[^a-zA-Z0-9-_ ]/g,
             ""
           )
-
           .trim()
+          .replace(/\s+/g, "-");
 
-          .replace(
-            /\s+/g,
-            "-"
-          );
+      const safeFileName =
+        cleanFileName || "resource";
 
-
-      const finalCleanFileName =
-        cleanFileName ||
-        "resource";
-
-
-      // ==================================================
+      // ======================================
       // CLOUDINARY PUBLIC ID
-      // ==================================================
+      // ======================================
 
       const publicId =
-        `${finalCleanFileName}-${Date.now()}`;
-
+        `${safeFileName}-${Date.now()}`;
 
       console.log(
-        "CLEAN FILE NAME:",
-        finalCleanFileName
+        "ORIGINAL FILE:",
+        originalFileName
       );
 
       console.log(
-        "CLOUDINARY PUBLIC ID:",
-        publicId
-      );
-
-
-      // ==================================================
-      // UPLOAD PDF TO CLOUDINARY
-      // ==================================================
-
-      const uploadToCloudinary =
-        () => {
-
-          return new Promise(
-            (resolve, reject) => {
-
-              const stream =
-                cloudinary
-                  .uploader
-                  .upload_stream(
-
-                    {
-
-                      folder:
-                        "student-resources",
-
-                      resource_type:
-                        "raw",
-
-                      public_id:
-                        publicId,
-
-                      overwrite:
-                        false,
-
-                    },
-
-                    (
-                      error,
-                      result
-                    ) => {
-
-                      if (error) {
-
-                        reject(
-                          error
-                        );
-
-                      } else {
-
-                        resolve(
-                          result
-                        );
-
-                      }
-
-                    }
-
-                  );
-
-
-              stream.end(
-                req.file.buffer
-              );
-
-            }
-          );
-
-        };
-
-
-      // ==================================================
-      // CLOUDINARY UPLOAD
-      // ==================================================
-
-      const cloudinaryResult =
-        await uploadToCloudinary();
-
-
-      console.log(
-        "======================================"
-      );
-
-      console.log(
-        "☁️ CLOUDINARY UPLOAD SUCCESS"
-      );
-
-      console.log(
-        "URL:",
-        cloudinaryResult.secure_url
-      );
-
-      console.log(
-        "PUBLIC ID:",
-        cloudinaryResult.public_id
-      );
-
-      console.log(
-        "======================================"
-      );
-
-
-      // ==================================================
-      // GET ADMIN USER ID
-      // ==================================================
-
-      const uploadedBy =
-        req.user?._id ||
-        req.user?.id;
-
-
-      // ==================================================
-      // CREATE RESOURCE
-      // ==================================================
-
-      const resource =
-        new Resource({
-
-          // --------------------------------------------
-          // BASIC INFORMATION
-          // --------------------------------------------
-
-          title:
-            title.trim(),
-
-          description:
-            description
-              ? description.trim()
-              : "",
-
-
-          // --------------------------------------------
-          // ⭐ VERY IMPORTANT
-          // SAVE SELECTED BRANCH
-          // --------------------------------------------
-
-          branch:
-            selectedBranch,
-
-
-          // --------------------------------------------
-          // SEMESTER
-          // --------------------------------------------
-
-          semester:
-            semester.trim(),
-
-
-          // --------------------------------------------
-          // CATEGORY
-          // --------------------------------------------
-
-          category:
-            selectedCategory,
-
-
-          // --------------------------------------------
-          // SUBJECT
-          // --------------------------------------------
-
-          subject:
-            subject
-              ? subject.trim()
-              : "",
-
-
-          // --------------------------------------------
-          // CLOUDINARY FILE
-          // --------------------------------------------
-
-          fileUrl:
-            cloudinaryResult.secure_url,
-
-          filePublicId:
-            cloudinaryResult.public_id,
-
-          fileName:
-            originalFileName,
-
-
-          // --------------------------------------------
-          // UPLOADED BY
-          // --------------------------------------------
-
-          uploadedBy:
-            uploadedBy,
-
-        });
-
-
-      // ==================================================
-      // SAVE TO MONGODB
-      // ==================================================
-
-      await resource.save();
-
-
-      // ==================================================
-      // LOG SAVED DATA
-      // ==================================================
-
-      console.log(
-        "======================================"
-      );
-
-      console.log(
-        "✅ RESOURCE SAVED TO MONGODB"
-      );
-
-      console.log(
-        "ID:",
-        resource._id
-      );
-
-      console.log(
-        "TITLE:",
-        resource.title
+        "CLEAN FILE:",
+        safeFileName
       );
 
       console.log(
         "BRANCH:",
-        resource.branch
+        cleanBranch
       );
 
       console.log(
-        "SEMESTER:",
-        resource.semester
+        "PUBLIC ID:",
+        publicId
+      );
+
+      // ======================================
+      // CLOUDINARY UPLOAD
+      // ======================================
+
+      const uploadToCloudinary = () => {
+        return new Promise((resolve, reject) => {
+          const stream =
+            cloudinary.uploader.upload_stream(
+              {
+                folder: "student-resources",
+
+                resource_type: "raw",
+
+                public_id: publicId,
+
+                overwrite: false,
+              },
+
+              (error, result) => {
+                if (error) {
+                  reject(error);
+                } else {
+                  resolve(result);
+                }
+              }
+            );
+
+          stream.end(req.file.buffer);
+        });
+      };
+
+      const cloudinaryResult =
+        await uploadToCloudinary();
+
+      // ======================================
+      // CHECK CLOUDINARY RESULT
+      // ======================================
+
+      if (
+        !cloudinaryResult ||
+        !cloudinaryResult.secure_url
+      ) {
+        return res.status(500).json({
+          success: false,
+          message:
+            "File uploaded but Cloudinary URL was not received",
+        });
+      }
+
+      console.log(
+        "CLOUDINARY URL:",
+        cloudinaryResult.secure_url
       );
 
       console.log(
-        "CATEGORY:",
-        resource.category
+        "CLOUDINARY PUBLIC ID:",
+        cloudinaryResult.public_id
       );
 
-      console.log(
-        "SUBJECT:",
-        resource.subject
-      );
+      // ======================================
+      // SAVE RESOURCE TO MONGODB
+      // ======================================
 
-      console.log(
-        "======================================"
-      );
+      const resource = new Resource({
+        title: title.trim(),
 
+        description:
+          description
+            ? description.trim()
+            : "",
 
-      // ==================================================
-      // SUCCESS RESPONSE
-      // ==================================================
+        // ⭐ VERY IMPORTANT
+        // Selected branch is saved here
+        branch: cleanBranch,
+
+        semester:
+          semester.trim(),
+
+        category,
+
+        subject:
+          subject
+            ? subject.trim()
+            : "",
+
+        fileUrl:
+          cloudinaryResult.secure_url,
+
+        filePublicId:
+          cloudinaryResult.public_id,
+
+        fileName:
+          originalFileName,
+
+        uploadedBy:
+          req.user?._id,
+      });
+
+      await resource.save();
+
+      // ======================================
+      // LOG SAVED DATA
+      // ======================================
+
+      console.log("=================================");
+      console.log("RESOURCE SAVED SUCCESSFULLY");
+      console.log("=================================");
+
+      console.log("RESOURCE ID:", resource._id);
+      console.log("TITLE:", resource.title);
+      console.log("BRANCH:", resource.branch);
+      console.log("SEMESTER:", resource.semester);
+      console.log("CATEGORY:", resource.category);
+      console.log("SUBJECT:", resource.subject);
+
+      console.log("=================================");
+
+      // ======================================
+      // SUCCESS
+      // ======================================
 
       return res.status(201).json({
-
         success: true,
 
         message:
           "PDF uploaded successfully!",
 
         resource,
-
       });
 
-
     } catch (error) {
-
       console.error(
-        "======================================"
+        "================================="
       );
 
       console.error(
-        "❌ RESOURCE UPLOAD ERROR"
-      );
-
-      console.error(
+        "RESOURCE UPLOAD ERROR:",
         error
       );
 
       console.error(
-        "======================================"
+        "================================="
       );
 
-
       return res.status(500).json({
-
         success: false,
 
         message:
           error.message ||
           "PDF upload failed",
-
       });
-
     }
-
   }
 );
 
-
-// ======================================================
+// ======================================
 // EXPORT
-// ======================================================
+// ======================================
 
 module.exports = router;
