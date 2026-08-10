@@ -8,12 +8,12 @@ export default function Home() {
 
       <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
 
+        {/* =========================================
+            HERO SECTION
+        ========================================= */}
+
         <section className="bg-gradient-to-r from-blue-700 via-indigo-600 to-cyan-500 px-5 py-24 text-center text-white">
           <div className="mx-auto max-w-4xl">
-
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-white/15 text-4xl shadow-lg">
-              📚
-            </div>
 
             <p className="mb-4 inline-block rounded-full bg-white/10 px-4 py-2 text-sm font-semibold">
               Student Learning Platform
@@ -52,11 +52,10 @@ export default function Home() {
           </div>
         </section>
 
-        
 
-          </div>
-
-       
+        {/* =========================================
+            CHOOSE YOUR BRANCH
+        ========================================= */}
 
         <section className="bg-slate-50 px-5 py-16">
 
@@ -74,13 +73,18 @@ export default function Home() {
 
             </div>
 
+
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+
+              {/* CSE */}
 
               <a
                 href="/branch/cse"
                 className="rounded-2xl border border-blue-100 bg-blue-50 p-7 transition hover:-translate-y-2 hover:bg-blue-100 hover:shadow-xl"
               >
-                <div className="text-4xl">💻</div>
+                <div className="text-4xl">
+                  💻
+                </div>
 
                 <h3 className="mt-5 text-xl font-extrabold text-gray-900">
                   Computer Science
@@ -95,11 +99,16 @@ export default function Home() {
                 </div>
               </a>
 
+
+              {/* ELECTRICAL */}
+
               <a
                 href="/branch/electrical"
                 className="rounded-2xl border border-amber-100 bg-amber-50 p-7 transition hover:-translate-y-2 hover:bg-amber-100 hover:shadow-xl"
               >
-                <div className="text-4xl">⚡</div>
+                <div className="text-4xl">
+                  ⚡
+                </div>
 
                 <h3 className="mt-5 text-xl font-extrabold text-gray-900">
                   Electrical Engineering
@@ -114,11 +123,16 @@ export default function Home() {
                 </div>
               </a>
 
+
+              {/* MECHANICAL */}
+
               <a
                 href="/branch/mechanical"
                 className="rounded-2xl border border-slate-200 bg-slate-50 p-7 transition hover:-translate-y-2 hover:bg-slate-100 hover:shadow-xl"
               >
-                <div className="text-4xl">🔧</div>
+                <div className="text-4xl">
+                  🔧
+                </div>
 
                 <h3 className="mt-5 text-xl font-extrabold text-gray-900">
                   Mechanical Engineering
@@ -133,11 +147,16 @@ export default function Home() {
                 </div>
               </a>
 
+
+              {/* CIVIL */}
+
               <a
                 href="/branch/civil-ctm"
                 className="rounded-2xl border border-emerald-100 bg-emerald-50 p-7 transition hover:-translate-y-2 hover:bg-emerald-100 hover:shadow-xl"
               >
-                <div className="text-4xl">🏗️</div>
+                <div className="text-4xl">
+                  🏗️
+                </div>
 
                 <h3 className="mt-5 text-xl font-extrabold text-gray-900">
                   Civil / CTM
@@ -152,11 +171,16 @@ export default function Home() {
                 </div>
               </a>
 
+
+              {/* ELECTRONICS */}
+
               <a
                 href="/branch/electronics"
                 className="rounded-2xl border border-violet-100 bg-violet-50 p-7 transition hover:-translate-y-2 hover:bg-violet-100 hover:shadow-xl"
               >
-                <div className="text-4xl">📡</div>
+                <div className="text-4xl">
+                  📡
+                </div>
 
                 <h3 className="mt-5 text-xl font-extrabold text-gray-900">
                   Electronics
@@ -171,11 +195,16 @@ export default function Home() {
                 </div>
               </a>
 
+
+              {/* LEATHER */}
+
               <a
                 href="/branch/leather-technology"
                 className="rounded-2xl border border-rose-100 bg-rose-50 p-7 transition hover:-translate-y-2 hover:bg-rose-100 hover:shadow-xl"
               >
-                <div className="text-4xl">🧪</div>
+                <div className="text-4xl">
+                  🧪
+                </div>
 
                 <h3 className="mt-5 text-xl font-extrabold text-gray-900">
                   Leather Technology
@@ -193,7 +222,13 @@ export default function Home() {
             </div>
 
           </div>
+
         </section>
+
+
+        {/* =========================================
+            CTA SECTION
+        ========================================= */}
 
         <section className="px-5 py-16">
 
