@@ -8,7 +8,7 @@ const cloudinary = require("../config/cloudinary");
 const router = express.Router();
 
 // ==========================================
-// ALLOWED BRANCHES
+// CONSTANTS
 // ==========================================
 
 const ALLOWED_BRANCHES = [
@@ -20,8 +20,28 @@ const ALLOWED_BRANCHES = [
   "Leather Technology",
 ];
 
+const ALLOWED_CATEGORIES = [
+  "Notes",
+  "PYQ",
+  "Syllabus",
+  "Ebooks",
+  "Other",
+];
+
+// ==========================================
+// HELPER - ESCAPE REGEX
+// ==========================================
+
+const escapeRegex = (value = "") => {
+  return value.replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&"
+  );
+};
+
 // ==========================================
 // GET ALL RESOURCES
+// GET /api/resources
 // ==========================================
 
 router.get("/", async (req, res) => {
@@ -35,10 +55,9 @@ router.get("/", async (req, res) => {
       count: resources.length,
       resources,
     });
-
   } catch (error) {
     console.error(
-      "Get resources error:",
+      "GET ALL RESOURCES ERROR:",
       error
     );
 
@@ -50,56 +69,11 @@ router.get("/", async (req, res) => {
 });
 
 // ==========================================
-// GET RESOURCES BY BRANCH
-// ==========================================
-
-router.get("/branch/:branch", async (req, res) => {
-  try {
-    const branch = decodeURIComponent(
-      req.params.branch
-    ).trim();
-
-    if (!ALLOWED_BRANCHES.includes(branch)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid branch",
-      });
-    }
-
-    const resources = await Resource.find({
-      branch: branch,
-    })
-      .populate(
-        "uploadedBy",
-        "name email"
-      )
-      .sort({
-        createdAt: -1,
-      });
-
-    return res.status(200).json({
-      success: true,
-      branch,
-      count: resources.length,
-      resources,
-    });
-
-  } catch (error) {
-    console.error(
-      "Branch resources error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Failed to load branch resources",
-    });
-  }
-});
-
-// ==========================================
 // GET RESOURCES BY BRANCH + CATEGORY
+// IMPORTANT: keep before /branch/:branch
+//
+// GET
+// /api/resources/branch/Computer%20Science/category/Notes
 // ==========================================
 
 router.get(
@@ -114,29 +88,45 @@ router.get(
         req.params.category
       ).trim();
 
+      // --------------------------------------
+      // VALIDATE BRANCH
+      // --------------------------------------
+
       if (!ALLOWED_BRANCHES.includes(branch)) {
         return res.status(400).json({
           success: false,
           message: "Invalid branch",
+          allowedBranches: ALLOWED_BRANCHES,
         });
       }
 
-      const resources =
-        await Resource.find({
-          branch: branch,
+      // --------------------------------------
+      // VALIDATE CATEGORY
+      // --------------------------------------
 
-          category: {
-            $regex: `^${category}$`,
-            $options: "i",
-          },
-        })
-          .populate(
-            "uploadedBy",
-            "name email"
-          )
-          .sort({
-            createdAt: -1,
-          });
+      if (!ALLOWED_CATEGORIES.includes(category)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid category",
+          allowedCategories: ALLOWED_CATEGORIES,
+        });
+      }
+
+      // --------------------------------------
+      // FIND
+      // --------------------------------------
+
+      const resources = await Resource.find({
+        branch,
+        category,
+      })
+        .populate(
+          "uploadedBy",
+          "name email"
+        )
+        .sort({
+          createdAt: -1,
+        });
 
       return res.status(200).json({
         success: true,
@@ -145,17 +135,70 @@ router.get(
         count: resources.length,
         resources,
       });
-
     } catch (error) {
       console.error(
-        "Branch category error:",
+        "BRANCH CATEGORY ERROR:",
         error
       );
 
       return res.status(500).json({
         success: false,
         message:
-          "Failed to load resources",
+          "Failed to load branch resources",
+      });
+    }
+  }
+);
+
+// ==========================================
+// GET RESOURCES BY BRANCH
+//
+// GET /api/resources/branch/Computer%20Science
+// ==========================================
+
+router.get(
+  "/branch/:branch",
+  async (req, res) => {
+    try {
+      const branch = decodeURIComponent(
+        req.params.branch
+      ).trim();
+
+      if (!ALLOWED_BRANCHES.includes(branch)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid branch",
+          allowedBranches: ALLOWED_BRANCHES,
+        });
+      }
+
+      const resources = await Resource.find({
+        branch,
+      })
+        .populate(
+          "uploadedBy",
+          "name email"
+        )
+        .sort({
+          createdAt: -1,
+        });
+
+      return res.status(200).json({
+        success: true,
+        branch,
+        count: resources.length,
+        resources,
+      });
+    } catch (error) {
+      console.error(
+        "BRANCH RESOURCES ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to load branch resources",
       });
     }
   }
@@ -163,41 +206,57 @@ router.get(
 
 // ==========================================
 // GET RESOURCES BY CATEGORY
+//
+// GET /api/resources/category/Notes
+// GET /api/resources/category/PYQ
+// GET /api/resources/category/Syllabus
+// GET /api/resources/category/Ebooks
 // ==========================================
 
 router.get(
   "/category/:category",
   async (req, res) => {
     try {
-      const category =
-        decodeURIComponent(
-          req.params.category
-        ).trim();
+      const category = decodeURIComponent(
+        req.params.category
+      ).trim();
 
-      const resources =
-        await Resource.find({
-          category: {
-            $regex: `^${category}$`,
-            $options: "i",
-          },
-        })
-          .populate(
-            "uploadedBy",
-            "name email"
-          )
-          .sort({
-            createdAt: -1,
-          });
+      const matchedCategory =
+        ALLOWED_CATEGORIES.find(
+          (item) =>
+            item.toLowerCase() ===
+            category.toLowerCase()
+        );
+
+      if (!matchedCategory) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid category",
+          allowedCategories:
+            ALLOWED_CATEGORIES,
+        });
+      }
+
+      const resources = await Resource.find({
+        category: matchedCategory,
+      })
+        .populate(
+          "uploadedBy",
+          "name email"
+        )
+        .sort({
+          createdAt: -1,
+        });
 
       return res.status(200).json({
         success: true,
+        category: matchedCategory,
         count: resources.length,
         resources,
       });
-
     } catch (error) {
       console.error(
-        "Category resources error:",
+        "CATEGORY RESOURCES ERROR:",
         error
       );
 
@@ -212,41 +271,48 @@ router.get(
 
 // ==========================================
 // GET RESOURCES BY SEMESTER
+//
+// GET /api/resources/semester/1st%20Semester
 // ==========================================
 
 router.get(
   "/semester/:semester",
   async (req, res) => {
     try {
-      const semester =
-        decodeURIComponent(
-          req.params.semester
-        ).trim();
+      const semester = decodeURIComponent(
+        req.params.semester
+      ).trim();
 
-      const resources =
-        await Resource.find({
-          semester: {
-            $regex: `^${semester}$`,
-            $options: "i",
-          },
-        })
-          .populate(
-            "uploadedBy",
-            "name email"
-          )
-          .sort({
-            createdAt: -1,
-          });
+      if (!semester) {
+        return res.status(400).json({
+          success: false,
+          message: "Semester is required",
+        });
+      }
+
+      const resources = await Resource.find({
+        semester: {
+          $regex: `^${escapeRegex(semester)}$`,
+          $options: "i",
+        },
+      })
+        .populate(
+          "uploadedBy",
+          "name email"
+        )
+        .sort({
+          createdAt: -1,
+        });
 
       return res.status(200).json({
         success: true,
+        semester,
         count: resources.length,
         resources,
       });
-
     } catch (error) {
       console.error(
-        "Semester resources error:",
+        "SEMESTER RESOURCES ERROR:",
         error
       );
 
@@ -261,44 +327,64 @@ router.get(
 
 // ==========================================
 // SEARCH RESOURCES
+//
+// GET /api/resources/search/:keyword
 // ==========================================
 
 router.get(
   "/search/:keyword",
   async (req, res) => {
     try {
-      const keyword =
-        decodeURIComponent(
-          req.params.keyword
-        ).trim();
+      const keyword = decodeURIComponent(
+        req.params.keyword
+      ).trim();
+
+      if (!keyword) {
+        return res.status(400).json({
+          success: false,
+          message: "Search keyword is required",
+        });
+      }
+
+      const safeKeyword =
+        escapeRegex(keyword);
 
       const resources =
         await Resource.find({
           $or: [
             {
               title: {
-                $regex: keyword,
+                $regex: safeKeyword,
                 $options: "i",
               },
             },
-
             {
               subject: {
-                $regex: keyword,
+                $regex: safeKeyword,
                 $options: "i",
               },
             },
-
             {
               description: {
-                $regex: keyword,
+                $regex: safeKeyword,
                 $options: "i",
               },
             },
-
             {
               branch: {
-                $regex: keyword,
+                $regex: safeKeyword,
+                $options: "i",
+              },
+            },
+            {
+              semester: {
+                $regex: safeKeyword,
+                $options: "i",
+              },
+            },
+            {
+              fileName: {
+                $regex: safeKeyword,
                 $options: "i",
               },
             },
@@ -314,13 +400,13 @@ router.get(
 
       return res.status(200).json({
         success: true,
+        keyword,
         count: resources.length,
         resources,
       });
-
     } catch (error) {
       console.error(
-        "Search resources error:",
+        "SEARCH RESOURCES ERROR:",
         error
       );
 
@@ -335,6 +421,8 @@ router.get(
 // ==========================================
 // DELETE RESOURCE
 // ADMIN ONLY
+//
+// DELETE /api/resources/:id
 // ==========================================
 
 router.delete(
@@ -349,9 +437,9 @@ router.delete(
         id
       );
 
-      // ======================================
-      // VALIDATE ID
-      // ======================================
+      // --------------------------------------
+      // VALIDATE OBJECT ID
+      // --------------------------------------
 
       if (
         !mongoose.Types.ObjectId.isValid(id)
@@ -362,9 +450,9 @@ router.delete(
         });
       }
 
-      // ======================================
+      // --------------------------------------
       // FIND RESOURCE
-      // ======================================
+      // --------------------------------------
 
       const resource =
         await Resource.findById(id);
@@ -376,9 +464,9 @@ router.delete(
         });
       }
 
-      // ======================================
+      // --------------------------------------
       // DELETE CLOUDINARY FILE
-      // ======================================
+      // --------------------------------------
 
       if (resource.filePublicId) {
         try {
@@ -395,20 +483,21 @@ router.delete(
           );
 
           console.log(
-            "Cloudinary file deleted"
+            "Cloudinary file deleted successfully"
           );
-
         } catch (cloudinaryError) {
           console.error(
-            "Cloudinary delete error:",
+            "CLOUDINARY DELETE ERROR:",
             cloudinaryError
           );
+
+          // MongoDB deletion will continue.
         }
       }
 
-      // ======================================
-      // DELETE MONGODB RESOURCE
-      // ======================================
+      // --------------------------------------
+      // DELETE MONGODB DOCUMENT
+      // --------------------------------------
 
       await Resource.findByIdAndDelete(id);
 
@@ -422,7 +511,6 @@ router.delete(
         message:
           "Resource deleted successfully",
       });
-
     } catch (error) {
       console.error(
         "DELETE RESOURCE ERROR:",
