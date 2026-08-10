@@ -1,574 +1,341 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-
-interface User {
-  _id?: string;
-  name?: string;
-  email?: string;
-  role?: string;
-}
-
-const branches = [
-  {
-    id: "cse",
-    name: "Computer Science Engineering",
-    shortName: "CSE",
-    icon: "💻",
-  },
-  {
-    id: "electrical",
-    name: "Electrical Engineering",
-    shortName: "Electrical",
-    icon: "⚡",
-  },
-  {
-    id: "mechanical",
-    name: "Mechanical Engineering",
-    shortName: "Mechanical",
-    icon: "🔧",
-  },
-  {
-    id: "civil-ctm",
-    name: "Civil Engineering / CTM",
-    shortName: "Civil / CTM",
-    icon: "🏗️",
-  },
-  {
-    id: "leather",
-    name: "Leather Technology",
-    shortName: "Leather",
-    icon: "👞",
-  },
-];
+import { Link, NavLink, useNavigate } from "react-router-dom";
 
 export default function Navbar() {
   const navigate = useNavigate();
 
-  const [token, setToken] = useState<string | null>(
-    localStorage.getItem("token")
-  );
-
-  const [user, setUser] = useState<User | null>(null);
-
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const [branchOpen, setBranchOpen] = useState(false);
-
-  // ======================================
-  // LOAD LOGIN USER
-  // ======================================
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
+    const checkAuth = () => {
+      const token = localStorage.getItem("token");
+      const userString = localStorage.getItem("user");
 
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error("Invalid user data:", error);
-        setUser(null);
+      setIsLoggedIn(Boolean(token));
+
+      if (userString) {
+        try {
+          const user = JSON.parse(userString);
+          setIsAdmin(user?.role === "admin");
+        } catch {
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
       }
-    } else {
-      setUser(null);
-    }
+    };
 
-    setToken(localStorage.getItem("token"));
+    checkAuth();
+
+    window.addEventListener("storage", checkAuth);
+
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+    };
   }, []);
 
-  // ======================================
-  // CHECK ADMIN
-  // ======================================
-
-  const isAdmin =
-    token &&
-    user &&
-    user.role?.toLowerCase() === "admin";
-
-  // ======================================
-  // LOGOUT
-  // ======================================
+  const closeMobileMenu = () => {
+    setMobileOpen(false);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
-    setToken(null);
-    setUser(null);
-    setMenuOpen(false);
-    setBranchOpen(false);
+    setIsLoggedIn(false);
+    setIsAdmin(false);
+
+    closeMobileMenu();
 
     navigate("/login");
   };
 
-  // ======================================
-  // CLOSE MOBILE MENU
-  // ======================================
-
-  const closeMenu = () => {
-    setMenuOpen(false);
-    setBranchOpen(false);
-  };
-
-  // ======================================
-  // OPEN BRANCH
-  // ======================================
-
-  const openBranch = (branchId: string) => {
-    setBranchOpen(false);
-    setMenuOpen(false);
-
-    navigate(`/branch/${branchId}`);
-  };
+  const navClass = ({ isActive }: { isActive: boolean }) =>
+    [
+      "relative",
+      "px-3",
+      "py-2",
+      "rounded-lg",
+      "text-sm",
+      "font-semibold",
+      "transition",
+      isActive
+        ? "text-blue-700 bg-blue-50"
+        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
+    ].join(" ");
 
   return (
-    <nav className="bg-blue-600 text-white shadow-lg sticky top-0 z-50">
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
+      <div className="page-container">
 
-        <div className="flex justify-between items-center py-4">
+        <div className="flex h-[68px] items-center justify-between gap-4">
 
-          {/* ==============================
-              LOGO
-          ============================== */}
+          {/* =================================
+              BRAND
+          ================================= */}
 
           <Link
             to="/"
-            onClick={closeMenu}
-            className="flex items-center gap-2"
+            onClick={closeMobileMenu}
+            className="flex items-center gap-3 shrink-0"
           >
-            <span className="text-2xl">
-              📚
-            </span>
 
-            <span className="text-lg md:text-2xl font-bold">
-              Student Resources Hub
-            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-lg font-bold text-white">
+              SR
+            </div>
+
+            <div className="hidden sm:block">
+              <div className="text-[15px] font-extrabold leading-tight text-gray-900">
+                Student Resources
+              </div>
+
+              <div className="text-xs font-medium text-gray-500">
+                Hub
+              </div>
+            </div>
+
           </Link>
 
 
-          {/* ==============================
-              DESKTOP MENU
-          ============================== */}
+          {/* =================================
+              DESKTOP NAVIGATION
+          ================================= */}
 
-          <div className="hidden lg:flex items-center gap-5">
+          <nav className="hidden lg:flex items-center gap-1">
 
-            <Link
-              to="/"
-              className="hover:text-blue-200 transition font-medium"
+            <NavLink to="/" className={navClass}>
+              Home
+            </NavLink>
+
+            <NavLink to="/notes" className={navClass}>
+              Notes
+            </NavLink>
+
+            <NavLink to="/pyq" className={navClass}>
+              PYQ
+            </NavLink>
+
+            <NavLink to="/syllabus" className={navClass}>
+              Syllabus
+            </NavLink>
+
+            <NavLink to="/ebooks" className={navClass}>
+              E-Books
+            </NavLink>
+
+            <NavLink
+              to="/branches"
+              className={navClass}
             >
-              🏠 Home
-            </Link>
+              Branches
+            </NavLink>
 
-
-            {/* ==============================
-                BRANCH DROPDOWN
-            ============================== */}
-
-            <div className="relative">
-
-              <button
-                type="button"
-                onClick={() => setBranchOpen(!branchOpen)}
-                className="hover:text-blue-200 transition font-medium flex items-center gap-1"
-              >
-                🎓 Branch
-                <span
-                  className={`transition-transform duration-200 ${
-                    branchOpen ? "rotate-180" : ""
-                  }`}
-                >
-                  ▼
-                </span>
-              </button>
-
-
-              {branchOpen && (
-
-                <div className="absolute top-full left-0 mt-3 w-72 bg-white text-gray-800 rounded-xl shadow-2xl overflow-hidden border border-blue-100">
-
-                  <div className="px-4 py-3 bg-blue-50 border-b">
-                    <p className="font-bold text-blue-700">
-                      🎓 Select Your Branch
-                    </p>
-
-                    <p className="text-xs text-gray-500 mt-1">
-                      Choose your engineering branch
-                    </p>
-                  </div>
-
-
-                  <div className="py-2">
-
-                    {branches.map((branch) => (
-
-                      <button
-                        key={branch.id}
-                        type="button"
-                        onClick={() => openBranch(branch.id)}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-blue-50 transition"
-                      >
-
-                        <span className="text-2xl">
-                          {branch.icon}
-                        </span>
-
-                        <span className="flex-1">
-
-                          <span className="block font-bold text-gray-800">
-                            {branch.shortName}
-                          </span>
-
-                          <span className="block text-xs text-gray-500">
-                            {branch.name}
-                          </span>
-
-                        </span>
-
-                        <span className="text-blue-500">
-                          →
-                        </span>
-
-                      </button>
-
-                    ))}
-
-                  </div>
-
-                </div>
-
-              )}
-
-            </div>
-
-
-            <Link
-              to="/notes"
-              className="hover:text-blue-200 transition font-medium"
-            >
-              📄 Notes
-            </Link>
-
-            <Link
-              to="/pyq"
-              className="hover:text-blue-200 transition font-medium"
-            >
-              📝 PYQ
-            </Link>
-
-            <Link
-              to="/syllabus"
-              className="hover:text-blue-200 transition font-medium"
-            >
-              📘 Syllabus
-            </Link>
-
-            <Link
-              to="/ebooks"
-              className="hover:text-blue-200 transition font-medium"
-            >
-              📖 E-books
-            </Link>
-
-
-            {/* ==============================
-                AI QUESTION PAPER
-            ============================== */}
-
-            <Link
+            <NavLink
               to="/ai-question-paper"
-              className="bg-white text-blue-600 px-4 py-2 rounded-lg font-bold hover:bg-blue-50 transition shadow"
+              className={navClass}
             >
-              🤖 AI Paper
-            </Link>
+              AI Paper
+            </NavLink>
+
+          </nav>
 
 
-            {/* ==============================
-                ADMIN ONLY
-            ============================== */}
+          {/* =================================
+              DESKTOP ACTIONS
+          ================================= */}
+
+          <div className="hidden md:flex items-center gap-2">
 
             {isAdmin && (
-              <Link
+              <NavLink
                 to="/admin"
-                className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg font-bold hover:bg-yellow-300 transition"
+                className={({ isActive }) =>
+                  [
+                    "px-3",
+                    "py-2",
+                    "rounded-lg",
+                    "text-sm",
+                    "font-bold",
+                    isActive
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-700 hover:bg-gray-100",
+                  ].join(" ")
+                }
               >
-                ⚙️ Admin
-              </Link>
+                Admin
+              </NavLink>
             )}
 
-
-            {/* ==============================
-                AUTH
-            ============================== */}
-
-            {!token ? (
-
-              <div className="flex items-center gap-3">
-
+            {isLoggedIn ? (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="secondary-button min-h-[40px] px-4"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
                 <Link
                   to="/login"
-                  className="hover:text-blue-200 transition font-medium"
+                  className="secondary-button min-h-[40px] px-4"
                 >
-                  🔐 Login
+                  Login
                 </Link>
 
                 <Link
                   to="/register"
-                  className="bg-white text-blue-600 px-4 py-2 rounded-lg font-bold hover:bg-blue-50 transition"
+                  className="primary-button min-h-[40px] px-4"
                 >
                   Register
                 </Link>
-
-              </div>
-
-            ) : (
-
-              <div className="flex items-center gap-3">
-
-                {user?.name && (
-                  <span className="text-sm font-semibold">
-                    👤 {user.name}
-                  </span>
-                )}
-
-                <button
-                  onClick={handleLogout}
-                  className="bg-red-500 px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition"
-                >
-                  🚪 Logout
-                </button>
-
-              </div>
-
+              </>
             )}
 
           </div>
 
 
-          {/* ==============================
+          {/* =================================
               MOBILE MENU BUTTON
-          ============================== */}
+          ================================= */}
 
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="lg:hidden text-3xl focus:outline-none"
-            aria-label="Toggle menu"
+            type="button"
+            aria-label="Toggle navigation"
+            aria-expanded={mobileOpen}
+            onClick={() =>
+              setMobileOpen((prev) => !prev)
+            }
+            className="md:hidden flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
           >
-            {menuOpen ? "✕" : "☰"}
+            {mobileOpen ? "✕" : "☰"}
           </button>
 
         </div>
 
 
-        {/* ==============================
-            MOBILE MENU
-        ============================== */}
+        {/* =================================
+            MOBILE NAVIGATION
+        ================================= */}
 
-        {menuOpen && (
+        {mobileOpen && (
+          <div className="md:hidden border-t border-gray-100 py-4">
 
-          <div className="lg:hidden pb-5 border-t border-blue-400 pt-4">
+            <nav className="flex flex-col gap-1">
 
-            <div className="flex flex-col gap-2">
-
-              <Link
+              <NavLink
                 to="/"
-                onClick={closeMenu}
-                className="px-4 py-3 rounded-lg hover:bg-blue-700 transition"
+                onClick={closeMobileMenu}
+                className={navClass}
               >
-                🏠 Home
-              </Link>
+                Home
+              </NavLink>
 
-
-              {/* ==============================
-                  MOBILE BRANCH
-              ============================== */}
-
-              <div>
-
-                <button
-                  type="button"
-                  onClick={() => setBranchOpen(!branchOpen)}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-blue-700 transition font-medium"
-                >
-
-                  <span>
-                    🎓 Branch
-                  </span>
-
-                  <span
-                    className={`transition-transform duration-200 ${
-                      branchOpen ? "rotate-180" : ""
-                    }`}
-                  >
-                    ▼
-                  </span>
-
-                </button>
-
-
-                {branchOpen && (
-
-                  <div className="mt-2 ml-2 bg-blue-700 rounded-xl overflow-hidden">
-
-                    {branches.map((branch) => (
-
-                      <button
-                        key={branch.id}
-                        type="button"
-                        onClick={() => openBranch(branch.id)}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-blue-800 transition"
-                      >
-
-                        <span className="text-2xl">
-                          {branch.icon}
-                        </span>
-
-                        <span className="flex-1">
-
-                          <span className="block font-bold">
-                            {branch.shortName}
-                          </span>
-
-                          <span className="block text-xs text-blue-200">
-                            {branch.name}
-                          </span>
-
-                        </span>
-
-                        <span>
-                          →
-                        </span>
-
-                      </button>
-
-                    ))}
-
-                  </div>
-
-                )}
-
-              </div>
-
-
-              <Link
+              <NavLink
                 to="/notes"
-                onClick={closeMenu}
-                className="px-4 py-3 rounded-lg hover:bg-blue-700 transition"
+                onClick={closeMobileMenu}
+                className={navClass}
               >
-                📄 Notes
-              </Link>
+                Notes
+              </NavLink>
 
-              <Link
+              <NavLink
                 to="/pyq"
-                onClick={closeMenu}
-                className="px-4 py-3 rounded-lg hover:bg-blue-700 transition"
+                onClick={closeMobileMenu}
+                className={navClass}
               >
-                📝 PYQ
-              </Link>
+                PYQ
+              </NavLink>
 
-              <Link
+              <NavLink
                 to="/syllabus"
-                onClick={closeMenu}
-                className="px-4 py-3 rounded-lg hover:bg-blue-700 transition"
+                onClick={closeMobileMenu}
+                className={navClass}
               >
-                📘 Syllabus
-              </Link>
+                Syllabus
+              </NavLink>
 
-              <Link
+              <NavLink
                 to="/ebooks"
-                onClick={closeMenu}
-                className="px-4 py-3 rounded-lg hover:bg-blue-700 transition"
+                onClick={closeMobileMenu}
+                className={navClass}
               >
-                📖 E-books
-              </Link>
+                E-Books
+              </NavLink>
 
+              <NavLink
+                to="/branches"
+                onClick={closeMobileMenu}
+                className={navClass}
+              >
+                Branches
+              </NavLink>
 
-              {/* ==============================
-                  AI QUESTION PAPER MOBILE
-              ============================== */}
-
-              <Link
+              <NavLink
                 to="/ai-question-paper"
-                onClick={closeMenu}
-                className="px-4 py-3 rounded-lg bg-white text-blue-600 font-bold hover:bg-blue-50 transition"
+                onClick={closeMobileMenu}
+                className={navClass}
               >
-                🤖 AI Question Paper
-              </Link>
-
-
-              {/* ==============================
-                  ADMIN MOBILE ONLY
-              ============================== */}
+                AI Question Paper
+              </NavLink>
 
               {isAdmin && (
-                <Link
+                <NavLink
                   to="/admin"
-                  onClick={closeMenu}
-                  className="px-4 py-3 rounded-lg bg-yellow-400 text-gray-900 font-bold"
+                  onClick={closeMobileMenu}
+                  className={navClass}
                 >
-                  ⚙️ Admin Dashboard
-                </Link>
+                  Admin Dashboard
+                </NavLink>
               )}
 
+            </nav>
 
-              {/* ==============================
-                  MOBILE AUTH
-              ============================== */}
 
-              {!token ? (
+            {/* MOBILE ACTIONS */}
 
-                <>
+            <div className="mt-4 border-t border-gray-100 pt-4">
+
+              {isLoggedIn ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="secondary-button"
+                >
+                  Logout
+                </button>
+              ) : (
+                <div className="flex flex-col gap-2">
 
                   <Link
                     to="/login"
-                    onClick={closeMenu}
-                    className="px-4 py-3 rounded-lg hover:bg-blue-700 transition"
+                    onClick={closeMobileMenu}
+                    className="secondary-button"
                   >
-                    🔐 Login
+                    Login
                   </Link>
 
                   <Link
                     to="/register"
-                    onClick={closeMenu}
-                    className="px-4 py-3 rounded-lg bg-white text-blue-600 font-bold"
+                    onClick={closeMobileMenu}
+                    className="primary-button"
                   >
-                    📝 Register
+                    Register
                   </Link>
 
-                </>
-
-              ) : (
-
-                <>
-
-                  {user?.name && (
-                    <div className="px-4 py-3 text-blue-100">
-                      👤 Logged in as{" "}
-                      <span className="font-bold text-white">
-                        {user.name}
-                      </span>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handleLogout}
-                    className="text-left px-4 py-3 rounded-lg bg-red-500 hover:bg-red-600 transition font-semibold"
-                  >
-                    🚪 Logout
-                  </button>
-
-                </>
-
+                </div>
               )}
 
             </div>
 
           </div>
-
         )}
 
       </div>
 
-    </nav>
+    </header>
   );
 }
