@@ -14,16 +14,16 @@ const aiRoutes = require("./routes/aiRoutes");
 const app = express();
 
 
-// ======================================
+// ======================================================
 // CONNECT MONGODB
-// ======================================
+// ======================================================
 
 connectDB();
 
 
-// ======================================
+// ======================================================
 // CORS
-// ======================================
+// ======================================================
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -33,27 +33,30 @@ const allowedOrigins = [
   "https://student-resources-hub-live-y438-puhj1vkih-student-resource-hub1.vercel.app",
 ];
 
-
 app.use(
   cors({
     origin: function (origin, callback) {
 
-      // Allow Postman / server-to-server requests
+      // Allow requests without origin
+      // Example: Postman / server-to-server
       if (!origin) {
         return callback(null, true);
       }
 
-      // Allow exact origins
+      // Exact allowed origins
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      // Allow Vercel deployments
+      // Allow all Vercel preview deployments
       if (origin.endsWith(".vercel.app")) {
         return callback(null, true);
       }
 
-      console.log("CORS BLOCKED ORIGIN:", origin);
+      console.log(
+        "❌ CORS BLOCKED ORIGIN:",
+        origin
+      );
 
       return callback(
         new Error("Not allowed by CORS")
@@ -79,32 +82,96 @@ app.use(
 );
 
 
-// ======================================
+// ======================================================
 // BODY PARSER
-// ======================================
+// ======================================================
 
-app.use(express.json());
+app.use(
+  express.json({
+    limit: "10mb",
+  })
+);
 
 app.use(
   express.urlencoded({
     extended: true,
+    limit: "10mb",
   })
 );
 
 
-// ======================================
-// API ROUTES
-// ======================================
+// ======================================================
+// HEALTH CHECK
+// ======================================================
+
+app.get("/", (req, res) => {
+
+  return res.status(200).send(
+    "🚀 Student Resources Hub Backend Running"
+  );
+
+});
+
+
+// ======================================================
+// API TEST
+// ======================================================
+
+app.get("/api/test", (req, res) => {
+
+  return res.status(200).json({
+    success: true,
+    message: "Student Resources Hub API is working",
+  });
+
+});
+
+
+// ======================================================
+// AUTH ROUTES
+// ======================================================
 
 app.use(
   "/api/auth",
   authRoutes
 );
 
+
+// ======================================================
+// RESOURCE ROUTES
+// ======================================================
+//
+// Examples:
+//
+// GET    /api/resources
+// GET    /api/resources/category/Notes
+// GET    /api/resources/semester/1st%20Semester
+// GET    /api/resources/branch/Electrical
+// DELETE /api/resources/:id
+//
+// ======================================================
+
 app.use(
   "/api/resources",
   resourceRoutes
 );
+
+
+// ======================================================
+// UPLOAD ROUTES
+// ======================================================
+//
+// IMPORTANT:
+//
+// Admin frontend sends:
+//
+// POST /api/upload
+//
+// Therefore this router must remain:
+//
+// /api/upload
+//
+// ======================================================
 
 app.use(
   "/api/upload",
@@ -112,9 +179,9 @@ app.use(
 );
 
 
-// ======================================
+// ======================================================
 // AI QUESTION PAPER ROUTES
-// ======================================
+// ======================================================
 
 app.use(
   "/api/ai",
@@ -122,9 +189,17 @@ app.use(
 );
 
 
-// ======================================
+// ======================================================
 // STATIC UPLOADS
-// ======================================
+// ======================================================
+//
+// For local uploaded files:
+//
+// /uploads/filename.pdf
+//
+// Cloudinary resources will normally use their
+// Cloudinary URL directly.
+//
 
 app.use(
   "/uploads",
@@ -134,36 +209,13 @@ app.use(
 );
 
 
-// ======================================
-// HOME TEST
-// ======================================
-
-app.get("/", (req, res) => {
-
-  res.status(200).send(
-    "🚀 Student Resources Hub Backend Running"
-  );
-
-});
-
-
-// ======================================
-// API TEST
-// ======================================
-
-app.get("/api/test", (req, res) => {
-
-  res.status(200).json({
-    success: true,
-    message: "Student Resources Hub API is working",
-  });
-
-});
-
-
-// ======================================
+// ======================================================
 // RESOURCE DELETE TEST
-// ======================================
+// ======================================================
+//
+// This is only a development test route.
+// It is intentionally kept before the 404 handler.
+//
 
 app.delete(
   "/api/resources/test-delete",
@@ -173,7 +225,7 @@ app.delete(
       "DELETE TEST ROUTE HIT"
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "DELETE route is working",
     });
@@ -182,54 +234,58 @@ app.delete(
 );
 
 
-// ======================================
+// ======================================================
 // 404 HANDLER
-// ======================================
+// ======================================================
 
-app.use((req, res) => {
+app.use(
+  (req, res) => {
 
-  console.log(
-    "404 ROUTE NOT FOUND:",
-    req.method,
-    req.originalUrl
-  );
+    console.log(
+      "❌ 404 ROUTE NOT FOUND:",
+      req.method,
+      req.originalUrl
+    );
 
-  res.status(404).json({
+    return res.status(404).json({
 
-    success: false,
+      success: false,
 
-    message: "Route Not Found",
+      message: "Route Not Found",
 
-    method: req.method,
+      method: req.method,
 
-    path: req.originalUrl,
+      path: req.originalUrl,
 
-  });
+    });
 
-});
+  }
+);
 
 
-// ======================================
-// ERROR HANDLER
-// ======================================
+// ======================================================
+// GLOBAL ERROR HANDLER
+// ======================================================
 
 app.use(
   (err, req, res, next) => {
 
     console.error(
-      "================================="
+      "======================================"
     );
 
     console.error(
-      "SERVER ERROR:",
-      err
+      "❌ SERVER ERROR:"
     );
+
+    console.error(err);
 
     console.error(
-      "================================="
+      "======================================"
     );
 
-    res.status(
+
+    return res.status(
       err.status || 500
     ).json({
 
@@ -245,20 +301,35 @@ app.use(
 );
 
 
-// ======================================
+// ======================================================
 // START SERVER
-// ======================================
+// ======================================================
 
 const PORT =
   process.env.PORT || 5000;
-
 
 app.listen(
   PORT,
   () => {
 
     console.log(
-      `🚀 Server running on port ${PORT}`
+      "======================================"
+    );
+
+    console.log(
+      `🚀 Student Resources Hub Server`
+    );
+
+    console.log(
+      `🚀 Running on port ${PORT}`
+    );
+
+    console.log(
+      `🚀 API: http://localhost:${PORT}/api`
+    );
+
+    console.log(
+      "======================================"
     );
 
   }
