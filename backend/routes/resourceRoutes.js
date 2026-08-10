@@ -8,7 +8,7 @@ const cloudinary = require("../config/cloudinary");
 const router = express.Router();
 
 // ==========================================
-// CONSTANTS
+// ALLOWED BRANCHES
 // ==========================================
 
 const ALLOWED_BRANCHES = [
@@ -20,6 +20,10 @@ const ALLOWED_BRANCHES = [
   "Leather Technology",
 ];
 
+// ==========================================
+// ALLOWED CATEGORIES
+// ==========================================
+
 const ALLOWED_CATEGORIES = [
   "Notes",
   "PYQ",
@@ -29,19 +33,7 @@ const ALLOWED_CATEGORIES = [
 ];
 
 // ==========================================
-// HELPER - ESCAPE REGEX
-// ==========================================
-
-const escapeRegex = (value = "") => {
-  return value.replace(
-    /[.*+?^${}()|[\]\\]/g,
-    "\\$&"
-  );
-};
-
-// ==========================================
 // GET ALL RESOURCES
-// GET /api/resources
 // ==========================================
 
 router.get("/", async (req, res) => {
@@ -69,91 +61,7 @@ router.get("/", async (req, res) => {
 });
 
 // ==========================================
-// GET RESOURCES BY BRANCH + CATEGORY
-// IMPORTANT: keep before /branch/:branch
-//
-// GET
-// /api/resources/branch/Computer%20Science/category/Notes
-// ==========================================
-
-router.get(
-  "/branch/:branch/category/:category",
-  async (req, res) => {
-    try {
-      const branch = decodeURIComponent(
-        req.params.branch
-      ).trim();
-
-      const category = decodeURIComponent(
-        req.params.category
-      ).trim();
-
-      // --------------------------------------
-      // VALIDATE BRANCH
-      // --------------------------------------
-
-      if (!ALLOWED_BRANCHES.includes(branch)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid branch",
-          allowedBranches: ALLOWED_BRANCHES,
-        });
-      }
-
-      // --------------------------------------
-      // VALIDATE CATEGORY
-      // --------------------------------------
-
-      if (!ALLOWED_CATEGORIES.includes(category)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid category",
-          allowedCategories: ALLOWED_CATEGORIES,
-        });
-      }
-
-      // --------------------------------------
-      // FIND
-      // --------------------------------------
-
-      const resources = await Resource.find({
-        branch,
-        category,
-      })
-        .populate(
-          "uploadedBy",
-          "name email"
-        )
-        .sort({
-          createdAt: -1,
-        });
-
-      return res.status(200).json({
-        success: true,
-        branch,
-        category,
-        count: resources.length,
-        resources,
-      });
-    } catch (error) {
-      console.error(
-        "BRANCH CATEGORY ERROR:",
-        error
-      );
-
-      return res.status(500).json({
-        success: false,
-        message:
-          "Failed to load branch resources",
-      });
-    }
-  }
-);
-
-// ==========================================
 // GET RESOURCES BY BRANCH
-//
-// GET /api/resources/branch/Computer%20Science
 // ==========================================
 
 router.get(
@@ -172,16 +80,17 @@ router.get(
         });
       }
 
-      const resources = await Resource.find({
-        branch,
-      })
-        .populate(
-          "uploadedBy",
-          "name email"
-        )
-        .sort({
-          createdAt: -1,
-        });
+      const resources =
+        await Resource.find({
+          branch,
+        })
+          .populate(
+            "uploadedBy",
+            "name email"
+          )
+          .sort({
+            createdAt: -1,
+          });
 
       return res.status(200).json({
         success: true,
@@ -191,7 +100,7 @@ router.get(
       });
     } catch (error) {
       console.error(
-        "BRANCH RESOURCES ERROR:",
+        "GET BRANCH RESOURCES ERROR:",
         error
       );
 
@@ -205,12 +114,77 @@ router.get(
 );
 
 // ==========================================
+// GET RESOURCES BY BRANCH + CATEGORY
+// ==========================================
+
+router.get(
+  "/branch/:branch/category/:category",
+  async (req, res) => {
+    try {
+      const branch = decodeURIComponent(
+        req.params.branch
+      ).trim();
+
+      const category = decodeURIComponent(
+        req.params.category
+      ).trim();
+
+      if (!ALLOWED_BRANCHES.includes(branch)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid branch",
+        });
+      }
+
+      if (!ALLOWED_CATEGORIES.includes(category)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid category",
+          allowedCategories:
+            ALLOWED_CATEGORIES,
+        });
+      }
+
+      const resources =
+        await Resource.find({
+          branch,
+          category: {
+            $regex: `^${category}$`,
+            $options: "i",
+          },
+        })
+          .populate(
+            "uploadedBy",
+            "name email"
+          )
+          .sort({
+            createdAt: -1,
+          });
+
+      return res.status(200).json({
+        success: true,
+        branch,
+        category,
+        count: resources.length,
+        resources,
+      });
+    } catch (error) {
+      console.error(
+        "BRANCH CATEGORY ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to load branch category resources",
+      });
+    }
+  }
+);
+
+// ==========================================
 // GET RESOURCES BY CATEGORY
-//
-// GET /api/resources/category/Notes
-// GET /api/resources/category/PYQ
-// GET /api/resources/category/Syllabus
-// GET /api/resources/category/Ebooks
 // ==========================================
 
 router.get(
@@ -221,14 +195,7 @@ router.get(
         req.params.category
       ).trim();
 
-      const matchedCategory =
-        ALLOWED_CATEGORIES.find(
-          (item) =>
-            item.toLowerCase() ===
-            category.toLowerCase()
-        );
-
-      if (!matchedCategory) {
+      if (!ALLOWED_CATEGORIES.includes(category)) {
         return res.status(400).json({
           success: false,
           message: "Invalid category",
@@ -237,20 +204,23 @@ router.get(
         });
       }
 
-      const resources = await Resource.find({
-        category: matchedCategory,
-      })
-        .populate(
-          "uploadedBy",
-          "name email"
-        )
-        .sort({
-          createdAt: -1,
-        });
+      const resources =
+        await Resource.find({
+          category: {
+            $regex: `^${category}$`,
+            $options: "i",
+          },
+        })
+          .populate(
+            "uploadedBy",
+            "name email"
+          )
+          .sort({
+            createdAt: -1,
+          });
 
       return res.status(200).json({
         success: true,
-        category: matchedCategory,
         count: resources.length,
         resources,
       });
@@ -271,8 +241,6 @@ router.get(
 
 // ==========================================
 // GET RESOURCES BY SEMESTER
-//
-// GET /api/resources/semester/1st%20Semester
 // ==========================================
 
 router.get(
@@ -283,26 +251,20 @@ router.get(
         req.params.semester
       ).trim();
 
-      if (!semester) {
-        return res.status(400).json({
-          success: false,
-          message: "Semester is required",
-        });
-      }
-
-      const resources = await Resource.find({
-        semester: {
-          $regex: `^${escapeRegex(semester)}$`,
-          $options: "i",
-        },
-      })
-        .populate(
-          "uploadedBy",
-          "name email"
-        )
-        .sort({
-          createdAt: -1,
-        });
+      const resources =
+        await Resource.find({
+          semester: {
+            $regex: `^${semester}$`,
+            $options: "i",
+          },
+        })
+          .populate(
+            "uploadedBy",
+            "name email"
+          )
+          .sort({
+            createdAt: -1,
+          });
 
       return res.status(200).json({
         success: true,
@@ -326,9 +288,147 @@ router.get(
 );
 
 // ==========================================
+// GET RESOURCES BY BRANCH + SEMESTER
+// ==========================================
+
+router.get(
+  "/branch/:branch/semester/:semester",
+  async (req, res) => {
+    try {
+      const branch = decodeURIComponent(
+        req.params.branch
+      ).trim();
+
+      const semester = decodeURIComponent(
+        req.params.semester
+      ).trim();
+
+      if (!ALLOWED_BRANCHES.includes(branch)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid branch",
+        });
+      }
+
+      const resources =
+        await Resource.find({
+          branch,
+          semester: {
+            $regex: `^${semester}$`,
+            $options: "i",
+          },
+        })
+          .populate(
+            "uploadedBy",
+            "name email"
+          )
+          .sort({
+            createdAt: -1,
+          });
+
+      return res.status(200).json({
+        success: true,
+        branch,
+        semester,
+        count: resources.length,
+        resources,
+      });
+    } catch (error) {
+      console.error(
+        "BRANCH SEMESTER ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to load branch semester resources",
+      });
+    }
+  }
+);
+
+// ==========================================
+// GET BRANCH + SEMESTER + CATEGORY
+// ==========================================
+
+router.get(
+  "/branch/:branch/semester/:semester/category/:category",
+  async (req, res) => {
+    try {
+      const branch = decodeURIComponent(
+        req.params.branch
+      ).trim();
+
+      const semester = decodeURIComponent(
+        req.params.semester
+      ).trim();
+
+      const category = decodeURIComponent(
+        req.params.category
+      ).trim();
+
+      if (!ALLOWED_BRANCHES.includes(branch)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid branch",
+        });
+      }
+
+      if (!ALLOWED_CATEGORIES.includes(category)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid category",
+        });
+      }
+
+      const resources =
+        await Resource.find({
+          branch,
+
+          semester: {
+            $regex: `^${semester}$`,
+            $options: "i",
+          },
+
+          category: {
+            $regex: `^${category}$`,
+            $options: "i",
+          },
+        })
+          .populate(
+            "uploadedBy",
+            "name email"
+          )
+          .sort({
+            createdAt: -1,
+          });
+
+      return res.status(200).json({
+        success: true,
+        branch,
+        semester,
+        category,
+        count: resources.length,
+        resources,
+      });
+    } catch (error) {
+      console.error(
+        "BRANCH SEMESTER CATEGORY ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to load resources",
+      });
+    }
+  }
+);
+
+// ==========================================
 // SEARCH RESOURCES
-//
-// GET /api/resources/search/:keyword
 // ==========================================
 
 router.get(
@@ -346,48 +446,21 @@ router.get(
         });
       }
 
-      const safeKeyword =
-        escapeRegex(keyword);
+      const regex = {
+        $regex: keyword,
+        $options: "i",
+      };
 
       const resources =
         await Resource.find({
           $or: [
-            {
-              title: {
-                $regex: safeKeyword,
-                $options: "i",
-              },
-            },
-            {
-              subject: {
-                $regex: safeKeyword,
-                $options: "i",
-              },
-            },
-            {
-              description: {
-                $regex: safeKeyword,
-                $options: "i",
-              },
-            },
-            {
-              branch: {
-                $regex: safeKeyword,
-                $options: "i",
-              },
-            },
-            {
-              semester: {
-                $regex: safeKeyword,
-                $options: "i",
-              },
-            },
-            {
-              fileName: {
-                $regex: safeKeyword,
-                $options: "i",
-              },
-            },
+            { title: regex },
+            { description: regex },
+            { subject: regex },
+            { branch: regex },
+            { semester: regex },
+            { category: regex },
+            { fileName: regex },
           ],
         })
           .populate(
@@ -421,8 +494,6 @@ router.get(
 // ==========================================
 // DELETE RESOURCE
 // ADMIN ONLY
-//
-// DELETE /api/resources/:id
 // ==========================================
 
 router.delete(
@@ -433,13 +504,25 @@ router.delete(
       const { id } = req.params;
 
       console.log(
-        "DELETE RESOURCE ID:",
+        "================================="
+      );
+
+      console.log(
+        "DELETE RESOURCE REQUEST"
+      );
+
+      console.log(
+        "RESOURCE ID:",
         id
       );
 
-      // --------------------------------------
-      // VALIDATE OBJECT ID
-      // --------------------------------------
+      console.log(
+        "================================="
+      );
+
+      // ======================================
+      // VALIDATE MONGODB ID
+      // ======================================
 
       if (
         !mongoose.Types.ObjectId.isValid(id)
@@ -450,9 +533,9 @@ router.delete(
         });
       }
 
-      // --------------------------------------
+      // ======================================
       // FIND RESOURCE
-      // --------------------------------------
+      // ======================================
 
       const resource =
         await Resource.findById(id);
@@ -464,9 +547,9 @@ router.delete(
         });
       }
 
-      // --------------------------------------
+      // ======================================
       // DELETE CLOUDINARY FILE
-      // --------------------------------------
+      // ======================================
 
       if (resource.filePublicId) {
         try {
@@ -491,13 +574,14 @@ router.delete(
             cloudinaryError
           );
 
-          // MongoDB deletion will continue.
+          // We don't stop MongoDB deletion
+          // if Cloudinary deletion fails.
         }
       }
 
-      // --------------------------------------
-      // DELETE MONGODB DOCUMENT
-      // --------------------------------------
+      // ======================================
+      // DELETE MONGODB RESOURCE
+      // ======================================
 
       await Resource.findByIdAndDelete(id);
 
@@ -506,15 +590,28 @@ router.delete(
         id
       );
 
+      // ======================================
+      // SUCCESS
+      // ======================================
+
       return res.status(200).json({
         success: true,
         message:
           "Resource deleted successfully",
+        resourceId: id,
       });
     } catch (error) {
       console.error(
+        "================================="
+      );
+
+      console.error(
         "DELETE RESOURCE ERROR:",
         error
+      );
+
+      console.error(
+        "================================="
       );
 
       return res.status(500).json({
