@@ -52,21 +52,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-5 py-16">
-
-          <div className="mb-10 text-center">
-
-            <p className="text-sm font-bold uppercase tracking-wider text-blue-600">
-              Quick Access
-            </p>
-
-            <h2 className="mt-2 text-3xl font-extrabold text-gray-900">
-              Everything You Need
-            </h2>
-
-            <p className="mt-3 text-gray-600">
-              Choose what you want to study today.
-            </p>
+        
 
           </div>
 
