@@ -2,11 +2,13 @@ import { Link } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 
-export default function Home() {
-  return (
-    <>
-      <Navbar />
+return (
+  <>
+    <div className="bg-red-600 text-white text-center p-5 text-2xl font-bold">
+      NEW HOME PAGE TEST
+    </div>
 
+    <Navbar />
       {/* =========================================
           HERO SECTION
       ========================================= */}
