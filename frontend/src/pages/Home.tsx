@@ -2,554 +2,882 @@ import { Link } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 
-const branches = [
-  {
-    name: "Computer Science",
-    short: "CSE",
-    description:
-      "Programming, DBMS, data structures, networks and software development resources.",
-    path: "/branch/cse",
-  },
-  {
-    name: "Electrical Engineering",
-    short: "Electrical",
-    description:
-      "Electrical circuits, machines, power systems and engineering study material.",
-    path: "/branch/electrical",
-  },
-  {
-    name: "Mechanical Engineering",
-    short: "Mechanical",
-    description:
-      "Thermodynamics, mechanics, manufacturing and mechanical engineering resources.",
-    path: "/branch/mechanical",
-  },
-  {
-    name: "Civil Engineering / CTM",
-    short: "Civil / CTM",
-    description:
-      "Civil engineering and CTM resources organized for semester-wise study.",
-    path: "/branch/civil-ctm",
-  },
-  {
-    name: "Electronics Engineering",
-    short: "Electronics",
-    description:
-      "Digital systems, communication, electronics and related study material.",
-    path: "/branch/electronics",
-  },
-  {
-    name: "Leather Technology",
-    short: "Leather Technology",
-    description:
-      "Leather processing, chemistry, technology and semester-wise resources.",
-    path: "/branch/leather-technology",
-  },
-];
-
-const resourceTypes = [
-  {
-    title: "Notes",
-    description: "Semester-wise notes for regular study and revision.",
-    path: "/notes",
-    number: "01",
-  },
-  {
-    title: "Previous Year Questions",
-    description: "Practice previous papers and understand exam patterns.",
-    path: "/pyq",
-    number: "02",
-  },
-  {
-    title: "Syllabus",
-    description: "Keep your subjects and semester syllabus organized.",
-    path: "/syllabus",
-    number: "03",
-  },
-  {
-    title: "E-Books",
-    description: "Useful books and reference material in one place.",
-    path: "/ebooks",
-    number: "04",
-  },
-];
-
 export default function Home() {
   return (
     <>
       <Navbar />
 
-      {/* =====================================================
-          HERO
-      ===================================================== */}
+      {/* =========================================
+          HERO SECTION
+      ========================================= */}
 
-      <main className="bg-white text-gray-900">
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-700 via-indigo-600 to-cyan-500 text-white">
 
-        <section className="border-b border-gray-200">
-          <div className="page-container">
+        {/* Decorative shapes */}
+        <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/10" />
+        <div className="absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-cyan-300/10" />
 
-            <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-12 lg:gap-20 items-center py-16 md:py-24 lg:py-28">
+        <div className="relative max-w-7xl mx-auto px-5 sm:px-6 py-20 md:py-28">
 
-              {/* LEFT */}
+          <div className="max-w-4xl mx-auto text-center">
 
-              <div>
-
-                <div className="inline-flex items-center gap-2 border border-blue-200 bg-blue-50 rounded-full px-4 py-2 mb-7">
-                  <span className="h-2 w-2 rounded-full bg-blue-600" />
-                  <span className="text-sm font-semibold text-blue-700">
-                    Built for students
-                  </span>
-                </div>
-
-                <h1 className="max-w-3xl text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08] text-gray-950">
-                  Your study material,
-                  <span className="block text-blue-700">
-                    all in one place.
-                  </span>
-                </h1>
-
-                <p className="max-w-2xl mt-6 text-base sm:text-lg leading-8 text-gray-600">
-                  Student Resources Hub makes it easier to find notes,
-                  previous year questions, syllabus and e-books without
-                  searching through different places.
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-3 mt-8">
-
-                  <Link
-                    to="/notes"
-                    className="primary-button justify-center min-h-[48px] px-6"
-                  >
-                    Explore Resources
-                  </Link>
-
-                  <Link
-                    to="/branches"
-                    className="secondary-button justify-center min-h-[48px] px-6"
-                  >
-                    Browse by Branch
-                  </Link>
-
-                </div>
-
-                <div className="flex flex-wrap gap-x-8 gap-y-3 mt-9 pt-7 border-t border-gray-200">
-
-                  <div>
-                    <p className="text-xl font-bold text-gray-950">
-                      6
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Semesters
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xl font-bold text-gray-950">
-                      6+
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Branches
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xl font-bold text-gray-950">
-                      4
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Resource types
-                    </p>
-                  </div>
-
-                </div>
-
-              </div>
-
-
-              {/* RIGHT — CUSTOM UI, NO IMAGE */}
-
-              <div className="relative">
-
-                <div className="rounded-3xl border border-gray-200 bg-gray-50 p-5 sm:p-7">
-
-                  <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-
-                    {/* WINDOW HEADER */}
-
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-
-                      <div className="flex items-center gap-2">
-
-                        <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
-                        <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
-                        <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
-
-                      </div>
-
-                      <span className="text-xs font-medium text-gray-400">
-                        Student Resources Hub
-                      </span>
-
-                    </div>
-
-
-                    {/* DASHBOARD */}
-
-                    <div className="p-5 sm:p-6">
-
-                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                        Study dashboard
-                      </p>
-
-                      <h2 className="text-xl font-bold mt-2 text-gray-900">
-                        Find what you need
-                      </h2>
-
-                      <div className="grid grid-cols-2 gap-3 mt-5">
-
-                        <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
-                          <p className="text-xs font-semibold text-blue-600">
-                            NOTES
-                          </p>
-                          <p className="mt-2 text-lg font-bold text-gray-900">
-                            Study
-                          </p>
-                        </div>
-
-                        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                          <p className="text-xs font-semibold text-gray-500">
-                            PYQ
-                          </p>
-                          <p className="mt-2 text-lg font-bold text-gray-900">
-                            Practice
-                          </p>
-                        </div>
-
-                        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                          <p className="text-xs font-semibold text-gray-500">
-                            SYLLABUS
-                          </p>
-                          <p className="mt-2 text-lg font-bold text-gray-900">
-                            Plan
-                          </p>
-                        </div>
-
-                        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                          <p className="text-xs font-semibold text-gray-500">
-                            E-BOOKS
-                          </p>
-                          <p className="mt-2 text-lg font-bold text-gray-900">
-                            Read
-                          </p>
-                        </div>
-
-                      </div>
-
-
-                      <div className="mt-5 rounded-xl bg-gray-900 p-4">
-
-                        <div className="flex items-center justify-between">
-
-                          <div>
-                            <p className="text-xs text-gray-400">
-                              CURRENT SEMESTER
-                            </p>
-
-                            <p className="text-sm font-semibold text-white mt-1">
-                              Choose resources and start learning
-                            </p>
-                          </div>
-
-                          <span className="text-blue-400 text-lg">
-                            →
-                          </span>
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-semibold backdrop-blur mb-7">
+              <span>🎓</span>
+              <span>Study Smarter • Learn Better</span>
             </div>
 
-          </div>
-        </section>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight">
+              Student Resources
+              <span className="block text-cyan-200">
+                Hub
+              </span>
+            </h1>
 
+            <p className="mt-6 text-lg sm:text-xl md:text-2xl font-semibold text-blue-50">
+              Everything you need for your college preparation.
+            </p>
 
-        {/* =====================================================
-            RESOURCE TYPES
-        ===================================================== */}
+            <p className="max-w-2xl mx-auto mt-5 text-sm sm:text-base md:text-lg leading-7 text-blue-100">
+              Access Notes, Previous Year Questions, Syllabus,
+              E-Books and AI-powered question papers from one
+              simple platform.
+            </p>
 
-        <section className="py-16 md:py-20">
-
-          <div className="page-container">
-
-            <div className="max-w-2xl mb-10">
-
-              <p className="text-sm font-bold uppercase tracking-wider text-blue-700">
-                Resources
-              </p>
-
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-2">
-                Everything you need for your studies.
-              </h2>
-
-              <p className="text-gray-600 mt-4 leading-7">
-                Choose a resource category and get directly to the
-                material you are looking for.
-              </p>
-
-            </div>
-
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-              {resourceTypes.map((resource) => (
-
-                <Link
-                  key={resource.number}
-                  to={resource.path}
-                  className="group"
-                >
-
-                  <div className="h-full rounded-2xl border border-gray-200 bg-white p-6 transition duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg">
-
-                    <div className="flex items-center justify-between">
-
-                      <span className="text-sm font-bold text-blue-600">
-                        {resource.number}
-                      </span>
-
-                      <span className="text-gray-300 group-hover:text-blue-600 transition">
-                        →
-                      </span>
-
-                    </div>
-
-                    <h3 className="text-lg font-bold mt-8">
-                      {resource.title}
-                    </h3>
-
-                    <p className="text-sm text-gray-600 leading-6 mt-3">
-                      {resource.description}
-                    </p>
-
-                  </div>
-
-                </Link>
-
-              ))}
-
-            </div>
-
-          </div>
-
-        </section>
-
-
-        {/* =====================================================
-            BRANCHES
-        ===================================================== */}
-
-        <section className="bg-gray-50 border-y border-gray-200 py-16 md:py-20">
-
-          <div className="page-container">
-
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-10">
-
-              <div className="max-w-2xl">
-
-                <p className="text-sm font-bold uppercase tracking-wider text-blue-700">
-                  Branches
-                </p>
-
-                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-2">
-                  Find resources for your branch.
-                </h2>
-
-                <p className="text-gray-600 mt-4 leading-7">
-                  Select your engineering branch and explore the
-                  available study material.
-                </p>
-
-              </div>
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mt-9">
 
               <Link
-                to="/branches"
-                className="text-sm font-bold text-blue-700 hover:text-blue-800"
+                to="/notes"
+                className="inline-flex items-center justify-center rounded-xl bg-white px-7 py-3.5 font-bold text-blue-700 shadow-lg transition hover:-translate-y-1 hover:shadow-xl"
               >
-                View all branches →
+                📚 Explore Resources
+              </Link>
+
+              <Link
+                to="/ai-question-paper"
+                className="inline-flex items-center justify-center rounded-xl border border-white/30 bg-white/10 px-7 py-3.5 font-bold text-white backdrop-blur transition hover:bg-white/20 hover:-translate-y-1"
+              >
+                🤖 Generate AI Paper
               </Link>
 
             </div>
 
+          </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        </div>
+      </section>
 
-              {branches.map((branch) => (
 
-                <Link
-                  key={branch.short}
-                  to={branch.path}
-                  className="group"
-                >
+      {/* =========================================
+          QUICK ACCESS
+      ========================================= */}
 
-                  <div className="h-full rounded-2xl border border-gray-200 bg-white p-6 transition duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg">
+      <section className="bg-slate-50 py-14">
 
-                    <div className="flex items-start justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6">
 
-                      <div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
 
-                        <span className="inline-flex rounded-lg bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
-                          {branch.short}
-                        </span>
+            <Link
+              to="/notes"
+              className="group rounded-2xl border border-blue-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg"
+            >
+              <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-2xl group-hover:bg-blue-600 transition">
+                📄
+              </div>
 
-                        <h3 className="text-lg font-bold mt-4">
-                          {branch.name}
-                        </h3>
+              <h3 className="font-bold text-gray-900">
+                Notes
+              </h3>
 
-                      </div>
+              <p className="mt-1 text-sm text-gray-500">
+                Semester notes
+              </p>
+            </Link>
 
-                      <span className="text-xl text-gray-300 group-hover:text-blue-600 transition">
-                        →
-                      </span>
 
-                    </div>
+            <Link
+              to="/pyq"
+              className="group rounded-2xl border border-orange-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+            >
+              <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-orange-100 text-2xl group-hover:bg-orange-500 transition">
+                📝
+              </div>
 
-                    <p className="text-sm text-gray-600 leading-6 mt-3">
-                      {branch.description}
-                    </p>
+              <h3 className="font-bold text-gray-900">
+                PYQ
+              </h3>
 
+              <p className="mt-1 text-sm text-gray-500">
+                Previous papers
+              </p>
+            </Link>
+
+
+            <Link
+              to="/syllabus"
+              className="group rounded-2xl border border-purple-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-purple-300 hover:shadow-lg"
+            >
+              <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-2xl group-hover:bg-purple-600 transition">
+                📘
+              </div>
+
+              <h3 className="font-bold text-gray-900">
+                Syllabus
+              </h3>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Course syllabus
+              </p>
+            </Link>
+
+
+            <Link
+              to="/ebooks"
+              className="group rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-emerald-300 hover:shadow-lg"
+            >
+              <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-2xl group-hover:bg-emerald-600 transition">
+                📖
+              </div>
+
+              <h3 className="font-bold text-gray-900">
+                E-Books
+              </h3>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Useful study books
+              </p>
+            </Link>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =========================================
+          CHOOSE YOUR BRANCH
+      ========================================= */}
+
+      <section className="bg-white py-20">
+
+        <div className="max-w-7xl mx-auto px-5 sm:px-6">
+
+          <div className="max-w-2xl mx-auto text-center mb-12">
+
+            <span className="inline-block rounded-full bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700">
+              🎓 College Branches
+            </span>
+
+            <h2 className="mt-4 text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900">
+              Choose Your Branch
+            </h2>
+
+            <p className="mt-4 text-gray-600 leading-7">
+              Find study materials according to your branch,
+              semester and subjects.
+            </p>
+
+          </div>
+
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+
+            {/* CSE */}
+
+            <Link to="/branch/cse" className="group">
+
+              <div className="h-full rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-blue-300 hover:shadow-xl">
+
+                <div className="flex items-center justify-between">
+
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-blue-600 text-3xl shadow-md">
+                    💻
                   </div>
 
-                </Link>
+                  <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
+                    CSE
+                  </span>
 
-              ))}
+                </div>
+
+                <h3 className="mt-6 text-xl font-extrabold text-gray-900">
+                  Computer Science
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-gray-600">
+                  Programming, DBMS, Data Structures,
+                  Networks, Operating Systems and more.
+                </p>
+
+                <div className="mt-6 font-bold text-blue-700 group-hover:text-blue-800">
+                  Explore CSE →
+                </div>
+
+              </div>
+
+            </Link>
+
+
+            {/* ELECTRICAL */}
+
+            <Link to="/branch/electrical" className="group">
+
+              <div className="h-full rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-amber-300 hover:shadow-xl">
+
+                <div className="flex items-center justify-between">
+
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-amber-500 text-3xl shadow-md">
+                    ⚡
+                  </div>
+
+                  <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
+                    Electrical
+                  </span>
+
+                </div>
+
+                <h3 className="mt-6 text-xl font-extrabold text-gray-900">
+                  Electrical Engineering
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-gray-600">
+                  Electrical circuits, machines, power systems
+                  and engineering resources.
+                </p>
+
+                <div className="mt-6 font-bold text-amber-600 group-hover:text-amber-700">
+                  Explore Electrical →
+                </div>
+
+              </div>
+
+            </Link>
+
+
+            {/* MECHANICAL */}
+
+            <Link to="/branch/mechanical" className="group">
+
+              <div className="h-full rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-gray-100 p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-slate-300 hover:shadow-xl">
+
+                <div className="flex items-center justify-between">
+
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-slate-700 text-3xl shadow-md">
+                    🔧
+                  </div>
+
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                    Mechanical
+                  </span>
+
+                </div>
+
+                <h3 className="mt-6 text-xl font-extrabold text-gray-900">
+                  Mechanical Engineering
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-gray-600">
+                  Manufacturing, thermodynamics, mechanics
+                  and mechanical engineering resources.
+                </p>
+
+                <div className="mt-6 font-bold text-slate-700 group-hover:text-slate-900">
+                  Explore Mechanical →
+                </div>
+
+              </div>
+
+            </Link>
+
+
+            {/* CIVIL */}
+
+            <Link to="/branch/civil-ctm" className="group">
+
+              <div className="h-full rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-green-50 p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-emerald-300 hover:shadow-xl">
+
+                <div className="flex items-center justify-between">
+
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-600 text-3xl shadow-md">
+                    🏗️
+                  </div>
+
+                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
+                    Civil / CTM
+                  </span>
+
+                </div>
+
+                <h3 className="mt-6 text-xl font-extrabold text-gray-900">
+                  Civil Engineering / CTM
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-gray-600">
+                  Civil and CTM resources organized in
+                  one common study section.
+                </p>
+
+                <div className="mt-6 font-bold text-emerald-700 group-hover:text-emerald-800">
+                  Explore Civil / CTM →
+                </div>
+
+              </div>
+
+            </Link>
+
+
+            {/* ELECTRONICS */}
+
+            <Link to="/branch/electronics" className="group">
+
+              <div className="h-full rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-indigo-50 p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-violet-300 hover:shadow-xl">
+
+                <div className="flex items-center justify-between">
+
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-violet-600 text-3xl shadow-md">
+                    📡
+                  </div>
+
+                  <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-700">
+                    Electronics
+                  </span>
+
+                </div>
+
+                <h3 className="mt-6 text-xl font-extrabold text-gray-900">
+                  Electronics Engineering
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-gray-600">
+                  Electronics, communication, digital systems
+                  and related study resources.
+                </p>
+
+                <div className="mt-6 font-bold text-violet-700 group-hover:text-violet-800">
+                  Explore Electronics →
+                </div>
+
+              </div>
+
+            </Link>
+
+
+            {/* LEATHER */}
+
+            <Link to="/branch/leather-technology" className="group">
+
+              <div className="h-full rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50 via-white to-pink-50 p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-rose-300 hover:shadow-xl">
+
+                <div className="flex items-center justify-between">
+
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-rose-600 text-3xl shadow-md">
+                    🧪
+                  </div>
+
+                  <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700">
+                    Leather
+                  </span>
+
+                </div>
+
+                <h3 className="mt-6 text-xl font-extrabold text-gray-900">
+                  Leather Technology
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-gray-600">
+                  Leather processing, technology, chemistry
+                  and semester-wise study resources.
+                </p>
+
+                <div className="mt-6 font-bold text-rose-700 group-hover:text-rose-800">
+                  Explore Leather →
+                </div>
+
+              </div>
+
+            </Link>
+
+          </div>
+
+        </div>
+
+      </section>
+      {/* =========================================
+          WHY CHOOSE US
+      ========================================= */}
+
+      <section className="bg-slate-50 py-20">
+
+        <div className="max-w-7xl mx-auto px-5 sm:px-6">
+
+          <div className="max-w-2xl mx-auto text-center mb-12">
+
+            <span className="inline-block rounded-full bg-indigo-100 px-4 py-2 text-sm font-bold text-indigo-700">
+              ✨ Why Student Resources Hub?
+            </span>
+
+            <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold text-gray-900">
+              Made for Students
+            </h2>
+
+            <p className="mt-4 text-gray-600 leading-7">
+              Everything is organized in a simple way so you can
+              spend less time searching and more time studying.
+            </p>
+
+          </div>
+
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+            {/* CARD 1 */}
+
+            <div className="group rounded-2xl border border-blue-100 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-3xl transition group-hover:bg-blue-600">
+                ⚡
+              </div>
+
+              <h3 className="mt-5 text-xl font-bold text-gray-900">
+                Fast Access
+              </h3>
+
+              <p className="mt-3 text-sm leading-6 text-gray-600">
+                Quickly find the study material you need
+                without wasting time.
+              </p>
+
+            </div>
+
+
+            {/* CARD 2 */}
+
+            <div className="group rounded-2xl border border-emerald-100 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-3xl transition group-hover:bg-emerald-600">
+                📱
+              </div>
+
+              <h3 className="mt-5 text-xl font-bold text-gray-900">
+                Mobile Friendly
+              </h3>
+
+              <p className="mt-3 text-sm leading-6 text-gray-600">
+                Access your resources comfortably from mobile,
+                tablet or laptop.
+              </p>
+
+            </div>
+
+
+            {/* CARD 3 */}
+
+            <div className="group rounded-2xl border border-purple-100 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-100 text-3xl transition group-hover:bg-purple-600">
+                🎓
+              </div>
+
+              <h3 className="mt-5 text-xl font-bold text-gray-900">
+                Semester Wise
+              </h3>
+
+              <p className="mt-3 text-sm leading-6 text-gray-600">
+                Resources are organized according to your
+                semester and branch.
+              </p>
+
+            </div>
+
+
+            {/* CARD 4 */}
+
+            <div className="group rounded-2xl border border-orange-100 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100 text-3xl transition group-hover:bg-orange-500">
+                📥
+              </div>
+
+              <h3 className="mt-5 text-xl font-bold text-gray-900">
+                Easy Access
+              </h3>
+
+              <p className="mt-3 text-sm leading-6 text-gray-600">
+                Open available PDF resources and study
+                whenever you need them.
+              </p>
 
             </div>
 
           </div>
 
-        </section>
-        {/* =====================================================
-            WHY STUDENT RESOURCES HUB
-        ===================================================== */}
+        </div>
 
-        <section className="py-16 md:py-20">
+      </section>
 
-          <div className="page-container">
 
-            <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-12 lg:gap-20 items-start">
+      {/* =========================================
+          PLATFORM STATISTICS
+      ========================================= */}
+
+      <section className="bg-white py-20">
+
+        <div className="max-w-7xl mx-auto px-5 sm:px-6">
+
+          <div className="text-center mb-12">
+
+            <span className="inline-block rounded-full bg-cyan-100 px-4 py-2 text-sm font-bold text-cyan-700">
+              📊 Platform Overview
+            </span>
+
+            <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold text-gray-900">
+              Resources at a Glance
+            </h2>
+
+            <p className="mt-4 text-gray-600">
+              A growing collection of study material for students.
+            </p>
+
+          </div>
+
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+
+            {/* NOTES */}
+
+            <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-6 md:p-8 text-center shadow-sm">
+
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-xl text-white">
+                📄
+              </div>
+
+              <h3 className="mt-5 text-3xl md:text-4xl font-extrabold text-blue-700">
+                20+
+              </h3>
+
+              <p className="mt-2 font-semibold text-gray-700">
+                Notes
+              </p>
+
+            </div>
+
+
+            {/* PYQ */}
+
+            <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-6 md:p-8 text-center shadow-sm">
+
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500 text-xl text-white">
+                📝
+              </div>
+
+              <h3 className="mt-5 text-3xl md:text-4xl font-extrabold text-orange-600">
+                26+
+              </h3>
+
+              <p className="mt-2 font-semibold text-gray-700">
+                PYQs
+              </p>
+
+            </div>
+
+
+            {/* EBOOK */}
+
+            <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-6 md:p-8 text-center shadow-sm">
+
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-xl text-white">
+                📖
+              </div>
+
+              <h3 className="mt-5 text-3xl md:text-4xl font-extrabold text-emerald-700">
+                11+
+              </h3>
+
+              <p className="mt-2 font-semibold text-gray-700">
+                E-Books
+              </p>
+
+            </div>
+
+
+            {/* SEMESTERS */}
+
+            <div className="rounded-2xl border border-purple-100 bg-gradient-to-br from-purple-50 to-white p-6 md:p-8 text-center shadow-sm">
+
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-purple-600 text-xl text-white">
+                🎓
+              </div>
+
+              <h3 className="mt-5 text-3xl md:text-4xl font-extrabold text-purple-700">
+                6
+              </h3>
+
+              <p className="mt-2 font-semibold text-gray-700">
+                Semesters
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =========================================
+          EXPLORE RESOURCES
+      ========================================= */}
+
+      <section className="bg-slate-50 py-20">
+
+        <div className="max-w-7xl mx-auto px-5 sm:px-6">
+
+          <div className="max-w-2xl mx-auto text-center mb-12">
+
+            <span className="inline-block rounded-full bg-pink-100 px-4 py-2 text-sm font-bold text-pink-700">
+              🔥 Study Resources
+            </span>
+
+            <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold text-gray-900">
+              Explore What You Need
+            </h2>
+
+            <p className="mt-4 text-gray-600 leading-7">
+              Choose a section and start studying with the
+              available resources.
+            </p>
+
+          </div>
+
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+            {/* NOTES */}
+
+            <Link to="/notes" className="group">
+
+              <div className="h-full rounded-2xl border border-blue-100 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-blue-300 hover:shadow-xl">
+
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100 text-3xl group-hover:bg-blue-600 transition">
+                  📄
+                </div>
+
+                <h3 className="mt-5 text-xl font-bold text-gray-900">
+                  Student Notes
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-gray-600">
+                  Read and revise important semester notes.
+                </p>
+
+                <div className="mt-5 font-bold text-blue-700">
+                  View Notes →
+                </div>
+
+              </div>
+
+            </Link>
+
+
+            {/* PYQ */}
+
+            <Link to="/pyq" className="group">
+
+              <div className="h-full rounded-2xl border border-orange-100 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-orange-300 hover:shadow-xl">
+
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-orange-100 text-3xl group-hover:bg-orange-500 transition">
+                  📝
+                </div>
+
+                <h3 className="mt-5 text-xl font-bold text-gray-900">
+                  Previous Papers
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-gray-600">
+                  Practice previous year questions before exams.
+                </p>
+
+                <div className="mt-5 font-bold text-orange-600">
+                  View PYQs →
+                </div>
+
+              </div>
+
+            </Link>
+
+
+            {/* SYLLABUS */}
+
+            <Link to="/syllabus" className="group">
+
+              <div className="h-full rounded-2xl border border-purple-100 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-purple-300 hover:shadow-xl">
+
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-purple-100 text-3xl group-hover:bg-purple-600 transition">
+                  📘
+                </div>
+
+                <h3 className="mt-5 text-xl font-bold text-gray-900">
+                  Syllabus
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-gray-600">
+                  Check your subjects and semester syllabus.
+                </p>
+
+                <div className="mt-5 font-bold text-purple-700">
+                  View Syllabus →
+                </div>
+
+              </div>
+
+            </Link>
+
+
+            {/* EBOOKS */}
+
+            <Link to="/ebooks" className="group">
+
+              <div className="h-full rounded-2xl border border-emerald-100 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-emerald-300 hover:shadow-xl">
+
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-100 text-3xl group-hover:bg-emerald-600 transition">
+                  📖
+                </div>
+
+                <h3 className="mt-5 text-xl font-bold text-gray-900">
+                  E-Books
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-gray-600">
+                  Explore useful books for your studies.
+                </p>
+
+                <div className="mt-5 font-bold text-emerald-700">
+                  View E-Books →
+                </div>
+
+              </div>
+
+            </Link>
+
+          </div>
+
+        </div>
+
+      </section>
+      {/* =========================================
+          AI QUESTION PAPER SECTION
+      ========================================= */}
+
+      <section className="bg-white py-20">
+
+        <div className="max-w-7xl mx-auto px-5 sm:px-6">
+
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 via-purple-700 to-blue-700 text-white shadow-xl">
+
+            <div className="grid lg:grid-cols-2 gap-10 items-center p-8 sm:p-12 lg:p-14">
 
               {/* LEFT */}
 
               <div>
 
-                <p className="text-sm font-bold uppercase tracking-wider text-blue-700">
-                  Why use the platform?
-                </p>
+                <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold">
+                  🤖 AI Study Assistant
+                </span>
 
-                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-2">
-                  Simple tools for everyday study.
+                <h2 className="mt-5 text-3xl sm:text-4xl font-extrabold leading-tight">
+                  Prepare Your Own
+                  <span className="block text-cyan-200">
+                    AI Question Paper
+                  </span>
                 </h2>
 
-                <p className="text-gray-600 leading-7 mt-5">
-                  The platform is designed around the things students
-                  actually need during a semester — finding material,
-                  preparing for exams and keeping study resources organized.
+                <p className="mt-5 max-w-xl text-blue-100 leading-7">
+                  Select your branch, semester, subject and
+                  difficulty level to generate a practice
+                  question paper for your preparation.
                 </p>
+
+                <Link
+                  to="/ai-question-paper"
+                  className="mt-7 inline-flex items-center justify-center rounded-xl bg-white px-7 py-3.5 font-bold text-indigo-700 shadow-lg transition hover:-translate-y-1 hover:shadow-xl"
+                >
+                  🤖 Create AI Paper →
+                </Link>
 
               </div>
 
 
               {/* RIGHT */}
 
-              <div className="divide-y divide-gray-200 border-y border-gray-200">
+              <div className="grid grid-cols-2 gap-4">
 
-                <div className="py-6 flex gap-5">
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
 
-                  <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700 font-bold">
-                    01
+                  <div className="text-3xl">
+                    🎯
                   </div>
 
-                  <div>
-                    <h3 className="font-bold text-lg">
-                      Easy to navigate
-                    </h3>
+                  <h3 className="mt-3 font-bold">
+                    Practice
+                  </h3>
 
-                    <p className="text-sm text-gray-600 leading-6 mt-1">
-                      Resources are separated into clear categories,
-                      branches and semesters so you can reach the right
-                      material quickly.
-                    </p>
-                  </div>
+                  <p className="mt-2 text-sm text-blue-100">
+                    Practice according to your subject.
+                  </p>
 
                 </div>
 
 
-                <div className="py-6 flex gap-5">
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
 
-                  <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700 font-bold">
-                    02
+                  <div className="text-3xl">
+                    🧠
                   </div>
 
-                  <div>
-                    <h3 className="font-bold text-lg">
-                      Built for mobile
-                    </h3>
+                  <h3 className="mt-3 font-bold">
+                    Smart Questions
+                  </h3>
 
-                    <p className="text-sm text-gray-600 leading-6 mt-1">
-                      The layout adapts to phones, tablets and desktop
-                      screens without making the interface difficult to use.
-                    </p>
-                  </div>
+                  <p className="mt-2 text-sm text-blue-100">
+                    Generate useful practice questions.
+                  </p>
 
                 </div>
 
 
-                <div className="py-6 flex gap-5">
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
 
-                  <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700 font-bold">
-                    03
+                  <div className="text-3xl">
+                    📚
                   </div>
 
-                  <div>
-                    <h3 className="font-bold text-lg">
-                      Semester-wise organization
-                    </h3>
+                  <h3 className="mt-3 font-bold">
+                    Subject Based
+                  </h3>
 
-                    <p className="text-sm text-gray-600 leading-6 mt-1">
-                      Keep notes, PYQs, syllabus and other study material
-                      connected to the semester you are preparing for.
-                    </p>
-                  </div>
+                  <p className="mt-2 text-sm text-blue-100">
+                    Focus on the subject you choose.
+                  </p>
 
                 </div>
 
 
-                <div className="py-6 flex gap-5">
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
 
-                  <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700 font-bold">
-                    04
+                  <div className="text-3xl">
+                    ⏱️
                   </div>
 
-                  <div>
-                    <h3 className="font-bold text-lg">
-                      One place for preparation
-                    </h3>
+                  <h3 className="mt-3 font-bold">
+                    Exam Practice
+                  </h3>
 
-                    <p className="text-sm text-gray-600 leading-6 mt-1">
-                      Instead of keeping resources scattered across
-                      different places, access your study material from
-                      one platform.
-                    </p>
-                  </div>
+                  <p className="mt-2 text-sm text-blue-100">
+                    Prepare before your actual exam.
+                  </p>
 
                 </div>
 
@@ -559,191 +887,66 @@ export default function Home() {
 
           </div>
 
-        </section>
+        </div>
+
+      </section>
 
 
-        {/* =====================================================
-            AI QUESTION PAPER
-        ===================================================== */}
+      {/* =========================================
+          FINAL CTA
+      ========================================= */}
 
-        <section className="bg-gray-950 text-white py-16 md:py-20">
+      <section className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 py-20 text-white">
 
-          <div className="page-container">
+        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10" />
 
-            <div className="grid lg:grid-cols-[1fr_auto] gap-10 items-center">
+        <div className="absolute -bottom-28 -left-24 h-72 w-72 rounded-full bg-cyan-300/10" />
 
-              <div className="max-w-3xl">
 
-                <span className="inline-flex items-center rounded-full border border-gray-700 bg-gray-900 px-4 py-2 text-xs font-bold uppercase tracking-wider text-blue-400">
-                  AI Study Tool
-                </span>
+        <div className="relative max-w-4xl mx-auto px-5 sm:px-6 text-center">
 
-                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-5">
-                  Create a practice question paper when you need one.
-                </h2>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-4xl backdrop-blur">
+            🎓
+          </div>
 
-                <p className="text-gray-400 leading-7 mt-4 max-w-2xl">
-                  Use the AI Question Paper feature to generate practice
-                  papers based on your subject and preparation requirements.
-                  It is designed to help you revise more effectively.
-                </p>
+          <h2 className="mt-6 text-3xl sm:text-4xl md:text-5xl font-extrabold">
+            Ready to Start Learning?
+          </h2>
 
-              </div>
+          <p className="mx-auto mt-5 max-w-2xl text-blue-100 text-base sm:text-lg leading-7">
+            Explore your study resources, practice previous
+            year questions and prepare smarter for your exams.
+          </p>
 
-              <Link
-                to="/ai-question-paper"
-                className="inline-flex items-center justify-center min-h-[48px] rounded-lg bg-white px-6 font-bold text-gray-950 hover:bg-gray-100 transition"
-              >
-                Try AI Paper →
-              </Link>
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
 
-            </div>
+            <Link
+              to="/notes"
+              className="inline-flex items-center justify-center rounded-xl bg-white px-7 py-3.5 font-bold text-blue-700 shadow-lg transition hover:-translate-y-1 hover:shadow-xl"
+            >
+              📚 Start Learning
+            </Link>
+
+            <Link
+              to="/branches"
+              className="inline-flex items-center justify-center rounded-xl border border-white/30 bg-white/10 px-7 py-3.5 font-bold text-white backdrop-blur transition hover:bg-white/20 hover:-translate-y-1"
+            >
+              🎓 Explore Branches
+            </Link>
 
           </div>
 
-        </section>
+        </div>
+
+      </section>
 
 
-        {/* =====================================================
-            PLATFORM OVERVIEW
-        ===================================================== */}
-
-        <section className="py-16 md:py-20">
-
-          <div className="page-container">
-
-            <div className="text-center max-w-2xl mx-auto mb-10">
-
-              <p className="text-sm font-bold uppercase tracking-wider text-blue-700">
-                At a glance
-              </p>
-
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-2">
-                A growing student resource library.
-              </h2>
-
-              <p className="text-gray-600 leading-7 mt-4">
-                More resources can be added as the platform grows.
-              </p>
-
-            </div>
-
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 border border-gray-200 rounded-2xl overflow-hidden">
-
-              <div className="p-6 md:p-8 text-center border-b sm:border-b-0 border-r border-gray-200">
-
-                <p className="text-3xl md:text-4xl font-extrabold text-gray-950">
-                  20+
-                </p>
-
-                <p className="text-sm font-medium text-gray-500 mt-2">
-                  Notes
-                </p>
-
-              </div>
-
-
-              <div className="p-6 md:p-8 text-center border-b sm:border-b-0 lg:border-r border-gray-200">
-
-                <p className="text-3xl md:text-4xl font-extrabold text-gray-950">
-                  26+
-                </p>
-
-                <p className="text-sm font-medium text-gray-500 mt-2">
-                  PYQs
-                </p>
-
-              </div>
-
-
-              <div className="p-6 md:p-8 text-center border-r border-gray-200">
-
-                <p className="text-3xl md:text-4xl font-extrabold text-gray-950">
-                  11+
-                </p>
-
-                <p className="text-sm font-medium text-gray-500 mt-2">
-                  E-Books
-                </p>
-
-              </div>
-
-
-              <div className="p-6 md:p-8 text-center">
-
-                <p className="text-3xl md:text-4xl font-extrabold text-gray-950">
-                  6
-                </p>
-
-                <p className="text-sm font-medium text-gray-500 mt-2">
-                  Semesters
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </section>
-
-
-        {/* =====================================================
-            FINAL CTA
-        ===================================================== */}
-
-        <section className="border-t border-gray-200 py-16 md:py-20">
-
-          <div className="page-container">
-
-            <div className="rounded-3xl bg-blue-700 px-6 sm:px-10 md:px-14 py-12 md:py-16 text-center">
-
-              <p className="text-sm font-bold uppercase tracking-wider text-blue-200">
-                Start studying
-              </p>
-
-              <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white mt-3">
-                Your next study session starts here.
-              </h2>
-
-              <p className="max-w-2xl mx-auto text-blue-100 leading-7 mt-5">
-                Browse the available resources, choose your semester
-                and start preparing at your own pace.
-              </p>
-
-              <div className="flex flex-col sm:flex-row justify-center gap-3 mt-8">
-
-                <Link
-                  to="/notes"
-                  className="inline-flex items-center justify-center min-h-[48px] rounded-lg bg-white px-7 font-bold text-blue-700 hover:bg-blue-50 transition"
-                >
-                  Explore Resources
-                </Link>
-
-                <Link
-                  to="/ai-question-paper"
-                  className="inline-flex items-center justify-center min-h-[48px] rounded-lg border border-blue-400 px-7 font-bold text-white hover:bg-blue-600 transition"
-                >
-                  Generate AI Paper
-                </Link>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </section>
-
-      </main>
-
-
-      {/* =====================================================
+      {/* =========================================
           FOOTER
-      ===================================================== */}
+      ========================================= */}
 
       <Footer />
+
     </>
   );
 }
