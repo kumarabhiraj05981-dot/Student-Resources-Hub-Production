@@ -8,6 +8,10 @@ export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // ==========================================
+  // AUTH CHECK
+  // ==========================================
+
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem("token");
@@ -15,14 +19,15 @@ export default function Navbar() {
 
       setIsLoggedIn(Boolean(token));
 
-      if (userString) {
-        try {
-          const user = JSON.parse(userString);
-          setIsAdmin(user?.role === "admin");
-        } catch {
-          setIsAdmin(false);
-        }
-      } else {
+      if (!userString) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const user = JSON.parse(userString);
+        setIsAdmin(user?.role === "admin");
+      } catch {
         setIsAdmin(false);
       }
     };
@@ -36,9 +41,17 @@ export default function Navbar() {
     };
   }, []);
 
+  // ==========================================
+  // CLOSE MOBILE MENU
+  // ==========================================
+
   const closeMobileMenu = () => {
     setMobileOpen(false);
   };
+
+  // ==========================================
+  // LOGOUT
+  // ==========================================
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -52,77 +65,154 @@ export default function Navbar() {
     navigate("/login");
   };
 
+  // ==========================================
+  // NAV LINK STYLE
+  // ==========================================
+
   const navClass = ({ isActive }: { isActive: boolean }) =>
     [
+      "group",
       "relative",
-      "px-3",
-      "py-2",
       "rounded-lg",
+      "px-3.5",
+      "py-2",
       "text-sm",
       "font-semibold",
-      "transition",
+      "transition-all",
+      "duration-200",
+      "whitespace-nowrap",
+
       isActive
-        ? "text-blue-700 bg-blue-50"
-        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
+        ? "bg-blue-50 text-blue-700"
+        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+    ].join(" ");
+
+  // ==========================================
+  // MOBILE LINK STYLE
+  // ==========================================
+
+  const mobileNavClass = ({
+    isActive,
+  }: {
+    isActive: boolean;
+  }) =>
+    [
+      "flex",
+      "items-center",
+      "justify-between",
+      "rounded-xl",
+      "px-4",
+      "py-3",
+      "text-sm",
+      "font-semibold",
+      "transition-all",
+      "duration-200",
+
+      isActive
+        ? "bg-blue-50 text-blue-700"
+        : "text-gray-700 hover:bg-gray-50",
     ].join(" ");
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
 
-      <div className="page-container">
+      {/* ==========================================
+          MAIN NAVBAR
+      ========================================== */}
 
-        <div className="flex h-[68px] items-center justify-between gap-4">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
-          {/* =================================
+        <div className="flex min-h-[72px] items-center justify-between gap-4">
+
+          {/* ======================================
               BRAND
-          ================================= */}
+          ====================================== */}
 
           <Link
             to="/"
             onClick={closeMobileMenu}
-            className="flex items-center gap-3 shrink-0"
+            className="group flex shrink-0 items-center gap-3"
           >
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-lg font-bold text-white">
+            {/* Logo Box */}
+
+            <div
+              className="
+                flex h-11 w-11
+                items-center justify-center
+                rounded-xl
+                border border-blue-100
+                bg-blue-600
+                text-sm
+                font-extrabold
+                tracking-wide
+                text-white
+                shadow-sm
+                transition-all
+                duration-200
+                group-hover:-translate-y-0.5
+                group-hover:shadow-md
+              "
+            >
               SR
             </div>
 
+            {/* Brand Text */}
+
             <div className="hidden sm:block">
-              <div className="text-[15px] font-extrabold leading-tight text-gray-900">
+
+              <div className="text-[15px] font-extrabold leading-tight tracking-tight text-gray-900">
                 Student Resources
               </div>
 
-              <div className="text-xs font-medium text-gray-500">
-                Hub
+              <div className="mt-0.5 text-xs font-medium text-gray-500">
+                Study smarter. Prepare better.
               </div>
+
             </div>
 
           </Link>
 
 
-          {/* =================================
+          {/* ======================================
               DESKTOP NAVIGATION
-          ================================= */}
+          ====================================== */}
 
           <nav className="hidden lg:flex items-center gap-1">
 
-            <NavLink to="/" className={navClass}>
+            <NavLink
+              to="/"
+              end
+              className={navClass}
+            >
               Home
             </NavLink>
 
-            <NavLink to="/notes" className={navClass}>
+            <NavLink
+              to="/notes"
+              className={navClass}
+            >
               Notes
             </NavLink>
 
-            <NavLink to="/pyq" className={navClass}>
+            <NavLink
+              to="/pyq"
+              className={navClass}
+            >
               PYQ
             </NavLink>
 
-            <NavLink to="/syllabus" className={navClass}>
+            <NavLink
+              to="/syllabus"
+              className={navClass}
+            >
               Syllabus
             </NavLink>
 
-            <NavLink to="/ebooks" className={navClass}>
+            <NavLink
+              to="/ebooks"
+              className={navClass}
+            >
               E-Books
             </NavLink>
 
@@ -135,7 +225,22 @@ export default function Navbar() {
 
             <NavLink
               to="/ai-question-paper"
-              className={navClass}
+              className={({ isActive }) =>
+                [
+                  "rounded-lg",
+                  "px-3.5",
+                  "py-2",
+                  "text-sm",
+                  "font-bold",
+                  "transition-all",
+                  "duration-200",
+                  "whitespace-nowrap",
+
+                  isActive
+                    ? "bg-gray-900 text-white shadow-sm"
+                    : "text-gray-700 hover:bg-gray-900 hover:text-white",
+                ].join(" ")
+              }
             >
               AI Paper
             </NavLink>
@@ -143,25 +248,31 @@ export default function Navbar() {
           </nav>
 
 
-          {/* =================================
-              DESKTOP ACTIONS
-          ================================= */}
+          {/* ======================================
+              DESKTOP USER ACTIONS
+          ====================================== */}
 
           <div className="hidden md:flex items-center gap-2">
+
+            {/* ADMIN */}
 
             {isAdmin && (
               <NavLink
                 to="/admin"
                 className={({ isActive }) =>
                   [
-                    "px-3",
-                    "py-2",
                     "rounded-lg",
+                    "border",
+                    "px-3.5",
+                    "py-2",
                     "text-sm",
                     "font-bold",
+                    "transition-all",
+                    "duration-200",
+
                     isActive
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-700 hover:bg-gray-100",
+                      ? "border-gray-900 bg-gray-900 text-white"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50",
                   ].join(" ")
                 }
               >
@@ -169,26 +280,70 @@ export default function Navbar() {
               </NavLink>
             )}
 
+            {/* LOGGED IN */}
+
             {isLoggedIn ? (
               <button
                 type="button"
                 onClick={handleLogout}
-                className="secondary-button min-h-[40px] px-4"
+                className="
+                  rounded-lg
+                  border border-gray-200
+                  bg-white
+                  px-4 py-2
+                  text-sm
+                  font-semibold
+                  text-gray-700
+                  transition-all
+                  duration-200
+                  hover:border-red-200
+                  hover:bg-red-50
+                  hover:text-red-600
+                "
               >
                 Logout
               </button>
             ) : (
               <>
+                {/* LOGIN */}
+
                 <Link
                   to="/login"
-                  className="secondary-button min-h-[40px] px-4"
+                  className="
+                    rounded-lg
+                    border border-gray-200
+                    bg-white
+                    px-4 py-2
+                    text-sm
+                    font-semibold
+                    text-gray-700
+                    transition-all
+                    duration-200
+                    hover:border-gray-300
+                    hover:bg-gray-50
+                  "
                 >
                   Login
                 </Link>
 
+                {/* REGISTER */}
+
                 <Link
                   to="/register"
-                  className="primary-button min-h-[40px] px-4"
+                  className="
+                    rounded-lg
+                    bg-blue-600
+                    px-4 py-2
+                    text-sm
+                    font-bold
+                    text-white
+                    shadow-sm
+                    transition-all
+                    duration-200
+                    hover:bg-blue-700
+                    hover:shadow
+                    active:scale-[0.98]
+                  "
                 >
                   Register
                 </Link>
@@ -198,18 +353,35 @@ export default function Navbar() {
           </div>
 
 
-          {/* =================================
+          {/* ======================================
               MOBILE MENU BUTTON
-          ================================= */}
+          ====================================== */}
 
           <button
             type="button"
-            aria-label="Toggle navigation"
+            aria-label={
+              mobileOpen
+                ? "Close navigation menu"
+                : "Open navigation menu"
+            }
             aria-expanded={mobileOpen}
             onClick={() =>
-              setMobileOpen((prev) => !prev)
+              setMobileOpen((previous) => !previous)
             }
-            className="md:hidden flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+            className="
+              flex h-10 w-10
+              items-center justify-center
+              rounded-lg
+              border border-gray-200
+              bg-white
+              text-lg
+              text-gray-700
+              transition-all
+              duration-200
+              hover:border-gray-300
+              hover:bg-gray-50
+              md:hidden
+            "
           >
             {mobileOpen ? "✕" : "☰"}
           </button>
@@ -217,85 +389,118 @@ export default function Navbar() {
         </div>
 
 
-        {/* =================================
-            MOBILE NAVIGATION
-        ================================= */}
+        {/* ==========================================
+            MOBILE MENU
+        ========================================== */}
 
         {mobileOpen && (
-          <div className="md:hidden border-t border-gray-100 py-4">
+          <div className="border-t border-gray-100 py-4 md:hidden">
+
+            {/* MOBILE NAVIGATION */}
 
             <nav className="flex flex-col gap-1">
 
               <NavLink
                 to="/"
+                end
                 onClick={closeMobileMenu}
-                className={navClass}
+                className={mobileNavClass}
               >
-                Home
+                <span>Home</span>
+                <span className="text-gray-400">→</span>
               </NavLink>
 
               <NavLink
                 to="/notes"
                 onClick={closeMobileMenu}
-                className={navClass}
+                className={mobileNavClass}
               >
-                Notes
+                <span>Notes</span>
+                <span className="text-gray-400">→</span>
               </NavLink>
 
               <NavLink
                 to="/pyq"
                 onClick={closeMobileMenu}
-                className={navClass}
+                className={mobileNavClass}
               >
-                PYQ
+                <span>Previous Year Questions</span>
+                <span className="text-gray-400">→</span>
               </NavLink>
 
               <NavLink
                 to="/syllabus"
                 onClick={closeMobileMenu}
-                className={navClass}
+                className={mobileNavClass}
               >
-                Syllabus
+                <span>Syllabus</span>
+                <span className="text-gray-400">→</span>
               </NavLink>
 
               <NavLink
                 to="/ebooks"
                 onClick={closeMobileMenu}
-                className={navClass}
+                className={mobileNavClass}
               >
-                E-Books
+                <span>E-Books</span>
+                <span className="text-gray-400">→</span>
               </NavLink>
 
               <NavLink
                 to="/branches"
                 onClick={closeMobileMenu}
-                className={navClass}
+                className={mobileNavClass}
               >
-                Branches
+                <span>Branches</span>
+                <span className="text-gray-400">→</span>
               </NavLink>
 
               <NavLink
                 to="/ai-question-paper"
                 onClick={closeMobileMenu}
-                className={navClass}
+                className={({ isActive }) =>
+                  [
+                    "flex",
+                    "items-center",
+                    "justify-between",
+                    "rounded-xl",
+                    "px-4",
+                    "py-3",
+                    "text-sm",
+                    "font-bold",
+                    "transition-all",
+                    "duration-200",
+
+                    isActive
+                      ? "bg-gray-900 text-white"
+                      : "bg-gray-50 text-gray-800 hover:bg-gray-100",
+                  ].join(" ")
+                }
               >
-                AI Question Paper
+                <span>AI Question Paper</span>
+                <span>→</span>
               </NavLink>
+
+
+              {/* ADMIN */}
 
               {isAdmin && (
                 <NavLink
                   to="/admin"
                   onClick={closeMobileMenu}
-                  className={navClass}
+                  className={mobileNavClass}
                 >
-                  Admin Dashboard
+                  <span>Admin Dashboard</span>
+                  <span className="text-gray-400">→</span>
                 </NavLink>
               )}
 
             </nav>
 
 
-            {/* MOBILE ACTIONS */}
+            {/* ======================================
+                MOBILE ACCOUNT ACTIONS
+            ====================================== */}
 
             <div className="mt-4 border-t border-gray-100 pt-4">
 
@@ -303,17 +508,43 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="secondary-button"
+                  className="
+                    w-full
+                    rounded-xl
+                    border border-gray-200
+                    bg-white
+                    px-4 py-3
+                    text-sm
+                    font-bold
+                    text-gray-700
+                    transition-all
+                    duration-200
+                    hover:border-red-200
+                    hover:bg-red-50
+                    hover:text-red-600
+                  "
                 >
                   Logout
                 </button>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="grid grid-cols-2 gap-2">
 
                   <Link
                     to="/login"
                     onClick={closeMobileMenu}
-                    className="secondary-button"
+                    className="
+                      rounded-xl
+                      border border-gray-200
+                      bg-white
+                      px-4 py-3
+                      text-center
+                      text-sm
+                      font-bold
+                      text-gray-700
+                      transition-all
+                      duration-200
+                      hover:bg-gray-50
+                    "
                   >
                     Login
                   </Link>
@@ -321,7 +552,18 @@ export default function Navbar() {
                   <Link
                     to="/register"
                     onClick={closeMobileMenu}
-                    className="primary-button"
+                    className="
+                      rounded-xl
+                      bg-blue-600
+                      px-4 py-3
+                      text-center
+                      text-sm
+                      font-bold
+                      text-white
+                      transition-all
+                      duration-200
+                      hover:bg-blue-700
+                    "
                   >
                     Register
                   </Link>
