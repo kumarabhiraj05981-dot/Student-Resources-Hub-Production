@@ -91,7 +91,7 @@ export default function Ebooks() {
         <div className="text-center">
 
           <div className="text-6xl mb-4">
-            📚
+            
           </div>
 
           <p className="text-xl font-semibold text-gray-700">
@@ -124,7 +124,7 @@ export default function Ebooks() {
         <div className="mb-8">
 
           <h1 className="text-4xl font-bold text-green-700 mb-2">
-            📚 Student E-Books
+             Student E-Books
           </h1>
 
           <p className="text-gray-600">
@@ -133,7 +133,7 @@ export default function Ebooks() {
 
           {resources.length > 0 && (
             <p className="text-sm text-gray-500 mt-2">
-              📚 {resources.length} E-Book
+               {resources.length} E-Book
               {resources.length !== 1 ? "s" : ""} available
             </p>
           )}
@@ -149,7 +149,7 @@ export default function Ebooks() {
           <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-xl mb-6">
 
             <p className="font-semibold">
-              ❌ {error}
+               {error}
             </p>
 
           </div>
@@ -165,7 +165,7 @@ export default function Ebooks() {
           <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
 
             <div className="text-6xl mb-4">
-              📚
+              
             </div>
 
             <p className="text-xl font-semibold text-gray-700">
@@ -219,7 +219,7 @@ export default function Ebooks() {
                   <div className="mt-4">
 
                     <p className="text-sm font-semibold text-blue-600">
-                      🎓 Semester
+                       Semester
                     </p>
 
                     <p className="text-gray-700 mt-1">
@@ -238,7 +238,7 @@ export default function Ebooks() {
                   <div className="mt-3">
 
                     <p className="text-sm font-semibold text-gray-500">
-                      📚 Subject
+                       Subject
                     </p>
 
                     <p className="text-gray-700 mt-1">
@@ -275,7 +275,7 @@ export default function Ebooks() {
                       className="text-sm text-gray-600 truncate"
                       title={resource.fileName}
                     >
-                      📄 {resource.fileName}
+                       {resource.fileName}
                     </p>
 
                   </div>
@@ -296,7 +296,7 @@ export default function Ebooks() {
                     rel="noopener noreferrer"
                     className="flex-1 text-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2.5 px-4 rounded-lg transition"
                   >
-                    👁️ Open
+                     Open
                   </a>
 
 
@@ -309,7 +309,7 @@ export default function Ebooks() {
                     download={resource.fileName || true}
                     className="flex-1 text-center bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-2.5 px-4 rounded-lg transition"
                   >
-                    ⬇️ Download
+                     Download
                   </a>
 
                 </div>
