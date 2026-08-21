@@ -199,7 +199,7 @@ export default function Syllabus() {
         <div className="text-center">
 
           <div className="text-6xl mb-4">
-            📘
+            
           </div>
 
           <p className="text-xl font-semibold text-gray-700">
@@ -230,7 +230,7 @@ export default function Syllabus() {
         <div className="mb-8">
 
           <h1 className="text-4xl font-bold text-purple-700 mb-2">
-            📘 Student Syllabus
+             Student Syllabus
           </h1>
 
           <p className="text-gray-600">
@@ -239,7 +239,7 @@ export default function Syllabus() {
 
           {resources.length > 0 && (
             <p className="text-sm text-gray-500 mt-2">
-              📚 Showing{" "}
+               Showing{" "}
               <span className="font-semibold">
                 {filteredResources.length}
               </span>{" "}
@@ -266,7 +266,7 @@ export default function Syllabus() {
               onClick={loadSyllabus}
               className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold"
             >
-              🔄 Try Again
+               Try Again
             </button>
 
           </div>
@@ -286,7 +286,7 @@ export default function Syllabus() {
               <div>
 
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  🔎 Search Syllabus
+                   Search Syllabus
                 </label>
 
                 <input
@@ -306,7 +306,7 @@ export default function Syllabus() {
               <div>
 
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  🎓 Semester
+                   Semester
                 </label>
 
                 <select
@@ -343,7 +343,7 @@ export default function Syllabus() {
               <div>
 
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  📚 Subject
+                   Subject
                 </label>
 
                 <select
@@ -423,7 +423,7 @@ export default function Syllabus() {
           <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
 
             <div className="text-6xl mb-4">
-              📘
+              
             </div>
 
             <p className="text-xl font-semibold text-gray-700">
@@ -444,7 +444,7 @@ export default function Syllabus() {
           <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
 
             <div className="text-6xl mb-4">
-              🔎
+              
             </div>
 
             <p className="text-xl font-semibold text-gray-700">
@@ -461,7 +461,7 @@ export default function Syllabus() {
               onClick={clearFilters}
               className="mt-5 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition"
             >
-              🔄 Show All Syllabus
+               Show All Syllabus
             </button>
 
           </div>
@@ -502,7 +502,7 @@ export default function Syllabus() {
                     <div className="mt-4">
 
                       <p className="text-sm font-semibold text-purple-600">
-                        🎓 Semester
+                         Semester
                       </p>
 
                       <p className="text-gray-700 mt-1">
@@ -518,7 +518,7 @@ export default function Syllabus() {
                     <div className="mt-3">
 
                       <p className="text-sm font-semibold text-gray-500">
-                        📚 Subject
+                         Subject
                       </p>
 
                       <p className="text-gray-700 mt-1">
@@ -549,7 +549,7 @@ export default function Syllabus() {
                         className="text-sm text-gray-600 truncate"
                         title={resource.fileName}
                       >
-                        📄 {resource.fileName}
+                         {resource.fileName}
                       </p>
 
                     </div>
@@ -565,7 +565,7 @@ export default function Syllabus() {
                       rel="noopener noreferrer"
                       className="flex-1 text-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2.5 px-4 rounded-lg transition"
                     >
-                      👁️ Open
+                       Open
                     </a>
 
                     <a
@@ -578,7 +578,7 @@ export default function Syllabus() {
                       }
                       className="flex-1 text-center bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-2.5 px-4 rounded-lg transition"
                     >
-                      ⬇️ Download
+                       Download
                     </a>
 
                   </div>
