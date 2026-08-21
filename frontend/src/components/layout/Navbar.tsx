@@ -120,21 +120,8 @@ export default function Navbar() {
               Home
             </NavLink>
 
-            <NavLink to="/notes" className={navClass}>
-              Notes
-            </NavLink>
+          
 
-            <NavLink to="/pyq" className={navClass}>
-              PYQ
-            </NavLink>
-
-            <NavLink to="/syllabus" className={navClass}>
-              Syllabus
-            </NavLink>
-
-            <NavLink to="/ebooks" className={navClass}>
-              E-Books
-            </NavLink>
 
             {/* FIXED: /branches -> /branch-resources */}
             <NavLink to="/branch-resources" className={navClass}>
