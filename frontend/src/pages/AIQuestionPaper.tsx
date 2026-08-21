@@ -299,7 +299,7 @@ export default function AIQuestionPaper() {
         <div className="text-center mb-10">
 
           <div className="inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-full mb-4 font-semibold">
-            🤖 AI Powered
+             AI Powered
           </div>
 
           <h1 className="text-4xl md:text-5xl font-bold text-blue-700">
@@ -360,7 +360,7 @@ export default function AIQuestionPaper() {
             <div>
 
               <label className="block font-semibold text-gray-700 mb-2">
-                📋 Syllabus / Units / Topics
+                 Syllabus / Units / Topics
               </label>
 
               <textarea
@@ -401,7 +401,7 @@ Unit 4: Normalization
               />
 
               <p className="text-sm text-gray-500 mt-2">
-                💡 Copy and paste your complete syllabus,
+                 Copy and paste your complete syllabus,
                 units, topics, or study material here.
               </p>
 
@@ -414,7 +414,7 @@ Unit 4: Normalization
             <div>
 
               <label className="block font-semibold text-gray-700 mb-2">
-                🎯 Difficulty Level
+                 Difficulty Level
               </label>
 
               <select
@@ -450,7 +450,7 @@ Unit 4: Normalization
             <div>
 
               <label className="block font-semibold text-gray-700 mb-2">
-                🔢 Number of Questions
+                 Number of Questions
               </label>
 
               <select
@@ -490,7 +490,7 @@ Unit 4: Normalization
             <div>
 
               <label className="block font-semibold text-gray-700 mb-2">
-                📝 Question Type
+                 Question Type
               </label>
 
               <select
@@ -536,8 +536,8 @@ Unit 4: Normalization
               >
 
                 {loading
-                  ? "🤖 Generating Question Paper..."
-                  : "🤖 Generate Question Paper"}
+                  ? " Generating Question Paper..."
+                  : " Generate Question Paper"}
 
               </button>
 
@@ -589,7 +589,7 @@ Unit 4: Normalization
                   <div>
 
                     <h2 className="text-2xl md:text-3xl font-bold">
-                      📚 {result.paper.title}
+                      {result.paper.title}
                     </h2>
 
                     <p className="mt-2 text-blue-100">
@@ -757,7 +757,7 @@ Unit 4: Normalization
                   className="flex-1 bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-lg"
                 >
 
-                  🖨️ Print / Save as PDF
+                   Print / Save as PDF
 
                 </button>
 
@@ -772,7 +772,7 @@ Unit 4: Normalization
                   className="md:w-48 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-3 rounded-lg"
                 >
 
-                  🔄 Generate Another
+                   Generate Another
 
                 </button>
 
@@ -801,7 +801,7 @@ Unit 4: Normalization
             <div className="bg-white p-6 rounded-xl shadow text-center">
 
               <div className="text-3xl mb-2">
-                ⚡
+                
               </div>
 
               <h3 className="font-bold text-gray-800">
@@ -820,7 +820,7 @@ Unit 4: Normalization
             <div className="bg-white p-6 rounded-xl shadow text-center">
 
               <div className="text-3xl mb-2">
-                🎯
+                
               </div>
 
               <h3 className="font-bold text-gray-800">
@@ -839,7 +839,7 @@ Unit 4: Normalization
             <div className="bg-white p-6 rounded-xl shadow text-center">
 
               <div className="text-3xl mb-2">
-                💾
+                
               </div>
 
               <h3 className="font-bold text-gray-800">
@@ -862,7 +862,7 @@ Unit 4: Normalization
           <div className="mt-8 bg-white rounded-2xl shadow-lg p-8">
 
             <h2 className="text-2xl font-bold text-gray-800 text-center">
-              📖 How to Use AI Question Generator
+               How to Use AI Question Generator
             </h2>
 
             <div className="grid md:grid-cols-4 gap-6 mt-8">
