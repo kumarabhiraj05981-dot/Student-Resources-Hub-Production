@@ -127,7 +127,7 @@ export default function Register() {
 
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-3xl shadow-2xl mb-5">
             <span className="text-4xl">
-              🎓
+              
             </span>
           </div>
 
@@ -151,7 +151,7 @@ export default function Register() {
           <div className="mb-7">
 
             <h2 className="text-2xl font-bold text-gray-800">
-              Create Account ✨
+              Create Account 
             </h2>
 
             <p className="text-gray-500 mt-1">
@@ -181,7 +181,7 @@ export default function Register() {
               <div className="relative">
 
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl">
-                  👤
+                  
                 </span>
 
                 <input
@@ -212,7 +212,7 @@ export default function Register() {
               <div className="relative">
 
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl">
-                  📧
+                  
                 </span>
 
                 <input
@@ -243,7 +243,7 @@ export default function Register() {
               <div className="relative">
 
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl">
-                  🔒
+                  
                 </span>
 
                 <input
@@ -275,8 +275,8 @@ export default function Register() {
                   }
                 >
                   {showPassword
-                    ? "🙈"
-                    : "👁️"}
+                    ? ""
+                    : ""}
                 </button>
 
               </div>
@@ -301,8 +301,8 @@ export default function Register() {
             >
 
               {loading
-                ? "⏳ Creating Account..."
-                : "🚀 Create Account"}
+                ? " Creating Account..."
+                : " Create Account"}
 
             </button>
 
@@ -332,7 +332,7 @@ export default function Register() {
             to="/login"
             className="block w-full text-center border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-bold py-3 rounded-xl transition"
           >
-            🔐 Login to Account
+             Login to Account
           </Link>
 
         </div>
