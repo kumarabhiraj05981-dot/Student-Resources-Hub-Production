@@ -151,7 +151,7 @@ export default function Admin() {
         .toLowerCase()
         .endsWith(".pdf")
     ) {
-      alert("❌ Only PDF files are allowed");
+      alert(" Only PDF files are allowed");
 
       e.target.value = "";
       setFile(null);
@@ -162,7 +162,7 @@ export default function Admin() {
     // SIZE CHECK
     if (selectedFile.size > MAX_FILE_SIZE) {
       alert(
-        `❌ File size must be less than 500MB`
+        ` File size must be less than 500MB`
       );
 
       e.target.value = "";
@@ -418,7 +418,7 @@ export default function Admin() {
       }
 
       alert(
-        "🗑️ Resource deleted successfully!"
+        " Resource deleted successfully!"
       );
 
       setResources((prev) =>
@@ -520,25 +520,25 @@ export default function Admin() {
   ) => {
     switch (branchName) {
       case "Computer Science":
-        return "💻";
+        return "";
 
       case "Electrical":
-        return "⚡";
+        return "";
 
       case "Mechanical":
-        return "🔧";
+        return "";
 
       case "Civil & CTM":
-        return "🏗️";
+        return "";
 
       case "Electronics":
-        return "📡";
+        return "";
 
       case "Leather Technology":
-        return "👞";
+        return "";
 
       default:
-        return "🎓";
+        return "";
     }
   };
   // ==========================================
@@ -557,7 +557,7 @@ export default function Admin() {
 
           <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-blue-700 mb-2">
-              📚 Admin Resource Upload
+               Admin Resource Upload
             </h1>
 
             <p className="text-gray-600">
@@ -601,7 +601,7 @@ export default function Admin() {
 
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
-                🎓 Branch *
+                 Branch *
               </label>
 
               <select
@@ -693,7 +693,7 @@ export default function Admin() {
 
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
-                📖 Subject
+                 Subject
               </label>
 
               <input
@@ -714,7 +714,7 @@ export default function Admin() {
 
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
-                📂 Category *
+                 Category *
               </label>
 
               <select
@@ -733,7 +733,7 @@ export default function Admin() {
                     >
                       {categoryName ===
                         "Ebooks"
-                        ? "📚 E-Books"
+                        ? " E-Books"
                         : categoryName}
                     </option>
                   )
@@ -748,7 +748,7 @@ export default function Admin() {
 
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
-                📄 Select PDF *
+                 Select PDF *
               </label>
 
               <input
@@ -768,11 +768,11 @@ export default function Admin() {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
 
                     <p className="text-sm text-blue-700 font-semibold break-all">
-                      📄 {file.name}
+                       {file.name}
                     </p>
 
                     <p className="text-sm text-gray-600 whitespace-nowrap">
-                      📦 {formatFileSize(
+                       {formatFileSize(
                         file.size
                       )}
                     </p>
@@ -804,8 +804,8 @@ export default function Admin() {
               }`}
             >
               {uploading
-                ? "⏳ Uploading to Cloudinary..."
-                : "🚀 Upload Resource"}
+                ? " Uploading to Cloudinary..."
+                : " Upload Resource"}
             </button>
 
           </form>
@@ -826,7 +826,7 @@ export default function Admin() {
 
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-                📋 Manage Resources
+                 Manage Resources
               </h2>
 
               <p className="text-gray-500 mt-1">
@@ -844,8 +844,8 @@ export default function Admin() {
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold px-5 py-2.5 rounded-lg transition"
             >
               {loadingResources
-                ? "⏳ Loading..."
-                : "🔄 Refresh"}
+                ? " Loading..."
+                : " Refresh"}
             </button>
           </div>
 
@@ -857,7 +857,7 @@ export default function Admin() {
           <div className="mb-6">
 
             <h3 className="text-xl font-bold text-gray-800">
-              🔎 Filter Resources
+               Filter Resources
             </h3>
 
             <p className="text-gray-500 mt-1">
@@ -1027,7 +1027,7 @@ export default function Admin() {
             <div className="py-16 text-center">
 
               <div className="text-5xl mb-4">
-                ⏳
+                
               </div>
 
               <p className="text-xl font-semibold text-gray-700">
@@ -1048,7 +1048,7 @@ export default function Admin() {
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-10 text-center">
 
               <div className="text-6xl mb-4">
-                📚
+                
               </div>
 
               <h3 className="text-xl font-bold text-gray-700">
@@ -1073,7 +1073,7 @@ export default function Admin() {
                   }}
                   className="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg transition"
                 >
-                  🔄 Reset Filters
+                   Reset Filters
                 </button>
               )}
 
@@ -1155,7 +1155,7 @@ export default function Admin() {
                           </p>
 
                           <p className="text-sm font-medium text-gray-700 mt-1">
-                            🎓{" "}
+                            {" "}
                             {resource.semester}
                           </p>
 
@@ -1175,7 +1175,7 @@ export default function Admin() {
                           </p>
 
                           <p className="text-sm font-medium text-gray-700 mt-1">
-                            📖{" "}
+                            {" "}
                             {resource.subject}
                           </p>
 
@@ -1211,7 +1211,7 @@ export default function Admin() {
                               resource.fileName
                             }
                           >
-                            📄{" "}
+                            {" "}
                             {resource.fileName}
                           </p>
 
@@ -1260,7 +1260,7 @@ export default function Admin() {
                           rel="noopener noreferrer"
                           className="text-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2.5 px-3 rounded-lg transition"
                         >
-                          👁️ Open
+                           Open
                         </a>
 
 
@@ -1278,7 +1278,7 @@ export default function Admin() {
                           }
                           className="text-center bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-2.5 px-3 rounded-lg transition"
                         >
-                          ⬇️ Download
+                           Download
                         </a>
 
                       </div>
@@ -1308,8 +1308,8 @@ export default function Admin() {
                       >
                         {deletingId ===
                         resource._id
-                          ? "⏳ Deleting..."
-                          : "🗑️ Delete Resource"}
+                          ? " Deleting..."
+                          : " Delete Resource"}
                       </button>
 
                     </div>
