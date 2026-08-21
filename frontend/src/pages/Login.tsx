@@ -99,8 +99,8 @@ export default function Login() {
 
       alert(
         user.role?.toLowerCase() === "admin"
-          ? "Admin Login Successful 🎉"
-          : "Login Successful 🎉"
+          ? "Admin Login Successful "
+          : "Login Successful "
       );
 
       // ==============================
@@ -143,7 +143,7 @@ export default function Login() {
 
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-3xl shadow-2xl mb-5">
             <span className="text-4xl">
-              📚
+              
             </span>
           </div>
 
@@ -167,7 +167,7 @@ export default function Login() {
           <div className="mb-7">
 
             <h2 className="text-2xl font-bold text-gray-800">
-              Welcome Back 👋
+              Welcome Back 
             </h2>
 
             <p className="text-gray-500 mt-1">
@@ -197,7 +197,7 @@ export default function Login() {
               <div className="relative">
 
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl">
-                  📧
+                  
                 </span>
 
                 <input
@@ -228,7 +228,7 @@ export default function Login() {
               <div className="relative">
 
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl">
-                  🔒
+                  
                 </span>
 
                 <input
@@ -260,8 +260,8 @@ export default function Login() {
                   }
                 >
                   {showPassword
-                    ? "🙈"
-                    : "👁️"}
+                    ? ""
+                    : ""}
                 </button>
 
               </div>
@@ -282,8 +282,8 @@ export default function Login() {
             >
 
               {loading
-                ? "⏳ Logging in..."
-                : "🔐 Login"}
+                ? " Logging in..."
+                : " Login"}
 
             </button>
 
@@ -313,7 +313,7 @@ export default function Login() {
             to="/register"
             className="block w-full text-center border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-bold py-3 rounded-xl transition"
           >
-            ✨ Create New Account
+             Create New Account
           </Link>
 
         </div>
