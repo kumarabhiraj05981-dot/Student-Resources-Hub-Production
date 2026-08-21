@@ -14,73 +14,26 @@ import BranchResources from "./pages/BranchResources";
 function App() {
   return (
     <BrowserRouter>
-
       <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/notes" element={<Notes />} />
+        <Route path="/pyq" element={<Pyq />} />
+        <Route path="/syllabus" element={<Syllabus />} />
+        <Route path="/ebooks" element={<Ebooks />} />
 
-        {/* HOME */}
-        <Route
-          path="/"
-          element={<Home />}
-        />
+        <Route path="/branch-resources" element={<BranchResources />} />
+        <Route path="/branch/:branchId" element={<BranchResources />} />
 
-        {/* EXISTING RESOURCE PAGES */}
-        <Route
-          path="/notes"
-          element={<Notes />}
-        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-        <Route
-          path="/pyq"
-          element={<Pyq />}
-        />
+        <Route path="/admin" element={<Admin />} />
 
-        <Route
-          path="/syllabus"
-          element={<Syllabus />}
-        />
-
-        <Route
-          path="/ebooks"
-          element={<Ebooks />}
-        />
-
-        {/* BRANCH RESOURCES */}
-        <Route
-          path="/branch-resources"
-          element={<BranchResources />}
-        />
-
-        {/* INDIVIDUAL BRANCH */}
-        <Route
-          path="/branch/:branchId"
-          element={<BranchResources />}
-        />
-
-        {/* AUTH */}
-        <Route
-          path="/login"
-          element={<Login />}
-        />
-
-        <Route
-          path="/register"
-          element={<Register />}
-        />
-
-        {/* ADMIN */}
-        <Route
-          path="/admin"
-          element={<Admin />}
-        />
-
-        {/* AI QUESTION PAPER */}
         <Route
           path="/ai-question-paper"
           element={<AIQuestionPaper />}
         />
-
       </Routes>
-
     </BrowserRouter>
   );
 }
