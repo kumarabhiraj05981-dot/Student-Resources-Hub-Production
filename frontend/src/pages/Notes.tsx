@@ -18,7 +18,6 @@ export default function Notes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Phase 1 Filters
   const [search, setSearch] = useState("");
   const [semesterFilter, setSemesterFilter] = useState("All");
   const [subjectFilter, setSubjectFilter] = useState("All");
@@ -29,26 +28,20 @@ export default function Notes() {
         setLoading(true);
         setError("");
 
-        const res = await api.get(
-          "/api/resources/category/Notes"
-        );
-
-        console.log("NOTES RESPONSE:", res.data);
+        // Backend API unchanged
+        const res = await api.get("/api/resources/category/Notes");
 
         const notesOnly = (res.data.resources || []).filter(
           (resource: Resource) =>
             resource.category?.trim().toLowerCase() === "notes"
         );
 
-        console.log("FINAL NOTES:", notesOnly);
-
         setResources(notesOnly);
       } catch (err: any) {
         console.error("Notes loading error:", err);
 
         setError(
-          err.response?.data?.message ||
-            "Unable to load notes"
+          err.response?.data?.message || "Unable to load notes"
         );
       } finally {
         setLoading(false);
@@ -58,10 +51,6 @@ export default function Notes() {
     loadNotes();
   }, []);
 
-  // ======================================
-  // UNIQUE SEMESTERS
-  // ======================================
-
   const semesters = useMemo(() => {
     const values = resources
       .map((resource) => resource.semester?.trim())
@@ -69,10 +58,6 @@ export default function Notes() {
 
     return Array.from(new Set(values));
   }, [resources]);
-
-  // ======================================
-  // UNIQUE SUBJECTS
-  // ======================================
 
   const subjects = useMemo(() => {
     const values = resources
@@ -82,25 +67,16 @@ export default function Notes() {
     return Array.from(new Set(values)).sort();
   }, [resources]);
 
-  // ======================================
-  // FILTER NOTES
-  // ======================================
-
   const filteredResources = useMemo(() => {
     const searchText = search.trim().toLowerCase();
 
     return resources.filter((resource) => {
       const title = resource.title?.toLowerCase() || "";
-      const description =
-        resource.description?.toLowerCase() || "";
-      const subject =
-        resource.subject?.toLowerCase() || "";
-      const semester =
-        resource.semester?.toLowerCase() || "";
-      const fileName =
-        resource.fileName?.toLowerCase() || "";
+      const description = resource.description?.toLowerCase() || "";
+      const subject = resource.subject?.toLowerCase() || "";
+      const semester = resource.semester?.toLowerCase() || "";
+      const fileName = resource.fileName?.toLowerCase() || "";
 
-      // Search
       const matchesSearch =
         !searchText ||
         title.includes(searchText) ||
@@ -109,32 +85,17 @@ export default function Notes() {
         semester.includes(searchText) ||
         fileName.includes(searchText);
 
-      // Semester
       const matchesSemester =
         semesterFilter === "All" ||
         resource.semester === semesterFilter;
 
-      // Subject
       const matchesSubject =
         subjectFilter === "All" ||
         resource.subject === subjectFilter;
 
-      return (
-        matchesSearch &&
-        matchesSemester &&
-        matchesSubject
-      );
+      return matchesSearch && matchesSemester && matchesSubject;
     });
-  }, [
-    resources,
-    search,
-    semesterFilter,
-    subjectFilter,
-  ]);
-
-  // ======================================
-  // CLEAR FILTERS
-  // ======================================
+  }, [resources, search, semesterFilter, subjectFilter]);
 
   const clearFilters = () => {
     setSearch("");
@@ -147,18 +108,12 @@ export default function Notes() {
     semesterFilter !== "All" ||
     subjectFilter !== "All";
 
-  // ======================================
-  // LOADING
-  // ======================================
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">📚</div>
-
-          <p className="text-xl font-semibold text-gray-700">
-            Loading Notes...
+      <div className="min-h-screen bg-gray-50 px-4 py-16">
+        <div className="mx-auto max-w-7xl text-center">
+          <p className="text-lg font-semibold text-gray-700">
+            Loading notes...
           </p>
         </div>
       </div>
@@ -166,131 +121,98 @@ export default function Notes() {
   }
 
   return (
-    <div className="min-h-screen bg-blue-50 py-10 px-4">
-      <div className="max-w-7xl mx-auto">
+    <main className="min-h-screen bg-gray-50 px-4 py-10">
+      <div className="mx-auto max-w-7xl">
 
-        {/* ======================================
-            HEADER
-        ====================================== */}
-
+        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-blue-700 mb-2">
-            📚 Student Notes
+          <h1 className="text-3xl font-bold text-gray-900">
+            Student Notes
           </h1>
 
-          <p className="text-gray-600">
-            Semester-wise study notes and learning materials
+          <p className="mt-2 text-gray-600">
+            Semester-wise study notes and learning materials.
           </p>
         </div>
 
-        {/* ======================================
-            ERROR
-        ====================================== */}
-
+        {/* Error */}
         {error && (
-          <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-xl mb-6">
-            ❌ {error}
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+            {error}
           </div>
         )}
 
-        {/* ======================================
-            SEARCH + FILTERS
-        ====================================== */}
-
+        {/* Filters */}
         {resources.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-lg p-5 mb-8">
+          <section className="mb-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="grid gap-4 md:grid-cols-3">
 
-            <div className="grid md:grid-cols-3 gap-4">
-
-              {/* SEARCH */}
-
-              <div className="md:col-span-1">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  🔎 Search Notes
+              {/* Search */}
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Search Notes
                 </label>
 
                 <input
                   type="text"
-                  placeholder="Search by title, subject..."
+                  placeholder="Search by title or subject"
                   value={search}
-                  onChange={(e) =>
-                    setSearch(e.target.value)
-                  }
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
-              {/* SEMESTER */}
-
+              {/* Semester */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  🎓 Semester
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Semester
                 </label>
 
                 <select
                   value={semesterFilter}
-                  onChange={(e) =>
-                    setSemesterFilter(e.target.value)
-                  }
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => setSemesterFilter(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 >
-                  <option value="All">
-                    All Semesters
-                  </option>
+                  <option value="All">All Semesters</option>
 
                   {semesters.map((semester) => (
-                    <option
-                      key={semester}
-                      value={semester}
-                    >
+                    <option key={semester} value={semester}>
                       {semester}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* SUBJECT */}
-
+              {/* Subject */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  📖 Subject
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Subject
                 </label>
 
                 <select
                   value={subjectFilter}
-                  onChange={(e) =>
-                    setSubjectFilter(e.target.value)
-                  }
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => setSubjectFilter(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 >
-                  <option value="All">
-                    All Subjects
-                  </option>
+                  <option value="All">All Subjects</option>
 
                   {subjects.map((subject) => (
-                    <option
-                      key={subject}
-                      value={subject}
-                    >
+                    <option key={subject} value={subject}>
                       {subject}
                     </option>
                   ))}
                 </select>
               </div>
-
             </div>
 
-            {/* FILTER INFO */}
-
-            <div className="flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t">
-
-              <p className="text-gray-600">
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
+              <p className="text-sm text-gray-600">
                 Showing{" "}
                 <span className="font-bold text-blue-600">
                   {filteredResources.length}
                 </span>{" "}
                 of{" "}
-                <span className="font-bold">
+                <span className="font-bold text-gray-900">
                   {resources.length}
                 </span>{" "}
                 notes
@@ -300,165 +222,112 @@ export default function Notes() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-lg transition"
+                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-200"
                 >
-                  ✖ Clear Filters
+                  Clear Filters
                 </button>
               )}
-
             </div>
-
-          </div>
+          </section>
         )}
 
-        {/* ======================================
-            NO NOTES AT ALL
-        ====================================== */}
-
+        {/* No Notes */}
         {resources.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
+          <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-800">
+              No notes uploaded yet.
+            </h2>
 
-            <div className="text-6xl mb-4">
-              📚
-            </div>
-
-            <p className="text-xl font-semibold text-gray-700">
-              No Notes uploaded yet.
-            </p>
-
-            <p className="text-gray-500 mt-2">
+            <p className="mt-2 text-gray-500">
               Notes uploaded by the admin will appear here.
             </p>
-
           </div>
-
         ) : filteredResources.length === 0 ? (
-
-          /* ======================================
-              NO SEARCH RESULT
-          ====================================== */
-
-          <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
-
-            <div className="text-6xl mb-4">
-              🔎
-            </div>
-
-            <p className="text-xl font-semibold text-gray-700">
+          /* No Search Result */
+          <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-800">
               No matching notes found.
-            </p>
+            </h2>
 
-            <p className="text-gray-500 mt-2">
-              Try another search, semester or subject.
+            <p className="mt-2 text-gray-500">
+              Try another search, semester, or subject.
             </p>
 
             <button
               type="button"
               onClick={clearFilters}
-              className="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition"
+              className="mt-5 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
             >
-              🔄 Show All Notes
+              Show All Notes
             </button>
-
           </div>
-
         ) : (
-
-          /* ======================================
-              NOTES CARDS
-          ====================================== */
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-
+          /* Notes Cards */
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {filteredResources.map((resource) => (
-
-              <div
+              <article
                 key={resource._id}
-                className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition duration-300"
+                className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
-
-                {/* TITLE */}
-
-                <div className="flex justify-between items-start gap-3">
-
-                  <h2 className="text-xl font-bold text-gray-800 break-words">
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="break-words text-xl font-bold text-gray-900">
                     {resource.title}
                   </h2>
 
-                  <span className="shrink-0 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
+                  <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                     Notes
                   </span>
-
                 </div>
-
-                {/* SEMESTER */}
 
                 {resource.semester && (
                   <p className="mt-4 text-sm font-semibold text-blue-600">
-                    🎓 Semester: {resource.semester}
+                    Semester: {resource.semester}
                   </p>
                 )}
-
-                {/* SUBJECT */}
 
                 {resource.subject && (
-                  <p className="mt-2 text-sm font-semibold text-gray-500">
-                    📖 Subject: {resource.subject}
+                  <p className="mt-2 text-sm text-gray-600">
+                    Subject: {resource.subject}
                   </p>
                 )}
 
-                {/* DESCRIPTION */}
-
                 {resource.description && (
-                  <p className="mt-3 text-gray-600">
+                  <p className="mt-3 text-sm leading-6 text-gray-600">
                     {resource.description}
                   </p>
                 )}
 
-                {/* FILE NAME */}
-
                 {resource.fileName && (
-                  <p className="mt-4 text-sm text-gray-500 truncate">
-                    📄 {resource.fileName}
+                  <p className="mt-4 truncate text-sm text-gray-500">
+                    File: {resource.fileName}
                   </p>
                 )}
 
-                {/* BUTTONS */}
-
-                <div className="flex gap-3 mt-6">
-
+                <div className="mt-6 flex gap-3">
                   <a
                     href={resource.fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg transition"
+                    className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
                   >
-                    👁️ View PDF
+                    View PDF
                   </a>
 
                   <a
                     href={resource.fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    download={
-                      resource.fileName || true
-                    }
-                    className="flex-1 text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-4 rounded-lg transition"
+                    download={resource.fileName || true}
+                    className="flex-1 rounded-lg bg-gray-900 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-gray-800"
                   >
-                    ⬇️ Download
+                    Download
                   </a>
-
                 </div>
-
-              </div>
-
+              </article>
             ))}
-
           </div>
-
         )}
-
       </div>
-    </div>
+    </main>
   );
 }
