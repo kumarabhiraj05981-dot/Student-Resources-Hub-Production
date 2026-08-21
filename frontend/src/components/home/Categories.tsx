@@ -3,7 +3,7 @@ export default function Categories() {
     "📄 Notes",
     "📝 PYQ",
     "📚 Syllabus",
-    "📖 E-books",
+    "📖 ",
   ];
 
   return (
