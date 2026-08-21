@@ -1,9 +1,9 @@
 export default function Categories() {
   const items = [
-    "📄 Notes",
-    "📝 PYQ",
-    "📚 Syllabus",
-    "📖 ",
+    " Notes",
+    " PYQ",
+    " Syllabus",
+    " E-Books",
   ];
 
   return (
