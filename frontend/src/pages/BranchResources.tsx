@@ -16,7 +16,7 @@ const branches: Branch[] = [
     id: "cse",
     name: "Computer Science Engineering",
     shortName: "CSE",
-    icon: "💻",
+    icon: "",
     description:
       "Notes, PYQs, Syllabus, E-Books and AI Question Paper resources.",
     active: true,
@@ -26,7 +26,7 @@ const branches: Branch[] = [
     id: "electrical",
     name: "Electrical Engineering",
     shortName: "Electrical",
-    icon: "⚡",
+    icon: "",
     description:
       "Electrical Engineering resources will be available soon.",
     active: false,
@@ -36,7 +36,7 @@ const branches: Branch[] = [
     id: "mechanical",
     name: "Mechanical Engineering",
     shortName: "Mechanical",
-    icon: "🔧",
+    icon: "",
     description:
       "Mechanical Engineering resources will be available soon.",
     active: false,
@@ -46,7 +46,7 @@ const branches: Branch[] = [
     id: "civil-ctm",
     name: "Civil Engineering / CTM",
     shortName: "Civil / CTM",
-    icon: "🏗️",
+    icon: "",
     description:
       "Civil Engineering and CTM share the same syllabus and resources.",
     active: false,
@@ -56,7 +56,7 @@ const branches: Branch[] = [
     id: "leather",
     name: "Leather Technology",
     shortName: "Leather",
-    icon: "👞",
+    icon: "",
     description:
       "Leather Technology resources will be available soon.",
     active: false,
@@ -66,7 +66,7 @@ const branches: Branch[] = [
     id: "future",
     name: "More Branches",
     shortName: "Future",
-    icon: "🚀",
+    icon: "",
     description:
       "More engineering branch resources will be added in future.",
     active: false,
@@ -124,7 +124,7 @@ export default function BranchResources() {
 
           {!isCSE && (
             <div className="inline-block mt-6 bg-yellow-400/20 border border-yellow-200/40 px-6 py-2 rounded-full font-semibold">
-              🔜 Coming Soon
+               Coming Soon
             </div>
           )}
 
@@ -144,7 +144,7 @@ export default function BranchResources() {
           <div className="text-center mb-10">
 
             <h2 className="text-3xl md:text-4xl font-bold text-blue-700">
-              🎓 Select Your Branch
+               Select Your Branch
             </h2>
 
             <p className="text-gray-600 mt-3">
@@ -206,13 +206,13 @@ export default function BranchResources() {
                           : "bg-green-100 text-green-700"
                       }`}
                     >
-                      🟢 Available
+                       Available
                     </span>
 
                   ) : (
 
                     <span className="inline-block bg-yellow-100 text-yellow-700 px-4 py-1.5 rounded-full text-sm font-semibold">
-                      🔜 Coming Soon
+                       Coming Soon
                     </span>
 
                   )}
@@ -248,7 +248,7 @@ export default function BranchResources() {
               <div className="text-center mb-12">
 
                 <div className="text-5xl mb-4">
-                  💻
+                  
                 </div>
 
                 <h2 className="text-3xl md:text-4xl font-bold text-blue-700">
@@ -278,7 +278,7 @@ export default function BranchResources() {
                 >
 
                   <div className="text-6xl mb-5 group-hover:scale-110 transition">
-                    📄
+                    
                   </div>
 
                   <h3 className="text-2xl font-bold text-gray-800">
@@ -304,7 +304,7 @@ export default function BranchResources() {
                 >
 
                   <div className="text-6xl mb-5 group-hover:scale-110 transition">
-                    📝
+                    
                   </div>
 
                   <h3 className="text-2xl font-bold text-gray-800">
@@ -330,7 +330,7 @@ export default function BranchResources() {
                 >
 
                   <div className="text-6xl mb-5 group-hover:scale-110 transition">
-                    📘
+                    
                   </div>
 
                   <h3 className="text-2xl font-bold text-gray-800">
@@ -356,7 +356,7 @@ export default function BranchResources() {
                 >
 
                   <div className="text-6xl mb-5 group-hover:scale-110 transition">
-                    📖
+                    
                   </div>
 
                   <h3 className="text-2xl font-bold text-gray-800">
@@ -383,7 +383,7 @@ export default function BranchResources() {
               <div className="mt-10 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-3xl p-8 md:p-10 text-center shadow-2xl">
 
                 <div className="text-6xl mb-5">
-                  🤖
+                  
                 </div>
 
                 <h3 className="text-2xl md:text-3xl font-bold">
@@ -400,7 +400,7 @@ export default function BranchResources() {
                   to="/ai-question-paper"
                   className="inline-block mt-6 bg-white text-indigo-700 px-8 py-3 rounded-xl font-bold shadow-lg hover:scale-105 transition"
                 >
-                  🚀 Generate Question Paper
+                   Generate Question Paper
                 </Link>
 
               </div>
@@ -416,7 +416,7 @@ export default function BranchResources() {
             <div className="max-w-3xl mx-auto text-center bg-blue-50 rounded-3xl p-10 md:p-14 shadow-xl">
 
               <div className="text-7xl mb-6">
-                🚧
+                
               </div>
 
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
@@ -436,29 +436,29 @@ export default function BranchResources() {
               <div className="mt-7 bg-white rounded-xl p-5 shadow">
 
                 <p className="text-blue-700 font-semibold">
-                  🚀 Planned Resources
+                   Planned Resources
                 </p>
 
                 <div className="flex flex-wrap justify-center gap-3 mt-4">
 
                   <span className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold">
-                    📄 Notes
+                     Notes
                   </span>
 
                   <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-semibold">
-                    📝 PYQs
+                     PYQs
                   </span>
 
                   <span className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-sm font-semibold">
-                    📘 Syllabus
+                     Syllabus
                   </span>
 
                   <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold">
-                    📖 E-Books
+                     E-Books
                   </span>
 
                   <span className="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full text-sm font-semibold">
-                    🤖 AI Papers
+                     AI Papers
                   </span>
 
                 </div>
@@ -470,7 +470,7 @@ export default function BranchResources() {
                 to="/branch/cse"
                 className="inline-block mt-8 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition"
               >
-                💻 Go to CSE Resources
+                 Go to CSE Resources
               </Link>
 
             </div>
