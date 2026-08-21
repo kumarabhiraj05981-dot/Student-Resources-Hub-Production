@@ -1,28 +1,30 @@
 export default function Footer() {
   return (
-    <footer className="bg-blue-700 text-white py-10 mt-10">
-      <div className="max-w-7xl mx-auto px-6 text-center">
+    <footer className="mt-10 border-t border-gray-200 bg-gray-900 text-white">
+      <div className="mx-auto max-w-7xl px-6 py-10 text-center">
 
-        <h2 className="text-3xl font-bold mb-3">
-          📚 Student Resources Hub
+        <h2 className="text-2xl font-bold">
+          Student Resources Hub
         </h2>
 
-        <p className="text-blue-100">
-          One Platform for Notes, PYQ, Syllabus & E-books
+        <p className="mt-2 text-sm text-gray-400">
+          One platform for Notes, PYQ, Syllabus & E-Books
         </p>
 
-        <hr className="my-6 border-blue-500" />
+        <div className="my-6 border-t border-gray-700" />
 
-        <p className="text-sm">
+        <p className="text-sm text-gray-400">
           © 2026 Student Resources Hub. All Rights Reserved.
         </p>
 
-        <p className="mt-2 text-blue-200">
-          ❤️ Designed & Developed by <span className="font-bold text-white">Abhiraj Kumar  2024-2027</span>
+        <p className="mt-2 text-sm text-gray-500">
+          Designed & Developed by{" "}
+          <span className="font-semibold text-white">
+            Abhiraj Kumar 2024-2027
+          </span>
         </p>
 
       </div>
-      
     </footer>
   );
 }
