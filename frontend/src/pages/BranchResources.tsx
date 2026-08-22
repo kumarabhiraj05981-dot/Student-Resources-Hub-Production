@@ -1,8 +1,7 @@
 import { Link, useParams } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
-import api from "../services/api";
 
 interface Branch {
   id: string;
@@ -14,17 +13,32 @@ interface Branch {
 }
 
 interface Resource {
-  _id: string;
+  _id?: string;
+  id?: string;
   title: string;
   description?: string;
-  branch?: string;
-  semester?: string;
-  category?: string;
   subject?: string;
+  semester?: string | number;
+  category?: string;
+  branch?: string;
   fileUrl?: string;
+  filename?: string;
   fileName?: string;
-  createdAt?: string;
 }
+
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  "https://student-resources-hub-1.onrender.com/api";
+
+const FILE_BASE =
+  import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
+  "https://student-resources-hub-1.onrender.com";
+
+/* ============================================================
+   BRANCH LIST
+   IMPORTANT:
+   apiName MUST MATCH DATABASE BRANCH NAME
+============================================================ */
 
 const branches: Branch[] = [
   {
@@ -36,6 +50,7 @@ const branches: Branch[] = [
     description:
       "Notes, PYQs, Syllabus, E-Books and other CSE study resources.",
   },
+
   {
     id: "electrical",
     name: "Electrical Engineering",
@@ -45,6 +60,7 @@ const branches: Branch[] = [
     description:
       "Electrical Engineering notes, PYQs, syllabus and study materials.",
   },
+
   {
     id: "mechanical",
     name: "Mechanical Engineering",
@@ -54,6 +70,7 @@ const branches: Branch[] = [
     description:
       "Mechanical Engineering notes, PYQs, syllabus and study materials.",
   },
+
   {
     id: "civil-ctm",
     name: "Civil Engineering / CTM",
@@ -63,6 +80,7 @@ const branches: Branch[] = [
     description:
       "Civil Engineering and CTM notes, PYQs, syllabus and study materials.",
   },
+
   {
     id: "electronics",
     name: "Electronics Engineering",
@@ -72,6 +90,7 @@ const branches: Branch[] = [
     description:
       "Electronics Engineering notes, PYQs, syllabus and study materials.",
   },
+
   {
     id: "leather",
     name: "Leather Technology",
@@ -83,128 +102,147 @@ const branches: Branch[] = [
   },
 ];
 
-const categories = [
-  {
-    name: "Notes",
-    icon: "📚",
-    bg: "bg-blue-50",
-    text: "text-blue-700",
-  },
-  {
-    name: "PYQ",
-    icon: "📝",
-    bg: "bg-orange-50",
-    text: "text-orange-700",
-  },
-  {
-    name: "Syllabus",
-    icon: "📋",
-    bg: "bg-purple-50",
-    text: "text-purple-700",
-  },
-  {
-    name: "Ebooks",
-    icon: "📖",
-    bg: "bg-green-50",
-    text: "text-green-700",
-  },
-  {
-    name: "Other",
-    icon: "📁",
-    bg: "bg-gray-50",
-    text: "text-gray-700",
-  },
-];
+/* ============================================================
+   CATEGORY HELPERS
+============================================================ */
+
+const normalizeCategory = (category?: string) => {
+  if (!category) return "Other";
+
+  const value = category.trim().toLowerCase();
+
+  if (value === "notes") return "Notes";
+
+  if (
+    value === "pyq" ||
+    value === "pyqs" ||
+    value === "previous year question"
+  ) {
+    return "PYQ";
+  }
+
+  if (value === "syllabus") return "Syllabus";
+
+  if (
+    value === "ebook" ||
+    value === "ebooks" ||
+    value === "e-book" ||
+    value === "e-books"
+  ) {
+    return "E-Books";
+  }
+
+  return "Other";
+};
+
+/* ============================================================
+   BRANCH NAME COMPARISON
+============================================================ */
+
+const normalizeBranch = (branch?: string) => {
+  if (!branch) return "";
+
+  return branch
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+};
 
 export default function BranchResources() {
   const { branchId } = useParams();
 
-  const currentBranch =
-    branches.find((item) => item.id === branchId) || branches[0];
+  const branch =
+    branches.find((item) => item.id === branchId) ||
+    branches[0];
 
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // ==========================================================
-  // LOAD RESOURCES FOR SELECTED BRANCH
-  // ==========================================================
+  /* ==========================================================
+     FETCH RESOURCES
+  ========================================================== */
 
   useEffect(() => {
-    let cancelled = false;
+    let isMounted = true;
 
     const loadResources = async () => {
       try {
         setLoading(true);
         setError("");
+        setResources([]);
 
         /*
-         * IMPORTANT:
+         * VERY IMPORTANT:
          *
-         * Backend branch names:
+         * Example:
          *
-         * Computer Science
          * Electrical
-         * Mechanical
-         * Civil & CTM
-         * Electronics
-         * Leather Technology
+         * /api/resources/branch/Electrical
          *
-         * Therefore apiName is used instead of URL id.
+         * Mechanical
+         * /api/resources/branch/Mechanical
+         *
+         * Electronics
+         * /api/resources/branch/Electronics
          */
 
-        const response = await api.get(
-          `/api/resources/branch/${encodeURIComponent(
-            currentBranch.apiName
+        const response = await fetch(
+          `${API_BASE}/resources/branch/${encodeURIComponent(
+            branch.apiName
           )}`
         );
 
-        if (cancelled) return;
-
-        const data = response.data;
-
-        let resourceList: Resource[] = [];
-
-        if (Array.isArray(data)) {
-          resourceList = data;
-        } else if (Array.isArray(data.resources)) {
-          resourceList = data.resources;
-        } else if (Array.isArray(data.data)) {
-          resourceList = data.data;
+        if (!response.ok) {
+          throw new Error(
+            `Server returned ${response.status}`
+          );
         }
 
+        const data = await response.json();
+
+        let list: Resource[] = [];
+
+        if (Array.isArray(data)) {
+          list = data;
+        } else if (Array.isArray(data.resources)) {
+          list = data.resources;
+        } else if (Array.isArray(data.data)) {
+          list = data.data;
+        }
+
+        if (!isMounted) return;
+
         /*
-         * Extra safety:
+         * Extra safety filter.
          *
-         * Agar backend galti se kisi aur branch ka resource bhej de,
-         * to frontend usko show nahi karega.
+         * This makes sure Electrical resources do not appear
+         * on Mechanical page etc.
          */
 
-        const filtered = resourceList.filter((resource) => {
+        const filtered = list.filter((resource) => {
           if (!resource.branch) {
             return true;
           }
 
           return (
-            resource.branch.trim().toLowerCase() ===
-            currentBranch.apiName.trim().toLowerCase()
+            normalizeBranch(resource.branch) ===
+            normalizeBranch(branch.apiName)
           );
         });
 
         setResources(filtered);
-      } catch (err: any) {
-        console.error("Branch resources error:", err);
+      } catch (err) {
+        console.error("Resource loading error:", err);
 
-        if (!cancelled) {
-          setResources([]);
+        if (!isMounted) return;
 
-          setError(
-            err?.response?.data?.message ||
-              "Unable to load resources. Please try again."
-          );
-        }
+        setResources([]);
+        setError(
+          "Resources load nahi ho pa rahe hain. Please try again."
+        );
       } finally {
-        if (!cancelled) {
+        if (isMounted) {
           setLoading(false);
         }
       }
@@ -213,79 +251,41 @@ export default function BranchResources() {
     loadResources();
 
     return () => {
-      cancelled = true;
+      isMounted = false;
     };
-  }, [currentBranch.apiName]);
+  }, [branch.apiName]);
 
-  // ==========================================================
-  // RESOURCE FILE URL
-  // ==========================================================
+  /* ==========================================================
+     FILE URL
+  ========================================================== */
 
   const getFileUrl = (resource: Resource) => {
-    if (!resource.fileUrl) {
+    const file =
+      resource.fileUrl ||
+      resource.filename ||
+      resource.fileName;
+
+    if (!file) {
       return "#";
     }
 
     if (
-      resource.fileUrl.startsWith("http://") ||
-      resource.fileUrl.startsWith("https://")
+      file.startsWith("http://") ||
+      file.startsWith("https://")
     ) {
-      return resource.fileUrl;
+      return file;
     }
 
-    const baseUrl =
-      import.meta.env.VITE_API_URL ||
-      "https://student-resources-hub-1.onrender.com";
-
-    if (resource.fileUrl.startsWith("/")) {
-      return `${baseUrl}${resource.fileUrl}`;
+    if (file.startsWith("/")) {
+      return `${FILE_BASE}${file}`;
     }
 
-    return `${baseUrl}/${resource.fileUrl}`;
+    return `${FILE_BASE}/${file}`;
   };
 
-  // ==========================================================
-  // CATEGORY NORMALIZATION
-  // ==========================================================
-
-  const normalizeCategory = (category?: string) => {
-    if (!category) return "Other";
-
-    const value = category.trim().toLowerCase();
-
-    if (value === "notes") return "Notes";
-    if (value === "pyq" || value === "pyqs") return "PYQ";
-    if (value === "syllabus") return "Syllabus";
-
-    if (
-      value === "ebook" ||
-      value === "ebooks" ||
-      value === "e-book" ||
-      value === "e-books"
-    ) {
-      return "Ebooks";
-    }
-
-    return "Other";
-  };
-
-  // ==========================================================
-  // GROUP RESOURCES
-  // ==========================================================
-
-  const groupedResources = useMemo(() => {
-    return categories.map((category) => ({
-      ...category,
-      resources: resources.filter(
-        (resource) =>
-          normalizeCategory(resource.category) === category.name
-      ),
-    }));
-  }, [resources]);
-
-  // ==========================================================
-  // CATEGORY COUNT
-  // ==========================================================
+  /* ==========================================================
+     CATEGORY COUNT
+  ========================================================== */
 
   const getCategoryCount = (category: string) => {
     return resources.filter(
@@ -294,9 +294,58 @@ export default function BranchResources() {
     ).length;
   };
 
-  // ==========================================================
-  // PAGE
-  // ==========================================================
+  /* ==========================================================
+     RESOURCE CATEGORY DATA
+  ========================================================== */
+
+  const categoryCards = [
+    {
+      name: "Notes",
+      icon: "📚",
+      bg: "bg-blue-50",
+      text: "text-blue-700",
+    },
+    {
+      name: "PYQ",
+      icon: "📝",
+      bg: "bg-orange-50",
+      text: "text-orange-700",
+    },
+    {
+      name: "Syllabus",
+      icon: "📋",
+      bg: "bg-purple-50",
+      text: "text-purple-700",
+    },
+    {
+      name: "E-Books",
+      icon: "📖",
+      bg: "bg-green-50",
+      text: "text-green-700",
+    },
+    {
+      name: "Other",
+      icon: "📁",
+      bg: "bg-gray-50",
+      text: "text-gray-700",
+    },
+  ];
+
+  /* ==========================================================
+     GROUP RESOURCES
+  ========================================================== */
+
+  const groupedResources = categoryCards.map((category) => ({
+    ...category,
+    resources: resources.filter(
+      (resource) =>
+        normalizeCategory(resource.category) === category.name
+    ),
+  }));
+
+  /* ==========================================================
+     PAGE
+  ========================================================== */
 
   return (
     <>
@@ -310,24 +359,25 @@ export default function BranchResources() {
         <div className="max-w-7xl mx-auto px-6 py-16 text-center">
 
           <div className="text-6xl mb-5">
-            {currentBranch.icon}
+            {branch.icon}
           </div>
 
           <h1 className="text-4xl md:text-5xl font-extrabold">
-            {currentBranch.name}
+            {branch.name}
           </h1>
 
           <p className="mt-4 text-lg text-blue-100 max-w-3xl mx-auto">
-            {currentBranch.description}
+            {branch.description}
           </p>
 
-          <div className="inline-block mt-6 bg-green-500/20 border border-green-300/40 px-6 py-2 rounded-full font-semibold">
-            {loading
-              ? "Loading resources..."
-              : `${resources.length} Resource${
-                  resources.length === 1 ? "" : "s"
-                } Available`}
-          </div>
+          {!loading && (
+            <div className="inline-block mt-6 bg-green-500/20 border border-green-300/40 px-6 py-2 rounded-full font-semibold">
+              ✅ {resources.length}{" "}
+              {resources.length === 1
+                ? "Resource Available"
+                : "Resources Available"}
+            </div>
+          )}
 
         </div>
       </section>
@@ -358,7 +408,7 @@ export default function BranchResources() {
                 key={item.id}
                 to={`/branch/${item.id}`}
                 className={`block rounded-2xl p-6 transition duration-300 transform hover:-translate-y-2 ${
-                  item.id === currentBranch.id
+                  item.id === branch.id
                     ? "bg-blue-600 text-white shadow-2xl"
                     : "bg-white text-gray-800 shadow-lg hover:shadow-2xl"
                 }`}
@@ -378,7 +428,7 @@ export default function BranchResources() {
 
                     <p
                       className={`text-sm mt-1 ${
-                        item.id === currentBranch.id
+                        item.id === branch.id
                           ? "text-blue-100"
                           : "text-gray-500"
                       }`}
@@ -392,13 +442,13 @@ export default function BranchResources() {
 
                 <div className="mt-5">
 
-                  {item.id === currentBranch.id ? (
+                  {item.id === branch.id ? (
                     <span className="inline-block bg-white/20 text-white px-4 py-1.5 rounded-full text-sm font-semibold">
                       ✓ Selected
                     </span>
                   ) : (
                     <span className="inline-block bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-sm font-semibold">
-                      Open Resources →
+                      View Resources →
                     </span>
                   )}
 
@@ -408,7 +458,6 @@ export default function BranchResources() {
             ))}
 
           </div>
-
         </div>
       </section>
 
@@ -428,11 +477,12 @@ export default function BranchResources() {
             </div>
 
             <h2 className="text-3xl md:text-4xl font-bold text-blue-700">
-              {currentBranch.shortName} Study Resources
+              {branch.shortName} Study Resources
             </h2>
 
             <p className="text-gray-600 mt-3">
-              All resources uploaded for {currentBranch.name} are shown below.
+              {branch.name} ke uploaded study materials yahan
+              automatically show honge.
             </p>
 
           </div>
@@ -443,7 +493,7 @@ export default function BranchResources() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-14">
 
-            {categories.map((category) => (
+            {categoryCards.map((category) => (
               <div
                 key={category.name}
                 className={`${category.bg} rounded-2xl p-6 text-center shadow-md hover:shadow-xl transition`}
@@ -453,10 +503,10 @@ export default function BranchResources() {
                   {category.icon}
                 </div>
 
-                <h3 className={`text-xl font-bold ${category.text}`}>
-                  {category.name === "Ebooks"
-                    ? "E-Books"
-                    : category.name}
+                <h3
+                  className={`text-xl font-bold ${category.text}`}
+                >
+                  {category.name}
                 </h3>
 
                 <p className="text-3xl font-extrabold text-gray-800 mt-2">
@@ -488,7 +538,7 @@ export default function BranchResources() {
               </h3>
 
               <p className="text-gray-600 mt-3">
-                Please wait while we load {currentBranch.shortName} resources.
+                {branch.shortName} resources load ho rahe hain...
               </p>
 
             </div>
@@ -506,7 +556,7 @@ export default function BranchResources() {
               </div>
 
               <h3 className="text-2xl font-bold text-red-700">
-                Unable to Load Resources
+                Resources Load Nahi Ho Rahe
               </h3>
 
               <p className="text-red-600 mt-3">
@@ -541,22 +591,16 @@ export default function BranchResources() {
                 </h3>
 
                 <p className="text-gray-600 text-lg mt-5">
-                  There are currently no resources available for{" "}
-                  <strong>{currentBranch.name}</strong>.
+                  Abhi{" "}
+                  <strong>{branch.name}</strong>{" "}
+                  ke liye koi resource upload nahi hua hai.
                 </p>
 
                 <p className="text-gray-500 mt-3">
-                  When the administrator uploads Notes, PYQs, Syllabus,
-                  E-Books or other files for this branch, they will appear
-                  here automatically.
+                  Admin jab is branch ke liye Notes, PYQs,
+                  Syllabus, E-Books ya Other files upload karega,
+                  woh automatically yahan dikh jayengi.
                 </p>
-
-                <Link
-                  to="/"
-                  className="inline-block mt-7 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold"
-                >
-                  Go to Home
-                </Link>
 
               </div>
             )}
@@ -577,7 +621,7 @@ export default function BranchResources() {
                   .map((group) => (
                     <div key={group.name}>
 
-                      {/* GROUP HEADER */}
+                      {/* GROUP TITLE */}
 
                       <div className="flex items-center justify-between mb-6">
 
@@ -588,9 +632,7 @@ export default function BranchResources() {
                           </span>
 
                           <h3 className="text-2xl md:text-3xl font-bold text-gray-800">
-                            {group.name === "Ebooks"
-                              ? "E-Books"
-                              : group.name}
+                            {group.name}
                           </h3>
 
                         </div>
@@ -610,20 +652,22 @@ export default function BranchResources() {
 
                         {group.resources.map((resource) => (
                           <div
-                            key={resource._id}
+                            key={
+                              resource._id ||
+                              resource.id ||
+                              resource.title
+                            }
                             className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition"
                           >
 
-                            {/* TOP */}
+                            {/* CATEGORY */}
 
                             <div className="flex items-start justify-between gap-3">
 
                               <span
                                 className={`px-3 py-1 rounded-full text-xs font-bold ${group.bg} ${group.text}`}
                               >
-                                {group.name === "Ebooks"
-                                  ? "E-Books"
-                                  : group.name}
+                                {group.name}
                               </span>
 
                               {resource.semester && (
@@ -654,7 +698,7 @@ export default function BranchResources() {
                             {/* DESCRIPTION */}
 
                             {resource.description && (
-                              <p className="text-gray-500 text-sm mt-3 line-clamp-3">
+                              <p className="text-gray-500 text-sm mt-3">
                                 {resource.description}
                               </p>
                             )}
@@ -664,18 +708,78 @@ export default function BranchResources() {
                             <div className="mt-4">
 
                               <span className="inline-block bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
-                                {currentBranch.shortName}
+                                {branch.shortName}
                               </span>
 
                             </div>
 
-                            {/* OPEN BUTTON */}
+                            {/* OPEN FILE */}
 
-                            {resource.fileUrl ? (
+                            {(
+                              resource.fileUrl ||
+                              resource.filename ||
+                              resource.fileName
+                            ) ? (
                               <a
                                 href={getFileUrl(resource)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="block mt-6 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl text-center font-semibold transition"
                               >
-                                📄 Open R
+                                📄 Open Resource →
+                              </a>
+                            ) : (
+                              <div className="block mt-6 bg-gray-200 text-gray-500 px-5 py-3 rounded-xl text-center font-semibold">
+                                File Not Available
+                              </div>
+                            )}
+
+                          </div>
+                        ))}
+
+                      </div>
+
+                    </div>
+                  ))}
+
+              </div>
+            )}
+
+          {/* ==================================================
+              CSE AI QUESTION PAPER
+          ================================================== */}
+
+          {branch.id === "cse" && (
+            <div className="mt-14 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-3xl p-8 md:p-10 text-center shadow-2xl">
+
+              <div className="text-6xl mb-5">
+                🤖
+              </div>
+
+              <h3 className="text-2xl md:text-3xl font-bold">
+                AI Question Paper Generator
+              </h3>
+
+              <p className="mt-3 text-indigo-100 max-w-2xl mx-auto">
+                Enter your subject and syllabus or units.
+                AI will generate a question paper based on
+                the provided syllabus.
+              </p>
+
+              <Link
+                to="/ai-question-paper"
+                className="inline-block mt-6 bg-white text-indigo-700 px-8 py-3 rounded-xl font-bold shadow-lg hover:scale-105 transition"
+              >
+                Generate Question Paper
+              </Link>
+
+            </div>
+          )}
+
+        </div>
+      </section>
+
+      <Footer />
+    </>
+  );
+}
