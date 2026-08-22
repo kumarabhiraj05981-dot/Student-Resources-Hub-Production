@@ -336,50 +336,39 @@ router.post(
         "--------------------------------------"
       );
 
-      // ======================================
-      // CLOUDINARY UPLOAD
-      // ======================================
+     // ======================================
+// CLOUDINARY UPLOAD
+// ======================================
 
-      const uploadToCloudinary =
-        () => {
-          return new Promise(
-            (resolve, reject) => {
-              const stream =
-                cloudinary.uploader.upload_stream(
-                  {
-                    folder:
-                      "student-resources",
+const uploadToCloudinary = () => {
+  return new Promise((resolve, reject) => {
+    const stream =
+      cloudinary.uploader.upload_stream(
+        {
+          folder: "student-resources",
 
-                    resource_type:
-                      "raw",
+          // IMPORTANT:
+          // PDF ko image resource ke roop mein upload karo
+          // taaki browser PDF ko directly open kar sake.
+          resource_type: "image",
 
-                    public_id:
-                      publicId,
+          public_id: publicId,
 
-                    overwrite:
-                      false,
-                  },
+          overwrite: false,
+        },
 
-                  (
-                    error,
-                    result
-                  ) => {
-                    if (error) {
-                      reject(error);
-                    } else {
-                      resolve(
-                        result
-                      );
-                    }
-                  }
-                );
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        }
+      );
 
-              stream.end(
-                req.file.buffer
-              );
-            }
-          );
-        };
+    stream.end(req.file.buffer);
+  });
+};
 
       // ======================================
       // START CLOUDINARY UPLOAD
