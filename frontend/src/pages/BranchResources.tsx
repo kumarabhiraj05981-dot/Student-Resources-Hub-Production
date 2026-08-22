@@ -21,7 +21,6 @@ interface Branch {
   id: string;
   name: string;
   shortName: string;
-  icon: string;
   description: string;
 }
 
@@ -30,55 +29,58 @@ const branches: Branch[] = [
     id: "cse",
     name: "Computer Science Engineering",
     shortName: "CSE",
-    icon: "💻",
     description:
       "Notes, PYQs, Syllabus, E-Books and other study resources.",
   },
+
   {
     id: "electrical",
     name: "Electrical Engineering",
     shortName: "Electrical",
-    icon: "⚡",
     description:
       "Electrical Engineering notes, PYQs, syllabus and study materials.",
   },
+
   {
     id: "mechanical",
     name: "Mechanical Engineering",
     shortName: "Mechanical",
-    icon: "⚙️",
     description:
       "Mechanical Engineering notes, PYQs, syllabus and study materials.",
   },
+
   {
     id: "civil-ctm",
     name: "Civil Engineering / CTM",
     shortName: "Civil / CTM",
-    icon: "🏗️",
     description:
       "Civil Engineering and CTM study resources.",
   },
+
   {
     id: "electronics",
     name: "Electronics Engineering",
     shortName: "Electronics",
-    icon: "🔌",
     description:
       "Electronics Engineering notes, PYQs, syllabus and study materials.",
   },
+
   {
     id: "leather",
     name: "Leather Technology",
     shortName: "Leather",
-    icon: "📚",
     description:
       "Leather Technology notes, PYQs, syllabus and study materials.",
   },
 ];
 
-/* ============================================================
-   ADMIN BRANCH NAME -> URL BRANCH
-============================================================ */
+/*
+|--------------------------------------------------------------------------
+| IMPORTANT
+|--------------------------------------------------------------------------
+| Ye names Admin.tsx ke branch values ke EXACT same hain.
+|--------------------------------------------------------------------------
+*/
 
 const branchApiNames: Record<string, string> = {
   cse: "Computer Science",
@@ -89,122 +91,141 @@ const branchApiNames: Record<string, string> = {
   leather: "Leather Technology",
 };
 
-/* ============================================================
-   FOUR MAIN RESOURCE FOLDERS
-============================================================ */
+/*
+|--------------------------------------------------------------------------
+| ONLY 4 MAIN RESOURCE FOLDERS
+|--------------------------------------------------------------------------
+*/
 
 const RESOURCE_FOLDERS = [
   {
     id: "Notes",
     name: "Notes",
-    icon: "📘",
     description:
-      "Semester-wise notes, unit notes and subject study material.",
+      "Study notes, unit notes and subject-wise learning material.",
     bg: "bg-blue-50",
     hover: "hover:bg-blue-100",
     border: "border-blue-200",
+    iconBg: "bg-blue-100",
+    iconText: "text-blue-700",
     button: "bg-blue-600 hover:bg-blue-700",
   },
+
   {
     id: "PYQ",
     name: "PYQ",
-    icon: "📄",
     description:
-      "Previous year question papers semester-wise.",
+      "Previous year question papers and exam papers.",
     bg: "bg-orange-50",
     hover: "hover:bg-orange-100",
     border: "border-orange-200",
+    iconBg: "bg-orange-100",
+    iconText: "text-orange-700",
     button: "bg-orange-500 hover:bg-orange-600",
   },
+
   {
     id: "Syllabus",
     name: "Syllabus",
-    icon: "📋",
     description:
-      "Complete semester-wise syllabus documents.",
+      "Semester-wise syllabus and course documents.",
     bg: "bg-purple-50",
     hover: "hover:bg-purple-100",
     border: "border-purple-200",
+    iconBg: "bg-purple-100",
+    iconText: "text-purple-700",
     button: "bg-purple-600 hover:bg-purple-700",
   },
+
   {
     id: "Ebooks",
     name: "E-Books",
-    icon: "📗",
     description:
-      "Books and useful learning material in PDF format.",
+      "Useful books and learning material in PDF format.",
     bg: "bg-green-50",
     hover: "hover:bg-green-100",
     border: "border-green-200",
+    iconBg: "bg-green-100",
+    iconText: "text-green-700",
     button: "bg-green-600 hover:bg-green-700",
   },
 ];
 
-/* ============================================================
-   SEMESTERS
-============================================================ */
-
-const SEMESTERS = [
-  "1st Semester",
-  "2nd Semester",
-  "3rd Semester",
-  "4th Semester",
-  "5th Semester",
-  "6th Semester",
-];
-
-/* ============================================================
-   MAIN COMPONENT
-============================================================ */
+/*
+|--------------------------------------------------------------------------
+| COMPONENT
+|--------------------------------------------------------------------------
+*/
 
 export default function BranchResources() {
   const { branchId } = useParams();
 
+  /*
+  |--------------------------------------------------------------------------
+  | CURRENT BRANCH
+  |--------------------------------------------------------------------------
+  */
+
   const selectedBranchId = branchId || "cse";
 
   const branch =
-    branches.find((item) => item.id === selectedBranchId) ||
-    branches[0];
+    branches.find(
+      (item) => item.id === selectedBranchId
+    ) || branches[0];
+
+  /*
+  |--------------------------------------------------------------------------
+  | ADMIN BRANCH NAME
+  |--------------------------------------------------------------------------
+  */
 
   const apiBranchName =
     branchApiNames[branch.id] || "Computer Science";
 
-  /* ==========================================================
-     STATES
-  ========================================================== */
+  /*
+  |--------------------------------------------------------------------------
+  | STATES
+  |--------------------------------------------------------------------------
+  */
 
   const [resources, setResources] = useState<Resource[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
 
   /*
-   * selectedFolder:
-   *
-   * null
-   *    => 4 folders show honge
-   *
-   * "Notes"
-   *    => Notes ke andar resources show honge
-   *
-   * "PYQ"
-   *    => PYQ ke andar resources
-   *
-   * etc.
-   */
+  |--------------------------------------------------------------------------
+  | SELECTED FOLDER
+  |--------------------------------------------------------------------------
+  |
+  | null = 4 folders show
+  |
+  | Notes = Notes files show
+  | PYQ = PYQ files show
+  | Syllabus = Syllabus files show
+  | Ebooks = E-Books files show
+  |
+  */
 
   const [selectedFolder, setSelectedFolder] =
     useState<string | null>(null);
 
-  /* ==========================================================
-     LOAD RESOURCES
-  ========================================================== */
+  /*
+  |--------------------------------------------------------------------------
+  | LOAD ALL RESOURCES
+  |--------------------------------------------------------------------------
+  */
 
   const loadResources = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await api.get("/api/resources");
+      const response =
+        await api.get("/api/resources");
 
       console.log(
         "FRONTEND RESOURCES:",
@@ -213,13 +234,18 @@ export default function BranchResources() {
 
       const data = response.data;
 
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.resources)
-        ? data.resources
-        : [];
+      let resourceList: Resource[] = [];
 
-      setResources(list);
+      if (Array.isArray(data)) {
+        resourceList = data;
+      } else if (
+        Array.isArray(data?.resources)
+      ) {
+        resourceList = data.resources;
+      }
+
+      setResources(resourceList);
+
     } catch (err: any) {
       console.error(
         "RESOURCE LOAD ERROR:",
@@ -232,90 +258,126 @@ export default function BranchResources() {
       );
 
       setResources([]);
+
     } finally {
       setLoading(false);
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | LOAD ON PAGE OPEN
+  |--------------------------------------------------------------------------
+  */
+
   useEffect(() => {
     loadResources();
   }, []);
 
-  /* ==========================================================
-     CURRENT BRANCH RESOURCES
-  ========================================================== */
+  /*
+  |--------------------------------------------------------------------------
+  | FILTER RESOURCES BY BRANCH
+  |--------------------------------------------------------------------------
+  */
 
   const branchResources = useMemo(() => {
     const selectedBranch =
-      apiBranchName.trim().toLowerCase();
+      apiBranchName
+        .trim()
+        .toLowerCase();
 
-    return resources.filter((resource) => {
-      const resourceBranch =
-        resource.branch?.trim().toLowerCase();
+    return resources.filter(
+      (resource) => {
+        const resourceBranch =
+          resource.branch
+            ?.trim()
+            .toLowerCase();
 
-      return resourceBranch === selectedBranch;
-    });
-  }, [resources, apiBranchName]);
+        return (
+          resourceBranch ===
+          selectedBranch
+        );
+      }
+    );
+  }, [
+    resources,
+    apiBranchName,
+  ]);
 
-  /* ==========================================================
-     CURRENT FOLDER RESOURCES
-  ========================================================== */
+  /*
+  |--------------------------------------------------------------------------
+  | RESOURCES OF SELECTED FOLDER
+  |--------------------------------------------------------------------------
+  */
 
   const folderResources = useMemo(() => {
     if (!selectedFolder) {
       return [];
     }
 
-    return branchResources.filter((resource) => {
-      return (
-        resource.category?.trim().toLowerCase() ===
-        selectedFolder.trim().toLowerCase()
-      );
-    });
-  }, [branchResources, selectedFolder]);
+    const selectedCategory =
+      selectedFolder
+        .trim()
+        .toLowerCase();
 
-  /* ==========================================================
-     SEMESTER GROUPING
-  ========================================================== */
+    return branchResources.filter(
+      (resource) => {
+        const resourceCategory =
+          resource.category
+            ?.trim()
+            .toLowerCase();
 
-  const semesterGroups = useMemo(() => {
-    const groups: Record<string, Resource[]> = {};
-
-    folderResources.forEach((resource) => {
-      const semester =
-        resource.semester || "Other";
-
-      if (!groups[semester]) {
-        groups[semester] = [];
+        return (
+          resourceCategory ===
+          selectedCategory
+        );
       }
+    );
+  }, [
+    branchResources,
+    selectedFolder,
+  ]);
 
-      groups[semester].push(resource);
-    });
+  /*
+  |--------------------------------------------------------------------------
+  | GET FOLDER RESOURCE COUNT
+  |--------------------------------------------------------------------------
+  */
 
-    return groups;
-  }, [folderResources]);
+  const getFolderCount = (
+    folderId: string
+  ) => {
+    const category =
+      folderId
+        .trim()
+        .toLowerCase();
 
-  /* ==========================================================
-     GET FOLDER COUNT
-  ========================================================== */
-
-  const getFolderCount = (folderId: string) => {
     return branchResources.filter(
       (resource) =>
-        resource.category?.trim().toLowerCase() ===
-        folderId.trim().toLowerCase()
+        resource.category
+          ?.trim()
+          .toLowerCase() ===
+        category
     ).length;
   };
 
-  /* ==========================================================
-     DATE
-  ========================================================== */
+  /*
+  |--------------------------------------------------------------------------
+  | DATE FORMAT
+  |--------------------------------------------------------------------------
+  */
 
-  const formatDate = (date?: string) => {
-    if (!date) return "";
+  const formatDate = (
+    date?: string
+  ) => {
+    if (!date) {
+      return "";
+    }
 
     try {
-      return new Date(date).toLocaleDateString(
+      return new Date(
+        date
+      ).toLocaleDateString(
         "en-IN",
         {
           day: "2-digit",
@@ -328,32 +390,65 @@ export default function BranchResources() {
     }
   };
 
-  /* ==========================================================
-     BACK TO FOLDERS
-  ========================================================== */
+  /*
+  |--------------------------------------------------------------------------
+  | FOLDER INFORMATION
+  |--------------------------------------------------------------------------
+  */
 
-  const backToFolders = () => {
-    setSelectedFolder(null);
+  const selectedFolderInfo =
+    RESOURCE_FOLDERS.find(
+      (folder) =>
+        folder.id === selectedFolder
+    );
+
+  /*
+  |--------------------------------------------------------------------------
+  | OPEN PDF
+  |--------------------------------------------------------------------------
+  */
+
+  const openPdf = (
+    fileUrl: string
+  ) => {
+    if (!fileUrl) {
+      return;
+    }
+
+    window.open(
+      fileUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
-  /* ==========================================================
-     PAGE
-  ========================================================== */
+  /*
+  |--------------------------------------------------------------------------
+  | RESET FOLDER WHEN BRANCH CHANGES
+  |--------------------------------------------------------------------------
+  */
+
+  useEffect(() => {
+    setSelectedFolder(null);
+  }, [branch.id]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | PAGE
+  |--------------------------------------------------------------------------
+  */
 
   return (
     <>
       <Navbar />
 
-      {/* ======================================================
-          HERO
-      ====================================================== */}
+      {/* =====================================================
+          HERO SECTION
+      ===================================================== */}
 
       <section className="bg-gradient-to-r from-blue-700 via-blue-600 to-cyan-500 text-white">
-        <div className="max-w-7xl mx-auto px-6 py-16 text-center">
 
-          <div className="text-6xl mb-5">
-            {branch.icon}
-          </div>
+        <div className="max-w-7xl mx-auto px-6 py-16 text-center">
 
           <h1 className="text-4xl md:text-5xl font-extrabold">
             {branch.name}
@@ -365,17 +460,22 @@ export default function BranchResources() {
 
           {!loading && (
             <div className="inline-block mt-6 bg-white/10 border border-white/30 px-6 py-2 rounded-full font-semibold">
-              📚 {branchResources.length} Resources Available
+              {branchResources.length > 0
+                ? `${branchResources.length} Resources Available`
+                : "Resources Section"}
             </div>
           )}
+
         </div>
+
       </section>
 
-      {/* ======================================================
+      {/* =====================================================
           BRANCH SELECTOR
-      ====================================================== */}
+      ===================================================== */}
 
       <section className="bg-blue-50 py-14">
+
         <div className="max-w-7xl mx-auto px-6">
 
           <div className="text-center mb-10">
@@ -385,7 +485,7 @@ export default function BranchResources() {
             </h2>
 
             <p className="text-gray-600 mt-3">
-              Choose your engineering branch.
+              Choose your engineering branch to access study resources.
             </p>
 
           </div>
@@ -393,6 +493,7 @@ export default function BranchResources() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
             {branches.map((item) => {
+
               const isSelected =
                 item.id === branch.id;
 
@@ -400,9 +501,6 @@ export default function BranchResources() {
                 <Link
                   key={item.id}
                   to={`/branch/${item.id}`}
-                  onClick={() =>
-                    setSelectedFolder(null)
-                  }
                   className={`block rounded-2xl p-6 transition duration-300 hover:-translate-y-2 ${
                     isSelected
                       ? "bg-blue-600 text-white shadow-2xl"
@@ -410,31 +508,19 @@ export default function BranchResources() {
                   }`}
                 >
 
-                  <div className="flex items-center gap-4">
+                  <h3 className="text-xl font-bold">
+                    {item.shortName}
+                  </h3>
 
-                    <div className="text-5xl">
-                      {item.icon}
-                    </div>
-
-                    <div className="flex-1">
-
-                      <h3 className="text-xl font-bold">
-                        {item.shortName}
-                      </h3>
-
-                      <p
-                        className={`text-sm mt-1 ${
-                          isSelected
-                            ? "text-blue-100"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        {item.name}
-                      </p>
-
-                    </div>
-
-                  </div>
+                  <p
+                    className={`text-sm mt-2 ${
+                      isSelected
+                        ? "text-blue-100"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {item.name}
+                  </p>
 
                   <div className="mt-5">
 
@@ -457,19 +543,22 @@ export default function BranchResources() {
             })}
 
           </div>
+
         </div>
+
       </section>
 
-      {/* ======================================================
-          RESOURCE AREA
-      ====================================================== */}
+      {/* =====================================================
+          MAIN RESOURCE SECTION
+      ===================================================== */}
 
       <section className="bg-white py-16">
+
         <div className="max-w-7xl mx-auto px-6">
 
-          {/* ==================================================
+          {/* =================================================
               LOADING
-          ================================================== */}
+          ================================================= */}
 
           {loading && (
             <div className="text-center py-20">
@@ -483,16 +572,12 @@ export default function BranchResources() {
             </div>
           )}
 
-          {/* ==================================================
+          {/* =================================================
               ERROR
-          ================================================== */}
+          ================================================= */}
 
           {!loading && error && (
             <div className="max-w-2xl mx-auto bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
-
-              <div className="text-5xl mb-4">
-                ⚠️
-              </div>
 
               <h3 className="text-xl font-bold text-red-700">
                 Resources load nahi ho pa rahe
@@ -503,6 +588,7 @@ export default function BranchResources() {
               </p>
 
               <button
+                type="button"
                 onClick={loadResources}
                 className="mt-6 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold"
               >
@@ -512,417 +598,373 @@ export default function BranchResources() {
             </div>
           )}
 
-          {/* ==================================================
-              CONTENT
-          ================================================== */}
+          {/* =================================================
+              MAIN CONTENT
+          ================================================= */}
 
-          {!loading && !error && (
-            <>
-              {/* =================================================
-                  FOLDER VIEW
-              ================================================= */}
+          {!loading &&
+            !error && (
+              <>
 
-              {!selectedFolder && (
-                <>
+                {/* ===========================================
+                    4 MAIN FOLDERS
+                =========================================== */}
 
-                  <div className="text-center mb-12">
+                {!selectedFolder && (
+                  <>
 
-                    <h2 className="text-3xl md:text-4xl font-bold text-blue-700">
-                      {branch.shortName} Resources
-                    </h2>
+                    <div className="text-center mb-12">
 
-                    <p className="text-gray-600 mt-3">
-                      Select a folder to view resources.
-                    </p>
-
-                  </div>
-
-                  {branchResources.length === 0 ? (
-                    <div className="max-w-3xl mx-auto text-center bg-blue-50 rounded-3xl p-10 md:p-14 shadow-xl">
-
-                      <div className="text-7xl mb-6">
-                        📚
-                      </div>
-
-                      <h3 className="text-3xl font-bold text-gray-800">
-                        No Resources Available
-                      </h3>
-
-                      <p className="text-gray-600 text-lg mt-4">
-                        Abhi{" "}
-                        <strong>
-                          {branch.name}
-                        </strong>{" "}
-                        ke liye koi resource upload nahi hua hai.
-                      </p>
-
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
-
-                      {RESOURCE_FOLDERS.map(
-                        (folder) => {
-
-                          const count =
-                            getFolderCount(
-                              folder.id
-                            );
-
-                          return (
-                            <button
-                              key={folder.id}
-                              type="button"
-                              onClick={() =>
-                                setSelectedFolder(
-                                  folder.id
-                                )
-                              }
-                              className={`${folder.bg} ${folder.hover} ${folder.border} border-2 rounded-3xl p-8 text-center shadow-lg hover:shadow-2xl hover:-translate-y-2 transition duration-300`}
-                            >
-
-                              <div className="text-7xl mb-5">
-                                {folder.icon}
-                              </div>
-
-                              <h3 className="text-2xl font-bold text-gray-800">
-                                {folder.name}
-                              </h3>
-
-                              <p className="text-gray-600 mt-3 text-sm">
-                                {folder.description}
-                              </p>
-
-                              <div className="mt-6">
-
-                                <span className="inline-block bg-white px-5 py-2 rounded-full text-sm font-bold text-gray-700 shadow">
-                                  {count}{" "}
-                                  {count === 1
-                                    ? "File"
-                                    : "Files"}
-                                </span>
-
-                              </div>
-
-                              <div className="mt-5 text-blue-700 font-bold">
-                                Open Folder →
-                              </div>
-
-                            </button>
-                          );
-                        }
-                      )}
-
-                    </div>
-                  )}
-
-                </>
-              )}
-
-              {/* =================================================
-                  INSIDE FOLDER
-              ================================================= */}
-
-              {selectedFolder && (
-                <>
-
-                  {/* BACK BUTTON */}
-
-                  <button
-                    type="button"
-                    onClick={backToFolders}
-                    className="mb-8 bg-gray-100 hover:bg-gray-200 text-gray-800 px-5 py-3 rounded-xl font-semibold transition"
-                  >
-                    ← Back to Folders
-                  </button>
-
-                  {/* FOLDER HEADER */}
-
-                  <div className="text-center mb-12">
-
-                    <div className="text-6xl mb-4">
-                      {
-                        RESOURCE_FOLDERS.find(
-                          (item) =>
-                            item.id ===
-                            selectedFolder
-                        )?.icon
-                      }
-                    </div>
-
-                    <h2 className="text-3xl md:text-4xl font-bold text-blue-700">
-                      {
-                        RESOURCE_FOLDERS.find(
-                          (item) =>
-                            item.id ===
-                            selectedFolder
-                        )?.name
-                      }
-                    </h2>
-
-                    <p className="text-gray-600 mt-3">
-                      {branch.name} ke{" "}
-                      {
-                        RESOURCE_FOLDERS.find(
-                          (item) =>
-                            item.id ===
-                            selectedFolder
-                        )?.name
-                      }{" "}
-                      resources.
-                    </p>
-
-                  </div>
-
-                  {/* NO FILE */}
-
-                  {folderResources.length === 0 && (
-                    <div className="max-w-3xl mx-auto text-center bg-blue-50 rounded-3xl p-10 shadow-xl">
-
-                      <div className="text-6xl mb-5">
-                        📂
-                      </div>
-
-                      <h3 className="text-2xl font-bold text-gray-800">
-                        Folder Empty
-                      </h3>
+                      <h2 className="text-3xl md:text-4xl font-bold text-blue-700">
+                        {branch.shortName} Resources
+                      </h2>
 
                       <p className="text-gray-600 mt-3">
-                        Is folder mein abhi koi resource upload nahi hua hai.
+                        Select a folder to view files.
                       </p>
 
                     </div>
-                  )}
 
-                  {/* =================================================
-                      SEMESTER FOLDERS
-                  ================================================= */}
+                    {branchResources.length ===
+                    0 ? (
 
-                  {folderResources.length > 0 && (
-                    <div className="space-y-10">
+                      <div className="max-w-3xl mx-auto text-center bg-blue-50 rounded-3xl p-10 md:p-14 shadow-xl">
 
-                      {SEMESTERS.map(
-                        (semester) => {
+                        <h3 className="text-3xl font-bold text-gray-800">
+                          No Resources Available
+                        </h3>
 
-                          const semesterResources =
-                            semesterGroups[
-                              semester
-                            ] || [];
+                        <p className="text-gray-600 text-lg mt-4">
+                          Abhi{" "}
+                          <strong>
+                            {branch.name}
+                          </strong>{" "}
+                          ke liye koi resource upload nahi hua hai.
+                        </p>
 
-                          if (
-                            semesterResources.length ===
-                            0
-                          ) {
-                            return null;
-                          }
+                        <p className="text-gray-500 mt-3">
+                          Admin se resource upload hone ke baad yahan automatically dikhai dega.
+                        </p>
 
-                          return (
-                            <div
-                              key={semester}
-                              className="bg-gray-50 border border-gray-200 rounded-3xl p-6 md:p-8"
-                            >
+                      </div>
 
-                              {/* SEMESTER HEADER */}
+                    ) : (
 
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
 
-                                <div>
+                        {RESOURCE_FOLDERS.map(
+                          (folder) => {
 
-                                  <h3 className="text-2xl font-bold text-gray-800">
-                                    📁{" "}
-                                    {semester}
-                                  </h3>
+                            const count =
+                              getFolderCount(
+                                folder.id
+                              );
 
-                                  <p className="text-gray-500 mt-1">
-                                    {
-                                      semesterResources.length
-                                    }{" "}
-                                    {semesterResources.length ===
+                            return (
+                              <button
+                                key={
+                                  folder.id
+                                }
+                                type="button"
+                                onClick={() =>
+                                  setSelectedFolder(
+                                    folder.id
+                                  )
+                                }
+                                className={`${folder.bg} ${folder.hover} ${folder.border} border-2 rounded-3xl p-8 text-center shadow-lg hover:shadow-2xl hover:-translate-y-2 transition duration-300`}
+                              >
+
+                                <div
+                                  className={`w-20 h-20 mx-auto rounded-2xl flex items-center justify-center ${folder.iconBg}`}
+                                >
+                                  <span
+                                    className={`text-2xl font-bold ${folder.iconText}`}
+                                  >
+                                    PDF
+                                  </span>
+                                </div>
+
+                                <h3 className="text-2xl font-bold text-gray-800 mt-6">
+                                  {folder.name}
+                                </h3>
+
+                                <p className="text-gray-600 mt-3 text-sm">
+                                  {
+                                    folder.description
+                                  }
+                                </p>
+
+                                <div className="mt-6">
+
+                                  <span className="inline-block bg-white px-5 py-2 rounded-full text-sm font-bold text-gray-700 shadow">
+                                    {count}{" "}
+                                    {count ===
                                     1
-                                      ? "resource"
-                                      : "resources"}
-                                  </p>
+                                      ? "File"
+                                      : "Files"}
+                                  </span>
 
                                 </div>
 
-                                <span className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-bold">
-                                  {branch.shortName}
+                                <div className="mt-5 text-blue-700 font-bold">
+                                  Open Folder →
+                                </div>
+
+                              </button>
+                            );
+                          }
+                        )}
+
+                      </div>
+                    )}
+
+                  </>
+                )}
+
+                {/* ===========================================
+                    INSIDE FOLDER
+                =========================================== */}
+
+                {selectedFolder && (
+                  <>
+
+                    {/* BACK BUTTON */}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedFolder(
+                          null
+                        )
+                      }
+                      className="mb-8 bg-gray-100 hover:bg-gray-200 text-gray-800 px-5 py-3 rounded-xl font-semibold transition"
+                    >
+                      ← Back to Folders
+                    </button>
+
+                    {/* FOLDER HEADER */}
+
+                    <div className="text-center mb-12">
+
+                      <div
+                        className={`w-24 h-24 mx-auto rounded-3xl flex items-center justify-center ${
+                          selectedFolderInfo?.iconBg ||
+                          "bg-blue-100"
+                        }`}
+                      >
+                        <span
+                          className={`text-3xl font-bold ${
+                            selectedFolderInfo?.iconText ||
+                            "text-blue-700"
+                          }`}
+                        >
+                          PDF
+                        </span>
+                      </div>
+
+                      <h2 className="text-3xl md:text-4xl font-bold text-blue-700 mt-6">
+                        {
+                          selectedFolderInfo?.name
+                        }
+                      </h2>
+
+                      <p className="text-gray-600 mt-3">
+                        {branch.name} ke{" "}
+                        {
+                          selectedFolderInfo?.name
+                        } resources
+                      </p>
+
+                      <p className="text-gray-500 mt-2">
+                        Total Files:{" "}
+                        <strong>
+                          {
+                            folderResources.length
+                          }
+                        </strong>
+                      </p>
+
+                    </div>
+
+                    {/* ========================================
+                        EMPTY FOLDER
+                    ======================================== */}
+
+                    {folderResources.length ===
+                    0 ? (
+
+                      <div className="max-w-2xl mx-auto bg-blue-50 rounded-3xl p-10 text-center shadow-lg">
+
+                        <h3 className="text-2xl font-bold text-gray-800">
+                          Folder Empty
+                        </h3>
+
+                        <p className="text-gray-600 mt-3">
+                          Is folder mein abhi koi file upload nahi hui hai.
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedFolder(
+                              null
+                            )
+                          }
+                          className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
+                        >
+                          ← Back to Folders
+                        </button>
+
+                      </div>
+
+                    ) : (
+
+                      /* ======================================
+                         DIRECT FILE LIST
+                      ====================================== */
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                        {folderResources.map(
+                          (resource) => (
+
+                            <div
+                              key={
+                                resource._id
+                              }
+                              className="bg-gray-50 border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition duration-300"
+                            >
+
+                              {/* FILE HEADER */}
+
+                              <div className="flex items-start justify-between gap-4">
+
+                                <div className="w-16 h-16 bg-red-100 rounded-xl flex items-center justify-center">
+                                  <span className="text-red-700 font-bold">
+                                    PDF
+                                  </span>
+                                </div>
+
+                                <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">
+                                  PDF
                                 </span>
 
                               </div>
 
-                              {/* FILES */}
+                              {/* TITLE */}
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-
-                                {semesterResources.map(
-                                  (resource) => (
-                                    <div
-                                      key={
-                                        resource._id
-                                      }
-                                      className="bg-white rounded-2xl p-6 shadow-md hover:shadow-xl transition"
-                                    >
-
-                                      <div className="flex items-start justify-between gap-3">
-
-                                        <div className="text-5xl">
-                                          📕
-                                        </div>
-
-                                        <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
-                                          PDF
-                                        </span>
-
-                                      </div>
-
-                                      <h4 className="text-xl font-bold text-gray-800 mt-5">
-                                        {
-                                          resource.title
-                                        }
-                                      </h4>
-
-                                      {resource.subject && (
-                                        <p className="text-sm text-gray-600 mt-2">
-                                          <strong>
-                                            Subject:
-                                          </strong>{" "}
-                                          {
-                                            resource.subject
-                                          }
-                                        </p>
-                                      )}
-
-                                      {resource.description && (
-                                        <p className="text-sm text-gray-500 mt-3 line-clamp-3">
-                                          {
-                                            resource.description
-                                          }
-                                        </p>
-                                      )}
-
-                                      <p className="text-xs text-gray-400 mt-4">
-                                        Uploaded:{" "}
-                                        {formatDate(
-                                          resource.createdAt
-                                        )}
-                                      </p>
-
-                                      {/* OPEN PDF */}
-
-                                      {resource.fileUrl ? (
-                                        <a
-                                          href={
-                                            resource.fileUrl
-                                          }
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="block mt-5 bg-blue-600 hover:bg-blue-700 text-white text-center px-5 py-3 rounded-xl font-bold transition"
-                                        >
-                                          📖 Open PDF →
-                                        </a>
-                                      ) : (
-                                        <div className="mt-5 bg-gray-200 text-gray-500 text-center px-5 py-3 rounded-xl font-semibold">
-                                          PDF unavailable
-                                        </div>
-                                      )}
-
-                                    </div>
-                                  )
-                                )}
-
-                              </div>
-
-                            </div>
-                          );
-                        }
-                      )}
-
-                      {/* =================================================
-                          OTHER / UNKNOWN SEMESTER
-                      ================================================= */}
-
-                      {Object.entries(
-                        semesterGroups
-                      )
-                        .filter(
-                          ([semester]) =>
-                            !SEMESTERS.includes(
-                              semester
-                            )
-                        )
-                        .map(
-                          ([
-                            semester,
-                            semesterResources,
-                          ]) => (
-                            <div
-                              key={semester}
-                              className="bg-gray-50 border border-gray-200 rounded-3xl p-6"
-                            >
-
-                              <h3 className="text-2xl font-bold text-gray-800 mb-5">
-                                📁 {semester}
+                              <h3 className="text-xl font-bold text-gray-800 mt-5 break-words">
+                                {
+                                  resource.title
+                                }
                               </h3>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                              {/* FILE NAME */}
 
-                                {semesterResources.map(
-                                  (resource) => (
-                                    <div
-                                      key={
-                                        resource._id
-                                      }
-                                      className="bg-white rounded-2xl p-6 shadow-md"
-                                    >
+                              {resource.fileName && (
+                                <p className="text-xs text-gray-500 mt-2 break-all">
+                                  File:{" "}
+                                  {
+                                    resource.fileName
+                                  }
+                                </p>
+                              )}
 
-                                      <div className="text-5xl">
-                                        📕
-                                      </div>
+                              {/* SUBJECT */}
 
-                                      <h4 className="text-xl font-bold text-gray-800 mt-4">
-                                        {
-                                          resource.title
-                                        }
-                                      </h4>
+                              {resource.subject && (
+                                <p className="text-sm text-gray-600 mt-3">
+                                  <strong>
+                                    Subject:
+                                  </strong>{" "}
+                                  {
+                                    resource.subject
+                                  }
+                                </p>
+                              )}
 
-                                      {resource.subject && (
-                                        <p className="text-sm text-gray-600 mt-2">
-                                          {
-                                            resource.subject
-                                          }
-                                        </p>
-                                      )}
+                              {/* SEMESTER */}
+                              {/*
+                                  Semester folder nahi ban raha.
+                                  Semester sirf information ke liye show hoga.
+                              */}
 
-                                      <a
-                                        href={
-                                          resource.fileUrl
-                                        }
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="block mt-5 bg-blue-600 hover:bg-blue-700 text-white text-center px-5 py-3 rounded-xl font-bold"
-                                      >
-                                        📖 Open PDF →
-                                      </a>
+                              {resource.semester && (
+                                <p className="text-sm text-gray-600 mt-1">
+                                  <strong>
+                                    Semester:
+                                  </strong>{" "}
+                                  {
+                                    resource.semester
+                                  }
+                                </p>
+                              )}
 
-                                    </div>
-                                  )
-                                )}
+                              {/* DESCRIPTION */}
 
-                              </div>
+                              {resource.description && (
+                                <p className="text-sm text-gray-500 mt-3 line-clamp-3">
+                                  {
+                                    resource.description
+                                  }
+                                </p>
+                              )}
+
+                              {/* DATE */}
+
+                              {resource.createdAt && (
+                                <p className="text-xs text-gray-400 mt-4">
+                                  Uploaded:{" "}
+                                  {formatDate(
+                                    resource.createdAt
+                                  )}
+                                </p>
+                              )}
+
+                              {/* OPEN PDF */}
+
+                              {resource.fileUrl ? (
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    openPdf(
+                                      resource.fileUrl
+                                    )
+                                  }
+                                  className={`w-full mt-6 text-white px-5 py-3 rounded-xl font-bold transition ${
+                                    selectedFolderInfo?.button ||
+                                    "bg-blue-600 hover:bg-blue-700"
+                                  }`}
+                                >
+                                  Open PDF →
+                                </button>
+
+                              ) : (
+
+                                <div className="mt-6 bg-gray-200 text-gray-500 text-center px-5 py-3 rounded-xl font-semibold">
+                                  PDF unavailable
+                                </div>
+
+                              )}
 
                             </div>
+
                           )
                         )}
 
-                    </div>
-                  )}
+                      </div>
 
-                </>
-              )}
-            </>
-          )}
+                    )}
+
+                  </>
+                )}
+
+              </>
+            )}
 
         </div>
+
       </section>
 
       <Footer />
