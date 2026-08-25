@@ -336,37 +336,43 @@ router.post(
         "--------------------------------------"
       );
 
-     // ======================================
-// CLOUDINARY UPLOAD
+// ======================================
+// CLOUDINARY UPLOAD PDF FIX
 // ======================================
 
 const uploadToCloudinary = () => {
   return new Promise((resolve, reject) => {
+
     const stream =
       cloudinary.uploader.upload_stream(
         {
           folder: "student-resources",
 
-          // IMPORTANT:
-          // PDF ko image resource ke roop mein upload karo
-          // taaki browser PDF ko directly open kar sake.
+          // PDF ko proper document ki tarah upload karega
           resource_type: "image",
 
           public_id: publicId,
 
+          format: "pdf",
+
           overwrite: false,
+
         },
 
         (error, result) => {
+
           if (error) {
             reject(error);
           } else {
             resolve(result);
           }
+
         }
       );
 
+
     stream.end(req.file.buffer);
+
   });
 };
 
@@ -442,7 +448,10 @@ const uploadToCloudinary = () => {
             cleanSubject,
 
           fileUrl:
-            cloudinaryResult.secure_url,
+  cloudinaryResult.secure_url.replace(
+    "/upload/",
+    "/upload/fl_attachment:false/"
+  ),
 
           filePublicId:
             cloudinaryResult.public_id,
