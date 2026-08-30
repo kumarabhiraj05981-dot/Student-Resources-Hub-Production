@@ -3,18 +3,10 @@ import axios from "axios";
 // ==========================================
 // PRODUCTION BACKEND URL
 // ==========================================
-//
-// VITE_API_URL agar Vercel mein set hai,
-// to wahi use hoga.
-//
-// Agar environment variable missing hai,
-// to live Render backend use hoga.
-//
-// ==========================================
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
-  "https://student-resources-hub-1.onrender.com";
+  "https://student-resources-hub-production.onrender.com";
 
 // ==========================================
 // AXIOS INSTANCE
@@ -33,20 +25,13 @@ const api = axios.create({
 // ==========================================
 // REQUEST INTERCEPTOR
 // ==========================================
-//
-// Har request mein login token automatically
-// Authorization header mein add hoga.
-//
-// ==========================================
 
 api.interceptors.request.use(
   (config) => {
-    const token =
-      localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
     if (token) {
-      config.headers.Authorization =
-        `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
@@ -67,12 +52,8 @@ api.interceptors.response.use(
   },
 
   (error) => {
-    if (
-      error.response?.status === 401
-    ) {
-      console.warn(
-        "Unauthorized request"
-      );
+    if (error.response?.status === 401) {
+      console.warn("Unauthorized request");
     }
 
     return Promise.reject(error);
