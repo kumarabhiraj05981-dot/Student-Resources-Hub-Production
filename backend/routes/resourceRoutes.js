@@ -550,6 +550,17 @@ router.delete(
       // ======================================
       // DELETE CLOUDINARY FILE
       // ======================================
+      //
+      // IMPORTANT:
+      // PDFs current uploadRoutes.js mein
+      // resource_type: "image" ke through
+      // upload ho rahe hain.
+      //
+      // Isliye delete bhi "image" hona chahiye.
+      //
+      // Existing live PDFs ko change karne
+      // ki zarurat nahi hai.
+      // ======================================
 
       if (resource.filePublicId) {
         try {
@@ -558,24 +569,41 @@ router.delete(
             resource.filePublicId
           );
 
-          await cloudinary.uploader.destroy(
-            resource.filePublicId,
-            {
-              resource_type: "raw",
-            }
-          );
+          const deleteResult =
+            await cloudinary.uploader.destroy(
+              resource.filePublicId,
+              {
+                resource_type: "image",
+              }
+            );
 
           console.log(
-            "Cloudinary file deleted successfully"
+            "Cloudinary delete result:",
+            deleteResult
           );
+
+          if (
+            deleteResult.result !== "ok" &&
+            deleteResult.result !== "not found"
+          ) {
+            console.warn(
+              "Cloudinary file was not deleted:",
+              deleteResult
+            );
+          } else {
+            console.log(
+              "Cloudinary file delete completed"
+            );
+          }
         } catch (cloudinaryError) {
           console.error(
             "CLOUDINARY DELETE ERROR:",
             cloudinaryError
           );
 
-          // We don't stop MongoDB deletion
-          // if Cloudinary deletion fails.
+          // Cloudinary deletion fail hone par
+          // MongoDB resource ko delete karna
+          // continue rakhenge.
         }
       }
 
@@ -591,13 +619,15 @@ router.delete(
       );
 
       // ======================================
-      // SUCCESS
+      // SUCCESS RESPONSE
       // ======================================
 
       return res.status(200).json({
         success: true,
+
         message:
           "Resource deleted successfully",
+
         resourceId: id,
       });
     } catch (error) {
@@ -616,6 +646,7 @@ router.delete(
 
       return res.status(500).json({
         success: false,
+
         message:
           "Failed to delete resource",
       });
