@@ -51,7 +51,12 @@ export default function Admin() {
   const [semester, setSemester] = useState("");
   const [category, setCategory] = useState("Notes");
   const [subject, setSubject] = useState("");
+
   const [file, setFile] = useState<File | null>(null);
+
+  // IMPORTANT:
+  // File input ko reset karne ke liye key use karenge.
+  const [fileInputKey, setFileInputKey] = useState(0);
 
   const [uploading, setUploading] = useState(false);
 
@@ -60,17 +65,13 @@ export default function Admin() {
   // ==========================================
 
   const [resources, setResources] = useState<Resource[]>([]);
-  const [loadingResources, setLoadingResources] =
-    useState(true);
+  const [loadingResources, setLoadingResources] = useState(true);
 
   const [search, setSearch] = useState("");
-  const [filterCategory, setFilterCategory] =
-    useState("All");
-  const [filterBranch, setFilterBranch] =
-    useState("All");
+  const [filterCategory, setFilterCategory] = useState("All");
+  const [filterBranch, setFilterBranch] = useState("All");
 
-  const [deletingId, setDeletingId] =
-    useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // ==========================================
   // MAX FILE SIZE
@@ -130,48 +131,76 @@ export default function Admin() {
   }, []);
 
   // ==========================================
+  // RESET FILE INPUT
+  // ==========================================
+
+  const resetFileInput = () => {
+    setFile(null);
+
+    // File input ko completely recreate karega.
+    setFileInputKey((prev) => prev + 1);
+  };
+
+  // ==========================================
   // FILE SELECT
   // ==========================================
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const selectedFile =
-      e.target.files?.[0] || null;
+    console.log("FILE INPUT CHANGED");
 
-    if (!selectedFile) {
+    const inputFile = e.currentTarget.files?.[0];
+
+    console.log("SELECTED FILE:", inputFile);
+
+    if (!inputFile) {
       setFile(null);
       return;
     }
 
+    // ======================================
     // PDF CHECK
-    if (
-      selectedFile.type !== "application/pdf" &&
-      !selectedFile.name
+    // ======================================
+
+    const isPDF =
+      inputFile.type === "application/pdf" ||
+      inputFile.name
         .toLowerCase()
-        .endsWith(".pdf")
-    ) {
-      alert(" Only PDF files are allowed");
+        .endsWith(".pdf");
 
-      e.target.value = "";
+    if (!isPDF) {
+      alert("Only PDF files are allowed");
+
+      e.currentTarget.value = "";
       setFile(null);
 
       return;
     }
 
+    // ======================================
     // SIZE CHECK
-    if (selectedFile.size > MAX_FILE_SIZE) {
-      alert(
-        ` File size must be less than 500MB`
-      );
+    // ======================================
 
-      e.target.value = "";
+    if (inputFile.size > MAX_FILE_SIZE) {
+      alert("File size must be less than 500MB");
+
+      e.currentTarget.value = "";
       setFile(null);
 
       return;
     }
 
-    setFile(selectedFile);
+    // ======================================
+    // SAVE FILE
+    // ======================================
+
+    setFile(inputFile);
+
+    console.log(
+      "FILE SAVED:",
+      inputFile.name
+    );
   };
 
   // ==========================================
@@ -182,6 +211,10 @@ export default function Admin() {
     e: React.FormEvent
   ) => {
     e.preventDefault();
+
+    // ======================================
+    // VALIDATION
+    // ======================================
 
     if (!title.trim()) {
       alert("Please enter resource title");
@@ -208,10 +241,13 @@ export default function Admin() {
       return;
     }
 
-    if (
-      file.type !== "application/pdf" &&
-      !file.name.toLowerCase().endsWith(".pdf")
-    ) {
+    const isPDF =
+      file.type === "application/pdf" ||
+      file.name
+        .toLowerCase()
+        .endsWith(".pdf");
+
+    if (!isPDF) {
       alert("Only PDF files are allowed");
       return;
     }
@@ -270,23 +306,19 @@ export default function Admin() {
 
       formData.append(
         "file",
-        file
+        file,
+        file.name
       );
 
-      console.log("UPLOADING:", {
-        title,
-        description,
-        branch,
-        semester,
-        category,
-        subject,
-        file: file.name,
-        size: `${(
-          file.size /
-          1024 /
-          1024
-        ).toFixed(2)} MB`,
-      });
+      console.log("================================");
+      console.log("UPLOADING FILE");
+      console.log("Name:", file.name);
+      console.log("Type:", file.type);
+      console.log("Size:", file.size);
+      console.log("Branch:", branch);
+      console.log("Semester:", semester);
+      console.log("Category:", category);
+      console.log("================================");
 
       // ======================================
       // API REQUEST
@@ -322,11 +354,11 @@ export default function Admin() {
       }
 
       alert(
-        `✅ Resource uploaded successfully!\n\nBranch: ${branch}`
+        `Resource uploaded successfully!\n\nBranch: ${branch}`
       );
 
       // ======================================
-      // RESET
+      // RESET FORM
       // ======================================
 
       setTitle("");
@@ -335,16 +367,12 @@ export default function Admin() {
       setSemester("");
       setCategory("Notes");
       setSubject("");
-      setFile(null);
 
-      const fileInput =
-        document.getElementById(
-          "resource-file"
-        ) as HTMLInputElement | null;
+      resetFileInput();
 
-      if (fileInput) {
-        fileInput.value = "";
-      }
+      // ======================================
+      // RELOAD RESOURCES
+      // ======================================
 
       await loadResources();
 
@@ -418,7 +446,7 @@ export default function Admin() {
       }
 
       alert(
-        " Resource deleted successfully!"
+        "Resource deleted successfully!"
       );
 
       setResources((prev) =>
@@ -495,10 +523,7 @@ export default function Admin() {
       return `${bytes} B`;
     }
 
-    if (
-      bytes <
-      1024 * 1024
-    ) {
+    if (bytes < 1024 * 1024) {
       return `${(
         bytes / 1024
       ).toFixed(2)} KB`;
@@ -541,6 +566,7 @@ export default function Admin() {
         return "";
     }
   };
+
   // ==========================================
   // PAGE
   // ==========================================
@@ -557,12 +583,12 @@ export default function Admin() {
 
           <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-blue-700 mb-2">
-               Admin Resource Upload
+              Admin Resource Upload
             </h1>
 
             <p className="text-gray-600">
-              Upload Notes, PYQs, Syllabus and E-books
-              branch-wise.
+              Upload Notes, PYQs, Syllabus and
+              E-books branch-wise.
             </p>
           </div>
 
@@ -594,14 +620,11 @@ export default function Admin() {
               />
             </div>
 
-
-            {/* ==================================
-                BRANCH
-            ================================== */}
+            {/* BRANCH */}
 
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
-                 Branch *
+                Branch *
               </label>
 
               <select
@@ -628,10 +651,7 @@ export default function Admin() {
               </select>
             </div>
 
-
-            {/* ==================================
-                DESCRIPTION
-            ================================== */}
+            {/* DESCRIPTION */}
 
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
@@ -651,10 +671,7 @@ export default function Admin() {
               />
             </div>
 
-
-            {/* ==================================
-                SEMESTER
-            ================================== */}
+            {/* SEMESTER */}
 
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
@@ -686,14 +703,11 @@ export default function Admin() {
               </select>
             </div>
 
-
-            {/* ==================================
-                SUBJECT
-            ================================== */}
+            {/* SUBJECT */}
 
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
-                 Subject
+                Subject
               </label>
 
               <input
@@ -707,14 +721,11 @@ export default function Admin() {
               />
             </div>
 
-
-            {/* ==================================
-                CATEGORY
-            ================================== */}
+            {/* CATEGORY */}
 
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
-                 Category *
+                Category *
               </label>
 
               <select
@@ -732,8 +743,8 @@ export default function Admin() {
                       value={categoryName}
                     >
                       {categoryName ===
-                        "Ebooks"
-                        ? " E-Books"
+                      "Ebooks"
+                        ? "E-Books"
                         : categoryName}
                     </option>
                   )
@@ -741,44 +752,71 @@ export default function Admin() {
               </select>
             </div>
 
-
             {/* ==================================
                 PDF FILE
             ================================== */}
 
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
-                 Select PDF *
+                Select PDF *
               </label>
 
               <input
+                key={fileInputKey}
                 id="resource-file"
+                name="file"
                 type="file"
-                accept=".pdf,application/pdf"
+                accept="application/pdf,.pdf"
                 onChange={handleFileChange}
                 className="w-full border border-gray-300 rounded-lg p-3 bg-white cursor-pointer"
-                required
+                required={!file}
               />
 
-              {/* SELECTED FILE */}
+              {/* ==================================
+                  SELECTED FILE
+              ================================== */}
 
-              {file && (
-                <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-4">
+              {file ? (
+                <div className="mt-3 bg-green-50 border border-green-300 rounded-xl p-4">
 
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 
-                    <p className="text-sm text-blue-700 font-semibold break-all">
-                       {file.name}
-                    </p>
+                    <div className="min-w-0">
+                      <p className="text-xs text-green-700 font-semibold mb-1">
+                        SELECTED FILE
+                      </p>
 
-                    <p className="text-sm text-gray-600 whitespace-nowrap">
-                       {formatFileSize(
-                        file.size
-                      )}
-                    </p>
+                      <p className="text-sm text-green-800 font-bold break-all">
+                        {file.name}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+
+                      <p className="text-sm text-gray-600 whitespace-nowrap">
+                        {formatFileSize(
+                          file.size
+                        )}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={resetFileInput}
+                        className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-semibold"
+                      >
+                        Remove
+                      </button>
+
+                    </div>
 
                   </div>
 
+                </div>
+              ) : (
+                <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4">
+                  <p className="text-sm text-gray-500">
+                    No file selected
+                  </p>
                 </div>
               )}
 
@@ -788,7 +826,6 @@ export default function Admin() {
                 only.
               </p>
             </div>
-
 
             {/* ==================================
                 UPLOAD BUTTON
@@ -804,13 +841,12 @@ export default function Admin() {
               }`}
             >
               {uploading
-                ? " Uploading to Cloudinary..."
-                : " Upload Resource"}
+                ? "Uploading to Cloudinary..."
+                : "Upload Resource"}
             </button>
 
           </form>
         </div>
-
 
         {/* ======================================
             RESOURCE MANAGEMENT
@@ -818,15 +854,11 @@ export default function Admin() {
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
 
-          {/* ==================================
-              HEADER
-          ================================== */}
-
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
 
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-                 Manage Resources
+                Manage Resources
               </h2>
 
               <p className="text-gray-500 mt-1">
@@ -844,20 +876,16 @@ export default function Admin() {
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold px-5 py-2.5 rounded-lg transition"
             >
               {loadingResources
-                ? " Loading..."
-                : " Refresh"}
+                ? "Loading..."
+                : "Refresh"}
             </button>
+
           </div>
-
-
-          {/* ==================================
-              FILTER HEADER
-          ================================== */}
 
           <div className="mb-6">
 
             <h3 className="text-xl font-bold text-gray-800">
-               Filter Resources
+              Filter Resources
             </h3>
 
             <p className="text-gray-500 mt-1">
@@ -867,17 +895,11 @@ export default function Admin() {
 
           </div>
 
-
-          {/* ==================================
-              SEARCH + FILTERS
-          ================================== */}
-
           <div className="grid md:grid-cols-3 gap-4 mb-8">
 
             {/* SEARCH */}
 
-            <div className="md:col-span-1">
-
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Search
               </label>
@@ -891,14 +913,11 @@ export default function Admin() {
                 }
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
-
             </div>
 
-
-            {/* CATEGORY FILTER */}
+            {/* CATEGORY */}
 
             <div>
-
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Category
               </label>
@@ -912,7 +931,6 @@ export default function Admin() {
                 }
                 className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500"
               >
-
                 <option value="All">
                   All Categories
                 </option>
@@ -924,22 +942,18 @@ export default function Admin() {
                       value={categoryName}
                     >
                       {categoryName ===
-                        "Ebooks"
+                      "Ebooks"
                         ? "E-Books"
                         : categoryName}
                     </option>
                   )
                 )}
-
               </select>
-
             </div>
 
-
-            {/* BRANCH FILTER */}
+            {/* BRANCH */}
 
             <div>
-
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Branch
               </label>
@@ -953,7 +967,6 @@ export default function Admin() {
                 }
                 className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500"
               >
-
                 <option value="All">
                   All Branches
                 </option>
@@ -971,356 +984,122 @@ export default function Admin() {
                     </option>
                   )
                 )}
-
               </select>
-
             </div>
 
           </div>
 
-
-          {/* ==================================
-              FILTER RESULT COUNT
-          ================================== */}
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-
-            <p className="text-gray-600">
-              Showing{" "}
-              <span className="font-bold text-blue-600">
-                {filteredResources.length}
-              </span>{" "}
-              of{" "}
-              <span className="font-bold">
-                {resources.length}
-              </span>{" "}
-              resources
-            </p>
-
-            {(search ||
-              filterCategory !== "All" ||
-              filterBranch !== "All") && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearch("");
-                  setFilterCategory("All");
-                  setFilterBranch("All");
-                }}
-                className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-lg transition"
-              >
-                ✖ Clear Filters
-              </button>
-            )}
-
-          </div>
-
-
-          {/* ==================================
-              PART 3 WILL CONTINUE HERE
-          ================================== */}
-          {/* ==================================
-              LOADING RESOURCES
-          ================================== */}
+          {/* ======================================
+              RESOURCE LIST
+          ====================================== */}
 
           {loadingResources ? (
-            <div className="py-16 text-center">
-
-              <div className="text-5xl mb-4">
-                
-              </div>
-
-              <p className="text-xl font-semibold text-gray-700">
+            <div className="text-center py-10">
+              <p className="text-gray-500">
                 Loading resources...
               </p>
-
-              <p className="text-gray-500 mt-2">
-                Please wait
-              </p>
-
             </div>
           ) : filteredResources.length === 0 ? (
-
-            /* ==================================
-               NO RESOURCES
-            ================================== */
-
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-10 text-center">
-
-              <div className="text-6xl mb-4">
-                
-              </div>
-
-              <h3 className="text-xl font-bold text-gray-700">
-                No resources found
-              </h3>
-
-              <p className="text-gray-500 mt-2">
-                {resources.length === 0
-                  ? "No resources have been uploaded yet."
-                  : "Try changing your search or filters."}
+            <div className="text-center py-10">
+              <p className="text-gray-500">
+                No resources found.
               </p>
-
-              {(search ||
-                filterCategory !== "All" ||
-                filterBranch !== "All") && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearch("");
-                    setFilterCategory("All");
-                    setFilterBranch("All");
-                  }}
-                  className="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg transition"
-                >
-                   Reset Filters
-                </button>
-              )}
-
             </div>
-
           ) : (
-
-            /* ==================================
-               RESOURCE GRID
-            ================================== */
-
-            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="space-y-4">
 
               {filteredResources.map(
                 (resource) => (
-
                   <div
                     key={resource._id}
-                    className="border border-gray-200 bg-white rounded-2xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden"
+                    className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition"
                   >
 
-                    {/* ==================================
-                        CARD HEADER
-                    ================================== */}
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
-                    <div className="p-6">
+                      <div className="min-w-0">
 
-                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="text-lg font-bold text-gray-800 break-words">
+                          {resource.title}
+                        </h3>
 
-                        <div className="flex-1 min-w-0">
-
-                          <h3 className="text-xl font-bold text-gray-800 break-words">
-                            {resource.title}
-                          </h3>
-
-                        </div>
-
-                        {/* CATEGORY BADGE */}
-
-                        <span className="shrink-0 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
-                          {resource.category ===
-                          "Ebooks"
-                            ? "E-Book"
-                            : resource.category}
-                        </span>
-
-                      </div>
-
-
-                      {/* ==================================
-                          BRANCH
-                      ================================== */}
-
-                      <div className="mt-4 flex items-center gap-2">
-
-                        <span className="text-lg">
-                          {getBranchIcon(
-                            resource.branch
-                          )}
-                        </span>
-
-                        <span className="text-sm font-semibold text-gray-700">
-                          {resource.branch ||
-                            "Computer Science"}
-                        </span>
-
-                      </div>
-
-
-                      {/* ==================================
-                          SEMESTER
-                      ================================== */}
-
-                      {resource.semester && (
-                        <div className="mt-3">
-
-                          <p className="text-xs font-semibold text-gray-500 uppercase">
-                            Semester
-                          </p>
-
-                          <p className="text-sm font-medium text-gray-700 mt-1">
-                            {" "}
-                            {resource.semester}
-                          </p>
-
-                        </div>
-                      )}
-
-
-                      {/* ==================================
-                          SUBJECT
-                      ================================== */}
-
-                      {resource.subject && (
-                        <div className="mt-3">
-
-                          <p className="text-xs font-semibold text-gray-500 uppercase">
-                            Subject
-                          </p>
-
-                          <p className="text-sm font-medium text-gray-700 mt-1">
-                            {" "}
-                            {resource.subject}
-                          </p>
-
-                        </div>
-                      )}
-
-
-                      {/* ==================================
-                          DESCRIPTION
-                      ================================== */}
-
-                      {resource.description && (
-                        <div className="mt-4">
-
-                          <p className="text-sm text-gray-600 line-clamp-3">
+                        {resource.description && (
+                          <p className="text-sm text-gray-500 mt-1">
                             {resource.description}
                           </p>
+                        )}
 
-                        </div>
-                      )}
+                        <div className="flex flex-wrap gap-2 mt-3">
 
+                          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                            {resource.branch}
+                          </span>
 
-                      {/* ==================================
-                          FILE NAME
-                      ================================== */}
+                          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                            {resource.category}
+                          </span>
 
-                      {resource.fileName && (
-                        <div className="mt-4 bg-gray-50 border border-gray-100 rounded-lg p-3">
+                          <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                            {resource.semester}
+                          </span>
 
-                          <p
-                            className="text-sm text-gray-600 truncate"
-                            title={
-                              resource.fileName
-                            }
-                          >
-                            {" "}
-                            {resource.fileName}
-                          </p>
-
-                        </div>
-                      )}
-
-
-                      {/* ==================================
-                          CREATED DATE
-                      ================================== */}
-
-                      {resource.createdAt && (
-                        <p className="text-xs text-gray-400 mt-4">
-                          Uploaded:{" "}
-                          {new Date(
-                            resource.createdAt
-                          ).toLocaleDateString(
-                            "en-IN",
-                            {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            }
+                          {resource.subject && (
+                            <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
+                              {resource.subject}
+                            </span>
                           )}
-                        </p>
-                      )}
 
-                    </div>
+                        </div>
 
-
-                    {/* ==================================
-                        ACTION BUTTONS
-                    ================================== */}
-
-                    <div className="border-t border-gray-100 bg-gray-50 p-4">
-
-                      <div className="grid grid-cols-2 gap-3">
-
-                        {/* OPEN */}
-
-                        <a
-                          href={
-                            resource.fileUrl
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2.5 px-3 rounded-lg transition"
-                        >
-                           Open
-                        </a>
-
-
-                        {/* DOWNLOAD */}
-
-                        <a
-                          href={
-                            resource.fileUrl
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download={
-                            resource.fileName ||
-                            true
-                          }
-                          className="text-center bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-2.5 px-3 rounded-lg transition"
-                        >
-                           Download
-                        </a>
+                        {resource.fileName && (
+                          <p className="text-xs text-gray-500 mt-3 break-all">
+                            File: {resource.fileName}
+                          </p>
+                        )}
 
                       </div>
 
+                      <div className="flex flex-wrap gap-2">
 
-                      {/* ==================================
-                          DELETE
-                      ================================== */}
+                        {resource.fileUrl && (
+                          <a
+                            href={resource.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm"
+                          >
+                            Open
+                          </a>
+                        )}
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleDelete(
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDelete(
+                              resource._id
+                            )
+                          }
+                          disabled={
+                            deletingId ===
                             resource._id
-                          )
-                        }
-                        disabled={
-                          deletingId ===
+                          }
+                          className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg font-semibold text-sm"
+                        >
+                          {deletingId ===
                           resource._id
-                        }
-                        className={`w-full mt-3 py-2.5 rounded-lg text-white font-semibold transition ${
-                          deletingId ===
-                          resource._id
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-red-600 hover:bg-red-700 active:bg-red-800"
-                        }`}
-                      >
-                        {deletingId ===
-                        resource._id
-                          ? " Deleting..."
-                          : " Delete Resource"}
-                      </button>
+                            ? "Deleting..."
+                            : "Delete"}
+                        </button>
+
+                      </div>
 
                     </div>
 
                   </div>
-
                 )
               )}
 
             </div>
-
           )}
 
         </div>
