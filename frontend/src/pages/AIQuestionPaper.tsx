@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 
 interface Question {
@@ -6,6 +7,9 @@ interface Question {
   question: string;
   options?: string[];
   answer: string;
+  explanation?: string;
+  marks?: number;
+  bloomLevel?: string;
 }
 
 interface Paper {
@@ -13,9 +17,16 @@ interface Paper {
   title: string;
   subject: string;
   unit: string;
+  syllabus?: string;
   difficulty: string;
   questionType?: string;
   questionCount?: number;
+  examPattern?: string;
+  language?: string;
+  totalMarks?: number;
+  duration?: string;
+  bloomLevel?: string;
+  includeExplanations?: boolean;
   questions: Question[];
   createdAt?: string;
 }
@@ -26,13 +37,8 @@ interface ApiResponse {
   paper?: Paper;
 }
 
-// ======================================
-// API BASE URL
-// ======================================
-
 const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000";
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function AIQuestionPaper() {
   // ======================================
@@ -40,7 +46,6 @@ export default function AIQuestionPaper() {
   // ======================================
 
   const [subject, setSubject] = useState("");
-
   const [syllabus, setSyllabus] = useState("");
 
   const [difficulty, setDifficulty] =
@@ -51,6 +56,24 @@ export default function AIQuestionPaper() {
 
   const [questionType, setQuestionType] =
     useState("Mixed");
+
+  const [examPattern, setExamPattern] =
+    useState("Polytechnic");
+
+  const [language, setLanguage] =
+    useState("English");
+
+  const [totalMarks, setTotalMarks] =
+    useState("100");
+
+  const [duration, setDuration] =
+    useState("2 Hours");
+
+  const [bloomLevel, setBloomLevel] =
+    useState("Mixed");
+
+  const [includeExplanations, setIncludeExplanations] =
+    useState(true);
 
   // ======================================
   // UI STATES
@@ -66,7 +89,7 @@ export default function AIQuestionPaper() {
     useState("");
 
   // ======================================
-  // GENERATE QUESTION PAPER
+  // GENERATE PAPER
   // ======================================
 
   const handleGenerate = async (
@@ -79,9 +102,9 @@ export default function AIQuestionPaper() {
     setError("");
 
     try {
-      // ======================================
-      // VALIDATE SUBJECT
-      // ======================================
+      // ------------------------------------
+      // VALIDATION
+      // ------------------------------------
 
       if (!subject.trim()) {
         throw new Error(
@@ -89,19 +112,33 @@ export default function AIQuestionPaper() {
         );
       }
 
-      // ======================================
-      // VALIDATE SYLLABUS
-      // ======================================
-
       if (!syllabus.trim()) {
         throw new Error(
           "Please enter or paste your syllabus / topics."
         );
       }
 
-      // ======================================
-      // GET LOGIN TOKEN
-      // ======================================
+      if (
+        Number(questionCount) < 1 ||
+        Number(questionCount) > 100
+      ) {
+        throw new Error(
+          "Question count must be between 1 and 100."
+        );
+      }
+
+      if (
+        Number(totalMarks) < 1 ||
+        Number(totalMarks) > 1000
+      ) {
+        throw new Error(
+          "Total marks must be between 1 and 1000."
+        );
+      }
+
+      // ------------------------------------
+      // TOKEN
+      // ------------------------------------
 
       const token =
         localStorage.getItem("token");
@@ -112,9 +149,9 @@ export default function AIQuestionPaper() {
         );
       }
 
-      // ======================================
-      // API URL CHECK
-      // ======================================
+      // ------------------------------------
+      // API URL
+      // ------------------------------------
 
       if (!API_URL) {
         throw new Error(
@@ -123,13 +160,13 @@ export default function AIQuestionPaper() {
       }
 
       console.log(
-        "AI API URL:",
+        "AI API:",
         `${API_URL}/api/ai/generate-paper`
       );
 
-      // ======================================
-      // API REQUEST
-      // ======================================
+      // ------------------------------------
+      // REQUEST
+      // ------------------------------------
 
       const response = await fetch(
         `${API_URL}/api/ai/generate-paper`,
@@ -144,8 +181,7 @@ export default function AIQuestionPaper() {
           },
 
           body: JSON.stringify({
-            subject:
-              subject.trim(),
+            subject: subject.trim(),
 
             syllabus:
               syllabus.trim(),
@@ -159,19 +195,31 @@ export default function AIQuestionPaper() {
               Number(questionCount),
 
             questionType,
+
+            examPattern,
+
+            language,
+
+            totalMarks:
+              Number(totalMarks),
+
+            duration,
+
+            bloomLevel,
+
+            includeExplanations,
           }),
         }
       );
 
-      // ======================================
-      // READ SERVER RESPONSE
-      // ======================================
+      // ------------------------------------
+      // RESPONSE
+      // ------------------------------------
 
       let data: ApiResponse;
 
       try {
-        data =
-          await response.json();
+        data = await response.json();
       } catch {
         throw new Error(
           `Server returned an invalid response. Status: ${response.status}`
@@ -183,16 +231,12 @@ export default function AIQuestionPaper() {
         data
       );
 
-      // ======================================
+      // ------------------------------------
       // AUTH ERROR
-      // ======================================
+      // ------------------------------------
 
-      if (
-        response.status === 401
-      ) {
-        localStorage.removeItem(
-          "token"
-        );
+      if (response.status === 401) {
+        localStorage.removeItem("token");
 
         throw new Error(
           data.message ||
@@ -200,9 +244,9 @@ export default function AIQuestionPaper() {
         );
       }
 
-      // ======================================
-      // OTHER API ERRORS
-      // ======================================
+      // ------------------------------------
+      // API ERROR
+      // ------------------------------------
 
       if (!response.ok) {
         throw new Error(
@@ -211,9 +255,9 @@ export default function AIQuestionPaper() {
         );
       }
 
-      // ======================================
-      // SUCCESS CHECK
-      // ======================================
+      // ------------------------------------
+      // SUCCESS
+      // ------------------------------------
 
       if (!data.success) {
         throw new Error(
@@ -228,12 +272,7 @@ export default function AIQuestionPaper() {
         );
       }
 
-      // ======================================
-      // SAVE RESULT
-      // ======================================
-
       setResult(data);
-
     } catch (err) {
       console.error(
         "AI Paper Error:",
@@ -244,23 +283,22 @@ export default function AIQuestionPaper() {
         err instanceof TypeError
       ) {
         setError(
-          "Unable to connect to the backend server. Please check the backend URL and CORS settings."
+          "Unable to connect to backend server. Please check the backend."
         );
       } else {
         setError(
           err instanceof Error
             ? err.message
-            : "Failed to connect to server."
+            : "Failed to generate question paper."
         );
       }
-
     } finally {
       setLoading(false);
     }
   };
 
   // ======================================
-  // PRINT / SAVE PDF
+  // PRINT
   // ======================================
 
   const handlePrint = () => {
@@ -268,29 +306,42 @@ export default function AIQuestionPaper() {
   };
 
   // ======================================
-  // CLEAR FORM
+  // CLEAR
   // ======================================
 
   const handleClear = () => {
     setSubject("");
-
     setSyllabus("");
-
     setDifficulty("Medium");
-
     setQuestionCount("20");
-
     setQuestionType("Mixed");
-
+    setExamPattern("Polytechnic");
+    setLanguage("English");
+    setTotalMarks("100");
+    setDuration("2 Hours");
+    setBloomLevel("Mixed");
+    setIncludeExplanations(true);
     setResult(null);
-
     setError("");
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-12 px-6">
+  // ======================================
+  // SCROLL TO FORM
+  // ======================================
 
-      <div className="max-w-5xl mx-auto">
+  const handleGenerateAnother = () => {
+    setResult(null);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-10 px-4 md:px-6">
+
+      <div className="max-w-6xl mx-auto">
 
         {/* ======================================
             HEADER
@@ -298,17 +349,19 @@ export default function AIQuestionPaper() {
 
         <div className="text-center mb-10">
 
-          <div className="inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-full mb-4 font-semibold">
-             AI Powered
+          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-semibold mb-4">
+            <span>AI</span>
+            <span>Powered Learning</span>
           </div>
 
           <h1 className="text-4xl md:text-5xl font-bold text-blue-700">
             AI Question Paper Generator
           </h1>
 
-          <p className="text-gray-600 mt-4">
-            Enter any subject and paste your syllabus.
-            AI will generate questions according to your topics.
+          <p className="text-gray-600 mt-4 max-w-3xl mx-auto">
+            Create customized examination papers using
+            syllabus, difficulty, marks, language and
+            Bloom's Taxonomy settings.
           </p>
 
         </div>
@@ -317,7 +370,7 @@ export default function AIQuestionPaper() {
             FORM CARD
         ====================================== */}
 
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
 
           <form
             onSubmit={handleGenerate}
@@ -338,18 +391,12 @@ export default function AIQuestionPaper() {
                 type="text"
                 value={subject}
                 onChange={(e) =>
-                  setSubject(
-                    e.target.value
-                  )
+                  setSubject(e.target.value)
                 }
-                placeholder="Example: DBMS, Java, Python, Computer Networks..."
+                placeholder="Example: Data Communication, AI, DBMS, Java"
                 required
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-
-              <p className="text-sm text-gray-500 mt-2">
-                You can enter any subject name.
-              </p>
 
             </div>
 
@@ -360,171 +407,411 @@ export default function AIQuestionPaper() {
             <div>
 
               <label className="block font-semibold text-gray-700 mb-2">
-                 Syllabus / Units / Topics
+                📖 Syllabus / Units / Topics
               </label>
 
               <textarea
                 value={syllabus}
                 onChange={(e) =>
-                  setSyllabus(
-                    e.target.value
-                  )
+                  setSyllabus(e.target.value)
                 }
-                placeholder={`Paste your syllabus here...
+                placeholder={`Paste your complete syllabus here...
 
 Example:
 
-Unit 1: Introduction to DBMS
-- Database concepts
-- DBMS architecture
-- Data models
+Unit 1: Introduction to AI
+- AI concepts
+- Intelligent agents
+- Knowledge representation
 
-Unit 2: Relational Model
-- Relations
-- Keys
-- Constraints
+Unit 2: Problem Solving
+- BFS
+- DFS
+- Best First Search
+- A* Search
 
-Unit 3: SQL
-- DDL
-- DML
-- SELECT queries
-- Joins
-
-Unit 4: Normalization
-- Functional dependency
-- 1NF
-- 2NF
-- 3NF`}
+Unit 3: Applications
+- Expert systems
+- NLP
+- Computer Vision`}
                 required
                 rows={12}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
               />
 
               <p className="text-sm text-gray-500 mt-2">
-                 Copy and paste your complete syllabus,
-                units, topics, or study material here.
+                The AI will generate questions based on
+                the topics you provide.
               </p>
 
             </div>
 
             {/* ======================================
-                DIFFICULTY
+                SETTINGS GRID
             ====================================== */}
 
-            <div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
 
-              <label className="block font-semibold text-gray-700 mb-2">
-                 Difficulty Level
-              </label>
+              {/* EXAM PATTERN */}
 
-              <select
-                value={difficulty}
-                onChange={(e) =>
-                  setDifficulty(
-                    e.target.value
-                  )
-                }
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
+              <div>
 
-                <option value="Easy">
-                  Easy
-                </option>
+                <label className="block font-semibold text-gray-700 mb-2">
+                  📝 Exam Pattern
+                </label>
 
-                <option value="Medium">
-                  Medium
-                </option>
+                <select
+                  value={examPattern}
+                  onChange={(e) =>
+                    setExamPattern(e.target.value)
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
 
-                <option value="Hard">
-                  Hard
-                </option>
+                  <option value="Polytechnic">
+                    Polytechnic
+                  </option>
 
-              </select>
+                  <option value="College">
+                    College
+                  </option>
+
+                  <option value="University">
+                    University
+                  </option>
+
+                  <option value="Competitive Exam">
+                    Competitive Exam
+                  </option>
+
+                  <option value="Custom">
+                    Custom
+                  </option>
+
+                </select>
+
+              </div>
+
+              {/* DIFFICULTY */}
+
+              <div>
+
+                <label className="block font-semibold text-gray-700 mb-2">
+                  🎯 Difficulty
+                </label>
+
+                <select
+                  value={difficulty}
+                  onChange={(e) =>
+                    setDifficulty(e.target.value)
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+
+                  <option value="Easy">
+                    Easy
+                  </option>
+
+                  <option value="Medium">
+                    Medium
+                  </option>
+
+                  <option value="Hard">
+                    Hard
+                  </option>
+
+                </select>
+
+              </div>
+
+              {/* QUESTION TYPE */}
+
+              <div>
+
+                <label className="block font-semibold text-gray-700 mb-2">
+                  ❓ Question Type
+                </label>
+
+                <select
+                  value={questionType}
+                  onChange={(e) =>
+                    setQuestionType(e.target.value)
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+
+                  <option value="Mixed">
+                    Mixed
+                  </option>
+
+                  <option value="MCQ">
+                    MCQ
+                  </option>
+
+                  <option value="Short Answer">
+                    Short Answer
+                  </option>
+
+                  <option value="Long Answer">
+                    Long Answer
+                  </option>
+
+                </select>
+
+              </div>
+
+              {/* LANGUAGE */}
+
+              <div>
+
+                <label className="block font-semibold text-gray-700 mb-2">
+                  🌐 Language
+                </label>
+
+                <select
+                  value={language}
+                  onChange={(e) =>
+                    setLanguage(e.target.value)
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+
+                  <option value="English">
+                    English
+                  </option>
+
+                  <option value="Hindi">
+                    Hindi
+                  </option>
+
+                  <option value="Hinglish">
+                    Hinglish
+                  </option>
+
+                </select>
+
+              </div>
+
+              {/* QUESTION COUNT */}
+
+              <div>
+
+                <label className="block font-semibold text-gray-700 mb-2">
+                  🔢 Questions
+                </label>
+
+                <select
+                  value={questionCount}
+                  onChange={(e) =>
+                    setQuestionCount(e.target.value)
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+
+                  <option value="5">
+                    5 Questions
+                  </option>
+
+                  <option value="10">
+                    10 Questions
+                  </option>
+
+                  <option value="20">
+                    20 Questions
+                  </option>
+
+                  <option value="30">
+                    30 Questions
+                  </option>
+
+                  <option value="50">
+                    50 Questions
+                  </option>
+
+                  <option value="100">
+                    100 Questions
+                  </option>
+
+                </select>
+
+              </div>
+
+              {/* TOTAL MARKS */}
+
+              <div>
+
+                <label className="block font-semibold text-gray-700 mb-2">
+                  🧮 Total Marks
+                </label>
+
+                <select
+                  value={totalMarks}
+                  onChange={(e) =>
+                    setTotalMarks(e.target.value)
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+
+                  <option value="20">
+                    20 Marks
+                  </option>
+
+                  <option value="30">
+                    30 Marks
+                  </option>
+
+                  <option value="50">
+                    50 Marks
+                  </option>
+
+                  <option value="70">
+                    70 Marks
+                  </option>
+
+                  <option value="100">
+                    100 Marks
+                  </option>
+
+                  <option value="150">
+                    150 Marks
+                  </option>
+
+                  <option value="200">
+                    200 Marks
+                  </option>
+
+                </select>
+
+              </div>
+
+              {/* DURATION */}
+
+              <div>
+
+                <label className="block font-semibold text-gray-700 mb-2">
+                  ⏱️ Duration
+                </label>
+
+                <select
+                  value={duration}
+                  onChange={(e) =>
+                    setDuration(e.target.value)
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+
+                  <option value="30 Minutes">
+                    30 Minutes
+                  </option>
+
+                  <option value="1 Hour">
+                    1 Hour
+                  </option>
+
+                  <option value="2 Hours">
+                    2 Hours
+                  </option>
+
+                  <option value="3 Hours">
+                    3 Hours
+                  </option>
+
+                  <option value="4 Hours">
+                    4 Hours
+                  </option>
+
+                </select>
+
+              </div>
+
+              {/* BLOOM LEVEL */}
+
+              <div>
+
+                <label className="block font-semibold text-gray-700 mb-2">
+                  🧠 Bloom's Taxonomy
+                </label>
+
+                <select
+                  value={bloomLevel}
+                  onChange={(e) =>
+                    setBloomLevel(e.target.value)
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+
+                  <option value="Mixed">
+                    Mixed
+                  </option>
+
+                  <option value="Remember">
+                    Remember
+                  </option>
+
+                  <option value="Understand">
+                    Understand
+                  </option>
+
+                  <option value="Apply">
+                    Apply
+                  </option>
+
+                  <option value="Analyze">
+                    Analyze
+                  </option>
+
+                  <option value="Evaluate">
+                    Evaluate
+                  </option>
+
+                  <option value="Create">
+                    Create
+                  </option>
+
+                </select>
+
+              </div>
 
             </div>
 
             {/* ======================================
-                QUESTION COUNT
+                EXPLANATION TOGGLE
             ====================================== */}
 
-            <div>
+            <div className="border border-gray-200 rounded-xl p-4 bg-gray-50">
 
-              <label className="block font-semibold text-gray-700 mb-2">
-                 Number of Questions
+              <label className="flex items-center gap-3 cursor-pointer">
+
+                <input
+                  type="checkbox"
+                  checked={includeExplanations}
+                  onChange={(e) =>
+                    setIncludeExplanations(
+                      e.target.checked
+                    )
+                  }
+                  className="w-5 h-5 accent-blue-600"
+                />
+
+                <div>
+
+                  <p className="font-semibold text-gray-800">
+                    💡 Include Answer Explanations
+                  </p>
+
+                  <p className="text-sm text-gray-500">
+                    AI will provide a short explanation
+                    for each answer.
+                  </p>
+
+                </div>
+
               </label>
-
-              <select
-                value={questionCount}
-                onChange={(e) =>
-                  setQuestionCount(
-                    e.target.value
-                  )
-                }
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-
-                <option value="10">
-                  10 Questions
-                </option>
-
-                <option value="20">
-                  20 Questions
-                </option>
-
-                <option value="30">
-                  30 Questions
-                </option>
-
-                <option value="50">
-                  50 Questions
-                </option>
-
-              </select>
 
             </div>
 
             {/* ======================================
-                QUESTION TYPE
-            ====================================== */}
-
-            <div>
-
-              <label className="block font-semibold text-gray-700 mb-2">
-                 Question Type
-              </label>
-
-              <select
-                value={questionType}
-                onChange={(e) =>
-                  setQuestionType(
-                    e.target.value
-                  )
-                }
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-
-                <option value="Mixed">
-                  Mixed
-                </option>
-
-                <option value="MCQ">
-                  MCQ
-                </option>
-
-                <option value="Short Answer">
-                  Short Answer
-                </option>
-
-                <option value="Long Answer">
-                  Long Answer
-                </option>
-
-              </select>
-
-            </div>
-
-            {/* ======================================
-                BUTTONS
+                GENERATE BUTTONS
             ====================================== */}
 
             <div className="flex flex-col md:flex-row gap-4">
@@ -536,8 +823,8 @@ Unit 4: Normalization
               >
 
                 {loading
-                  ? " Generating Question Paper..."
-                  : " Generate Question Paper"}
+                  ? "⏳ Generating Question Paper..."
+                  : "✨ Generate Question Paper"}
 
               </button>
 
@@ -552,384 +839,414 @@ Unit 4: Normalization
 
             </div>
 
-          </form>{/* ======================================
-              ERROR MESSAGE
+          </form>
+
+          {/* ======================================
+              ERROR
           ====================================== */}
 
           {error && (
 
             <div className="mt-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
 
-              ❌ {error}
+              <strong>❌ Error:</strong>{" "}
+              {error}
 
             </div>
 
           )}
 
-          {/* ======================================
-              GENERATED PAPER
-          ====================================== */}
+        </div>
 
-          {result?.success &&
-            result.paper && (
+        {/* ======================================
+            GENERATED PAPER
+        ====================================== */}
 
-            <div
-              id="generated-paper"
-              className="mt-10"
-            >
+        {result?.success &&
+          result.paper && (
 
-              {/* ======================================
-                  PAPER HEADER
-              ====================================== */}
+          <div
+            id="generated-paper"
+            className="mt-10"
+          >
 
-              <div className="bg-blue-700 text-white rounded-t-2xl p-6">
+            {/* PAPER HEADER */}
 
-                <div className="flex flex-col md:flex-row justify-between gap-4">
+            <div className="bg-blue-700 text-white rounded-t-2xl p-6">
 
-                  <div>
+              <div className="flex flex-col md:flex-row justify-between gap-6">
 
-                    <h2 className="text-2xl md:text-3xl font-bold">
-                      {result.paper.title}
-                    </h2>
+                <div>
 
-                    <p className="mt-2 text-blue-100">
-                      Subject:{" "}
-                      {result.paper.subject}
-                    </p>
+                  <h2 className="text-2xl md:text-3xl font-bold">
+                    {result.paper.title}
+                  </h2>
 
-                  </div>
+                  <p className="mt-2 text-blue-100">
+                    Subject: {result.paper.subject}
+                  </p>
 
-                  <div className="text-left md:text-right">
+                </div>
 
-                    <p>
-                      Difficulty:{" "}
-                      {result.paper.difficulty}
-                    </p>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm md:text-right">
 
-                    <p>
-                      Questions:{" "}
-                      {result.paper.questions.length}
-                    </p>
+                  <p>
+                    <strong>Pattern:</strong>{" "}
+                    {result.paper.examPattern || "General"}
+                  </p>
 
-                    {result.paper.questionType && (
-                      <p>
-                        Type:{" "}
-                        {result.paper.questionType}
-                      </p>
-                    )}
+                  <p>
+                    <strong>Difficulty:</strong>{" "}
+                    {result.paper.difficulty}
+                  </p>
 
-                  </div>
+                  <p>
+                    <strong>Questions:</strong>{" "}
+                    {result.paper.questions.length}
+                  </p>
+
+                  <p>
+                    <strong>Total Marks:</strong>{" "}
+                    {result.paper.totalMarks || "-"}
+                  </p>
+
+                  <p>
+                    <strong>Duration:</strong>{" "}
+                    {result.paper.duration || "-"}
+                  </p>
+
+                  <p>
+                    <strong>Language:</strong>{" "}
+                    {result.paper.language || "-"}
+                  </p>
 
                 </div>
 
               </div>
 
-              {/* ======================================
-                  QUESTIONS
-              ====================================== */}
+            </div>
 
-              <div className="bg-white border border-gray-200 rounded-b-2xl">
+            {/* PAPER META */}
 
-                {result.paper.questions.map(
-                  (q, index) => (
+            <div className="bg-white border-x border-gray-200 px-6 py-5">
 
-                  <div
-                    key={`${q.number}-${index}`}
-                    className="p-6 border-b border-gray-200 last:border-b-0"
-                  >
+              <div className="flex flex-wrap gap-3">
 
-                    <div className="flex gap-3">
+                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
+                  Type: {result.paper.questionType || "Mixed"}
+                </span>
 
-                      {/* QUESTION NUMBER */}
+                <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
+                  Bloom: {result.paper.bloomLevel || "Mixed"}
+                </span>
 
-                      <span className="flex-shrink-0 bg-blue-100 text-blue-700 font-bold w-9 h-9 rounded-full flex items-center justify-center">
+                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
+                  Marks: {result.paper.totalMarks || "-"}
+                </span>
 
-                        {q.number ||
-                          index + 1}
+                <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-semibold">
+                  Time: {result.paper.duration || "-"}
+                </span>
 
-                      </span>
+              </div>
 
-                      <div className="flex-1">
+            </div>
 
-                        {/* QUESTION TYPE */}
+            {/* QUESTIONS */}
 
-                        <span className="inline-block text-xs font-semibold bg-gray-100 text-gray-600 px-3 py-1 rounded-full mb-3">
+            <div className="bg-white border border-gray-200 rounded-b-2xl">
 
+              {result.paper.questions.map(
+                (q, index) => (
+
+                <div
+                  key={`${q.number}-${index}`}
+                  className="p-6 border-b border-gray-200 last:border-b-0"
+                >
+
+                  <div className="flex gap-4">
+
+                    {/* NUMBER */}
+
+                    <span className="flex-shrink-0 bg-blue-100 text-blue-700 font-bold w-10 h-10 rounded-full flex items-center justify-center">
+                      {q.number || index + 1}
+                    </span>
+
+                    <div className="flex-1">
+
+                      {/* TYPE + MARKS */}
+
+                      <div className="flex flex-wrap gap-2 mb-3">
+
+                        <span className="inline-block text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
                           {q.type}
-
                         </span>
 
-                        {/* QUESTION */}
+                        {q.marks && (
 
-                        <h3 className="text-lg font-semibold text-gray-800 leading-relaxed">
-
-                          {q.question}
-
-                        </h3>
-
-                        {/* ======================================
-                            MCQ OPTIONS
-                        ====================================== */}
-
-                        {q.options &&
-                          q.options.length > 0 && (
-
-                          <div className="grid md:grid-cols-2 gap-3 mt-4">
-
-                            {q.options.map(
-                              (
-                                option,
-                                optionIndex
-                              ) => (
-
-                              <div
-                                key={
-                                  optionIndex
-                                }
-                                className="border border-gray-200 rounded-lg p-3 bg-gray-50"
-                              >
-
-                                <span className="font-bold text-blue-600 mr-2">
-
-                                  {String.fromCharCode(
-                                    65 +
-                                      optionIndex
-                                  )}
-                                  .
-
-                                </span>
-
-                                {option}
-
-                              </div>
-
-                            )
-                            )}
-
-                          </div>
+                          <span className="inline-block text-xs font-semibold bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full">
+                            {q.marks} Mark{q.marks > 1 ? "s" : ""}
+                          </span>
 
                         )}
 
-                        {/* ======================================
-                            ANSWER
-                        ====================================== */}
+                        {q.bloomLevel && (
 
-                        <details className="mt-5">
+                          <span className="inline-block text-xs font-semibold bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
+                            {q.bloomLevel}
+                          </span>
 
-                          <summary className="cursor-pointer inline-block bg-green-100 text-green-700 px-4 py-2 rounded-lg font-semibold">
+                        )}
 
-                            ✅ Show Answer
+                      </div>
 
+                      {/* QUESTION */}
+
+                      <h3 className="text-lg font-semibold text-gray-800 leading-relaxed">
+                        {q.question}
+                      </h3>
+{/* MCQ OPTIONS */}
+
+{q.options && q.options.length > 0 && (
+  <div className="grid md:grid-cols-2 gap-3 mt-4">
+    {q.options.map((option, optionIndex) => (
+      <div
+        key={optionIndex}
+        className="border border-gray-200 rounded-lg p-3 bg-gray-50"
+      >
+        <span className="font-bold text-blue-600 mr-2">
+          {String.fromCharCode(65 + optionIndex)}.
+        </span>
+
+        {option}
+      </div>
+    ))}
+          </div>
+  )}
+
+
+
+                      {/* ANSWER */}
+
+                      <details className="mt-5">
+
+                        <summary className="cursor-pointer inline-block bg-green-100 text-green-700 px-4 py-2 rounded-lg font-semibold">
+                          ✅ Show Answer
+                        </summary>
+
+                        <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
+
+                          <strong>
+                            Answer:
+                          </strong>{" "}
+
+                          {q.answer}
+
+                        </div>
+
+                      </details>
+
+                      {/* EXPLANATION */}
+
+                      {q.explanation && (
+
+                        <details className="mt-3">
+
+                          <summary className="cursor-pointer inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-semibold">
+                            💡 Show Explanation
                           </summary>
 
-                          <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
+                          <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-800">
 
                             <strong>
-                              Answer:
+                              Explanation:
                             </strong>{" "}
 
-                            {q.answer}
+                            {q.explanation}
 
                           </div>
 
                         </details>
 
-                      </div>
+                      )}
 
                     </div>
 
                   </div>
 
-                )
-                )}
+                </div>
 
-              </div>
-
-              {/* ======================================
-                  PAPER ACTIONS
-              ====================================== */}
-
-              <div className="mt-6 flex flex-col md:flex-row gap-4">
-
-                <button
-                  type="button"
-                  onClick={handlePrint}
-                  className="flex-1 bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-lg"
-                >
-
-                   Print / Save as PDF
-
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    window.scrollTo({
-                      top: 0,
-                      behavior: "smooth",
-                    })
-                  }
-                  className="md:w-48 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-3 rounded-lg"
-                >
-
-                   Generate Another
-
-                </button>
-
-              </div>
-
-              {/* ======================================
-                  SUCCESS MESSAGE
-              ====================================== */}
-
-              <div className="mt-6 bg-green-50 border border-green-200 text-green-700 p-4 rounded-lg text-center font-semibold">
-
-                ✅ Question paper generated and saved successfully!
-
-              </div>
+              ))}
 
             </div>
 
-          )}{/* ======================================
-              AI FEATURES
-          ====================================== */}
+            {/* ======================================
+                PAPER ACTIONS
+            ====================================== */}
 
-          <div className="grid md:grid-cols-3 gap-6 mt-8">
+            <div className="mt-6 flex flex-col md:flex-row gap-4">
 
-            {/* FEATURE 1 */}
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="flex-1 bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-lg transition"
+              >
+                🖨️ Print / Save as PDF
+              </button>
 
-            <div className="bg-white p-6 rounded-xl shadow text-center">
-
-              <div className="text-3xl mb-2">
-                
-              </div>
-
-              <h3 className="font-bold text-gray-800">
-                Instant Generation
-              </h3>
-
-              <p className="text-sm text-gray-500 mt-2">
-                Generate customized question papers
-                quickly using AI.
-              </p>
-
-            </div>
-
-            {/* FEATURE 2 */}
-
-            <div className="bg-white p-6 rounded-xl shadow text-center">
-
-              <div className="text-3xl mb-2">
-                
-              </div>
-
-              <h3 className="font-bold text-gray-800">
-                Syllabus Based
-              </h3>
-
-              <p className="text-sm text-gray-500 mt-2">
-                Paste your syllabus or topics and
-                generate relevant questions.
-              </p>
+              <button
+                type="button"
+                onClick={handleGenerateAnother}
+                className="md:w-56 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-3 rounded-lg transition"
+              >
+                🔄 Generate Another
+              </button>
 
             </div>
 
-            {/* FEATURE 3 */}
+            {/* SUCCESS */}
 
-            <div className="bg-white p-6 rounded-xl shadow text-center">
-
-              <div className="text-3xl mb-2">
-                
-              </div>
-
-              <h3 className="font-bold text-gray-800">
-                Automatically Saved
-              </h3>
-
-              <p className="text-sm text-gray-500 mt-2">
-                Generated papers are automatically
-                saved to your account.
-              </p>
-
+            <div className="mt-6 bg-green-50 border border-green-200 text-green-700 p-4 rounded-lg text-center font-semibold">
+              ✅ Question paper generated and saved successfully!
             </div>
 
           </div>
 
-          {/* ======================================
-              HOW TO USE
-          ====================================== */}
+        )}
 
-          <div className="mt-8 bg-white rounded-2xl shadow-lg p-8">
+        {/* ======================================
+            FEATURES
+        ====================================== */}
 
-            <h2 className="text-2xl font-bold text-gray-800 text-center">
-               How to Use AI Question Generator
-            </h2>
+        <div className="grid md:grid-cols-3 gap-6 mt-10">
 
-            <div className="grid md:grid-cols-4 gap-6 mt-8">
+          <div className="bg-white p-6 rounded-xl shadow text-center">
 
-              <div className="text-center">
+            <div className="text-3xl mb-3">
+              ⚡
+            </div>
 
-                <div className="mx-auto bg-blue-100 text-blue-700 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl">
-                  1
-                </div>
+            <h3 className="font-bold text-gray-800">
+              Smart Generation
+            </h3>
 
-                <h3 className="font-bold mt-3">
-                  Enter Subject
-                </h3>
+            <p className="text-sm text-gray-500 mt-2">
+              Generate customized papers according
+              to your syllabus and exam requirements.
+            </p>
 
-                <p className="text-sm text-gray-500 mt-2">
-                  Type any subject name.
-                </p>
+          </div>
 
+          <div className="bg-white p-6 rounded-xl shadow text-center">
+
+            <div className="text-3xl mb-3">
+              🧠
+            </div>
+
+            <h3 className="font-bold text-gray-800">
+              Bloom's Taxonomy
+            </h3>
+
+            <p className="text-sm text-gray-500 mt-2">
+              Create questions focused on different
+              learning and thinking levels.
+            </p>
+
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow text-center">
+
+            <div className="text-3xl mb-3">
+              📊
+            </div>
+
+            <h3 className="font-bold text-gray-800">
+              Complete Assessment
+            </h3>
+
+            <p className="text-sm text-gray-500 mt-2">
+              Get questions, marks, answers,
+              explanations and difficulty settings.
+            </p>
+
+          </div>
+
+        </div>
+
+        {/* ======================================
+            HOW TO USE
+        ====================================== */}
+
+        <div className="mt-10 bg-white rounded-2xl shadow-lg p-8">
+
+          <h2 className="text-2xl font-bold text-gray-800 text-center">
+            How to Use AI Question Generator
+          </h2>
+
+          <div className="grid md:grid-cols-4 gap-6 mt-8">
+
+            <div className="text-center">
+
+              <div className="mx-auto bg-blue-100 text-blue-700 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl">
+                1
               </div>
 
-              <div className="text-center">
+              <h3 className="font-bold mt-3">
+                Enter Subject
+              </h3>
 
-                <div className="mx-auto bg-blue-100 text-blue-700 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl">
-                  2
-                </div>
+              <p className="text-sm text-gray-500 mt-2">
+                Enter your subject name.
+              </p>
 
-                <h3 className="font-bold mt-3">
-                  Paste Syllabus
-                </h3>
+            </div>
 
-                <p className="text-sm text-gray-500 mt-2">
-                  Paste units, topics or complete syllabus.
-                </p>
+            <div className="text-center">
 
+              <div className="mx-auto bg-blue-100 text-blue-700 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl">
+                2
               </div>
 
-              <div className="text-center">
+              <h3 className="font-bold mt-3">
+                Add Syllabus
+              </h3>
 
-                <div className="mx-auto bg-blue-100 text-blue-700 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl">
-                  3
-                </div>
+              <p className="text-sm text-gray-500 mt-2">
+                Paste units and important topics.
+              </p>
 
-                <h3 className="font-bold mt-3">
-                  Choose Settings
-                </h3>
+            </div>
 
-                <p className="text-sm text-gray-500 mt-2">
-                  Select difficulty, number and type.
-                </p>
+            <div className="text-center">
 
+              <div className="mx-auto bg-blue-100 text-blue-700 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl">
+                3
               </div>
 
-              <div className="text-center">
+              <h3 className="font-bold mt-3">
+                Configure
+              </h3>
 
-                <div className="mx-auto bg-blue-100 text-blue-700 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl">
-                  4
-                </div>
+              <p className="text-sm text-gray-500 mt-2">
+                Choose pattern, marks, language
+                and difficulty.
+              </p>
 
-                <h3 className="font-bold mt-3">
-                  Generate
-                </h3>
+            </div>
 
-                <p className="text-sm text-gray-500 mt-2">
-                  AI generates your question paper.
-                </p>
+            <div className="text-center">
 
+              <div className="mx-auto bg-blue-100 text-blue-700 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl">
+                4
               </div>
+
+              <h3 className="font-bold mt-3">
+                Generate
+              </h3>
+
+              <p className="text-sm text-gray-500 mt-2">
+                Let AI create your paper.
+              </p>
 
             </div>
 
@@ -938,6 +1255,51 @@ Unit 4: Normalization
         </div>
 
       </div>
+
+      {/* ======================================
+          PRINT CSS
+      ====================================== */}
+
+      <style>
+        {`
+          @media print {
+
+            body {
+              background: white !important;
+            }
+
+            form,
+            .no-print {
+              display: none !important;
+            }
+
+            #generated-paper {
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+
+            button {
+              display: none !important;
+            }
+
+            details {
+              display: block !important;
+            }
+
+            details summary {
+              display: none !important;
+            }
+
+            details > div {
+              display: block !important;
+            }
+
+            @page {
+              margin: 15mm;
+            }
+          }
+        `}
+      </style>
 
     </div>
   );

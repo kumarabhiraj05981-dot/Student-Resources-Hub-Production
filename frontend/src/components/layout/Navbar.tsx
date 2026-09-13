@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 
@@ -22,18 +23,29 @@ export default function Navbar() {
 
       try {
         const user = JSON.parse(userString);
-        setIsAdmin(user?.role === "admin");
+
+        const role = String(user?.role || "")
+          .trim()
+          .toLowerCase();
+
+        setIsAdmin(role === "admin");
       } catch {
         setIsAdmin(false);
       }
     };
 
+    // Check authentication when Navbar loads
     checkAuth();
 
+    // Detect localStorage changes from another tab/window
     window.addEventListener("storage", checkAuth);
+
+    // Detect login/logout changes in the same tab
+    window.addEventListener("auth-change", checkAuth);
 
     return () => {
       window.removeEventListener("storage", checkAuth);
+      window.removeEventListener("auth-change", checkAuth);
     };
   }, []);
 
@@ -47,6 +59,9 @@ export default function Navbar() {
 
     setIsLoggedIn(false);
     setIsAdmin(false);
+
+    // Notify Navbar/auth listeners
+    window.dispatchEvent(new Event("auth-change"));
 
     closeMobileMenu();
     navigate("/login");
@@ -120,10 +135,6 @@ export default function Navbar() {
               Home
             </NavLink>
 
-          
-
-
-            {/* FIXED: /branches -> /branch-resources */}
             <NavLink to="/branch-resources" className={navClass}>
               Branches
             </NavLink>
@@ -152,6 +163,8 @@ export default function Navbar() {
 
           {/* Desktop Account Actions */}
           <div className="hidden items-center gap-2 md:flex">
+
+            {/* Admin Button */}
             {isAdmin && (
               <NavLink
                 to="/admin"
@@ -205,7 +218,11 @@ export default function Navbar() {
           {/* Mobile Menu Button */}
           <button
             type="button"
-            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-label={
+              mobileOpen
+                ? "Close navigation menu"
+                : "Open navigation menu"
+            }
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((previous) => !previous)}
             className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-lg text-gray-700 transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 md:hidden"
@@ -218,6 +235,7 @@ export default function Navbar() {
         {mobileOpen && (
           <div className="border-t border-gray-100 py-4 md:hidden">
             <nav className="flex flex-col gap-1">
+
               <NavLink
                 to="/"
                 end
@@ -264,7 +282,6 @@ export default function Navbar() {
                 <span className="text-gray-400">→</span>
               </NavLink>
 
-              {/* FIXED: /branches -> /branch-resources */}
               <NavLink
                 to="/branch-resources"
                 onClick={closeMobileMenu}
@@ -299,6 +316,7 @@ export default function Navbar() {
                 <span>→</span>
               </NavLink>
 
+              {/* Mobile Admin */}
               {isAdmin && (
                 <NavLink
                   to="/admin"

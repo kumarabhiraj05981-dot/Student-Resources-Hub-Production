@@ -21,8 +21,65 @@ const GEMINI_MODEL =
   process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
 // ======================================
+// CONSTANTS
+// ======================================
+
+const ALLOWED_DIFFICULTIES = [
+  "Easy",
+  "Medium",
+  "Hard",
+];
+
+const ALLOWED_QUESTION_TYPES = [
+  "MCQ",
+  "Short Answer",
+  "Long Answer",
+  "Mixed",
+];
+
+const ALLOWED_LANGUAGES = [
+  "English",
+  "Hindi",
+  "Hinglish",
+];
+
+const ALLOWED_BLOOM_LEVELS = [
+  "Mixed",
+  "Remember",
+  "Understand",
+  "Apply",
+  "Analyze",
+  "Evaluate",
+  "Create",
+];
+
+const QUESTION_BLOOM_LEVELS = [
+  "Remember",
+  "Understand",
+  "Apply",
+  "Analyze",
+  "Evaluate",
+  "Create",
+];
+
+// ======================================
 // HELPER FUNCTIONS
 // ======================================
+
+function normalizeText(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function isEmpty(value) {
+  return (
+    value === undefined ||
+    value === null ||
+    String(value).trim() === ""
+  );
+}
 
 function normalizeQuestionType(type) {
   const value = String(type || "")
@@ -38,52 +95,17 @@ function normalizeQuestionType(type) {
   }
 
   if (
+    value === "short" ||
     value === "short answer" ||
-    value === "short-answer" ||
-    value === "short"
+    value === "short-answer"
   ) {
     return "Short Answer";
   }
 
   if (
+    value === "long" ||
     value === "long answer" ||
-    value === "long-answer" ||
-    value === "long"
-  ) {
-    return "Long Answer";
-  }
-
-  return type
-    ? String(type).trim()
-    : "MCQ";
-}
-
-
-function normalizeRequestedType(type) {
-  const value = String(type || "")
-    .trim()
-    .toLowerCase();
-
-  if (
-    value === "mcq" ||
-    value === "multiple choice" ||
-    value === "multiple-choice"
-  ) {
-    return "MCQ";
-  }
-
-  if (
-    value === "short answer" ||
-    value === "short-answer" ||
-    value === "short"
-  ) {
-    return "Short Answer";
-  }
-
-  if (
-    value === "long answer" ||
-    value === "long-answer" ||
-    value === "long"
+    value === "long-answer"
   ) {
     return "Long Answer";
   }
@@ -95,26 +117,130 @@ function normalizeRequestedType(type) {
   return "Mixed";
 }
 
-
-function isEmpty(value) {
-  return (
-    value === undefined ||
-    value === null ||
-    String(value).trim() === ""
-  );
-}
-
-
-function normalizeText(value) {
-  return String(value || "")
+function normalizeDifficulty(value) {
+  const text = String(value || "")
     .trim()
-    .replace(/\s+/g, " ")
     .toLowerCase();
+
+  if (text === "easy") return "Easy";
+  if (text === "hard") return "Hard";
+
+  return "Medium";
 }
 
+function normalizeLanguage(value) {
+  const text = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  if (text === "hindi") return "Hindi";
+  if (text === "hinglish") return "Hinglish";
+
+  return "English";
+}
+
+function normalizeBloomLevel(value) {
+  const text = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  const map = {
+    mixed: "Mixed",
+    remember: "Remember",
+    understand: "Understand",
+    apply: "Apply",
+    analyze: "Analyze",
+    evaluate: "Evaluate",
+    create: "Create",
+  };
+
+  return map[text] || "Mixed";
+}
+
+function normalizeQuestionBloomLevel(value) {
+  const text = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  const map = {
+    remember: "Remember",
+    understand: "Understand",
+    apply: "Apply",
+    analyze: "Analyze",
+    evaluate: "Evaluate",
+    create: "Create",
+  };
+
+  return map[text] || "Understand";
+}
+
+function normalizeExamPattern(value) {
+  const text = String(value || "").trim();
+
+  if (!text) {
+    return "General";
+  }
+
+  return text.slice(0, 100);
+}
+
+function normalizeDuration(value) {
+  const text = String(value || "").trim();
+
+  if (!text) {
+    return "2 Hours";
+  }
+
+  return text.slice(0, 50);
+}
+
+function parseBoolean(value, defaultValue = true) {
+  if (value === undefined || value === null) {
+    return defaultValue;
+  }
+
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  const text = String(value)
+    .trim()
+    .toLowerCase();
+
+  if (["false", "0", "no", "off"].includes(text)) {
+    return false;
+  }
+
+  if (["true", "1", "yes", "on"].includes(text)) {
+    return true;
+  }
+
+  return defaultValue;
+}
 
 // ======================================
-// VALIDATE + CLEAN AI QUESTIONS
+// BUILD MARK DISTRIBUTION
+// ======================================
+
+function buildMarkGuidance(questionCount, totalMarks) {
+  const average =
+    totalMarks / questionCount;
+
+  if (Number.isInteger(average)) {
+    return `Use approximately ${average} mark(s) per question and make the total exactly ${totalMarks}.`;
+  }
+
+  return `
+Distribute marks intelligently according to question type.
+MCQs should generally have fewer marks.
+Short answers should have moderate marks.
+Long answers should have higher marks.
+The sum of ALL question marks MUST be exactly ${totalMarks}.
+`;
+}
+
+// ======================================
+// VALIDATE + CLEAN QUESTIONS
 // ======================================
 
 function validateAndCleanQuestions(
@@ -140,12 +266,18 @@ function validateAndCleanQuestions(
 
   const cleanedQuestions = [];
 
+  let totalGeneratedMarks = 0;
+
   for (
     let index = 0;
     index < questions.length;
     index++
   ) {
     const item = questions[index];
+
+    // ======================================
+    // QUESTION TEXT
+    // ======================================
 
     const questionText = String(
       item?.question || ""
@@ -158,7 +290,7 @@ function validateAndCleanQuestions(
     }
 
     // ======================================
-    // DUPLICATE QUESTION CHECK
+    // DUPLICATE CHECK
     // ======================================
 
     const normalizedQuestion =
@@ -179,13 +311,26 @@ function validateAndCleanQuestions(
     );
 
     // ======================================
-    // QUESTION TYPE
+    // TYPE
     // ======================================
 
     const type =
-      normalizeQuestionType(
-        item?.type
+      normalizeQuestionType(item?.type);
+
+    // ======================================
+    // VALID TYPE
+    // ======================================
+
+    if (
+      !ALLOWED_QUESTION_TYPES.includes(
+        type
+      ) ||
+      type === "Mixed"
+    ) {
+      throw new Error(
+        `Invalid question type at question ${index + 1}`
       );
+    }
 
     // ======================================
     // OPTIONS
@@ -205,14 +350,9 @@ function validateAndCleanQuestions(
     // ANSWER
     // ======================================
 
-    const answer =
-      typeof item?.answer === "string"
-        ? item.answer.trim()
-        : String(item?.answer || "").trim();
-
-    // ======================================
-    // ANSWER REQUIRED
-    // ======================================
+    const answer = String(
+      item?.answer || ""
+    ).trim();
 
     if (isEmpty(answer)) {
       throw new Error(
@@ -231,7 +371,6 @@ function validateAndCleanQuestions(
         );
       }
 
-      // Check duplicate options
       const normalizedOptions =
         options.map((option) =>
           normalizeText(option)
@@ -248,12 +387,11 @@ function validateAndCleanQuestions(
         );
       }
 
-      // Answer must exactly match one option
       const answerExists =
         options.some(
           (option) =>
-            option.trim() ===
-            answer.trim()
+            normalizeText(option) ===
+            normalizeText(answer)
         );
 
       if (!answerExists) {
@@ -262,7 +400,6 @@ function validateAndCleanQuestions(
         );
       }
     } else {
-      // Non-MCQ questions should not need options
       options = [];
     }
 
@@ -271,33 +408,69 @@ function validateAndCleanQuestions(
     // ======================================
 
     if (
-      settings.questionType === "MCQ" &&
-      type !== "MCQ"
+      settings.questionType !== "Mixed" &&
+      type !== settings.questionType
     ) {
       throw new Error(
-        `Question ${index + 1} is not an MCQ as requested`
+        `Question ${index + 1} is ${type}, but ${settings.questionType} was requested`
       );
     }
 
+    // ======================================
+    // MIXED VALIDATION
+    // ======================================
+
     if (
-      settings.questionType ===
-        "Short Answer" &&
-      type !== "Short Answer"
+      settings.questionType === "Mixed" &&
+      settings.questionCount >= 3
+    ) {
+      // checked after loop
+    }
+
+    // ======================================
+    // MARKS
+    // ======================================
+
+    const marks = Number(item?.marks);
+
+    if (
+      !Number.isInteger(marks) ||
+      marks < 1 ||
+      marks > settings.totalMarks
     ) {
       throw new Error(
-        `Question ${index + 1} is not a Short Answer question as requested`
+        `Question ${index + 1} has invalid marks`
       );
     }
 
-    if (
-      settings.questionType ===
-        "Long Answer" &&
-      type !== "Long Answer"
-    ) {
-      throw new Error(
-        `Question ${index + 1} is not a Long Answer question as requested`
-      );
+    totalGeneratedMarks += marks;
+
+    // ======================================
+    // EXPLANATION
+    // ======================================
+
+    let explanation = "";
+
+    if (settings.includeExplanations) {
+      explanation = String(
+        item?.explanation || ""
+      ).trim();
+
+      if (!explanation) {
+        throw new Error(
+          `Question ${index + 1} is missing its explanation`
+        );
+      }
     }
+
+    // ======================================
+    // BLOOM LEVEL
+    // ======================================
+
+    const bloomLevel =
+      normalizeQuestionBloomLevel(
+        item?.bloomLevel
+      );
 
     // ======================================
     // FINAL QUESTION
@@ -305,14 +478,13 @@ function validateAndCleanQuestions(
 
     cleanedQuestions.push({
       number: index + 1,
-
       type,
-
       question: questionText,
-
       options,
-
       answer,
+      explanation,
+      marks,
+      bloomLevel,
     });
   }
 
@@ -332,14 +504,26 @@ function validateAndCleanQuestions(
 
     if (types.size < 2) {
       throw new Error(
-        "Mixed mode must contain different question types"
+        "Mixed mode must contain at least two different question types"
       );
     }
   }
 
+  // ======================================
+  // TOTAL MARK VALIDATION
+  // ======================================
+
+  if (
+    totalGeneratedMarks !==
+    settings.totalMarks
+  ) {
+    throw new Error(
+      `Generated question marks total ${totalGeneratedMarks}, but required total is ${settings.totalMarks}`
+    );
+  }
+
   return cleanedQuestions;
 }
-
 
 // ======================================
 // GENERATE + SAVE AI QUESTION PAPER
@@ -352,14 +536,22 @@ router.post(
     try {
       const {
         subject,
+        syllabus,
+        units,
         unit,
         difficulty,
         questionCount,
         questionType,
+        examPattern,
+        language,
+        totalMarks,
+        duration,
+        bloomLevel,
+        includeExplanations,
       } = req.body;
 
       // ======================================
-      // VALIDATION
+      // SUBJECT VALIDATION
       // ======================================
 
       if (
@@ -371,6 +563,10 @@ router.post(
           message: "Subject is required",
         });
       }
+
+      // ======================================
+      // GEMINI KEY VALIDATION
+      // ======================================
 
       if (!process.env.GEMINI_API_KEY) {
         console.error(
@@ -384,8 +580,33 @@ router.post(
         });
       }
 
+      // ======================================
+      // NORMALIZE SETTINGS
+      // ======================================
+
+      const parsedQuestionCount =
+        Number(questionCount);
+
+      const parsedTotalMarks =
+        Number(totalMarks);
+
       const settings = {
         subject: String(subject).trim(),
+
+        syllabus:
+          syllabus &&
+          String(syllabus).trim()
+            ? String(syllabus).trim()
+            : "",
+
+        units:
+          Array.isArray(units)
+            ? units
+                .map((item) =>
+                  String(item || "").trim()
+                )
+                .filter(Boolean)
+            : [],
 
         unit:
           unit &&
@@ -394,22 +615,54 @@ router.post(
             : "Full Syllabus",
 
         difficulty:
-          difficulty &&
-          String(difficulty).trim()
-            ? String(difficulty).trim()
-            : "Medium",
+          normalizeDifficulty(
+            difficulty
+          ),
 
         questionCount:
-          Number(questionCount) || 20,
+          Number.isInteger(
+            parsedQuestionCount
+          )
+            ? parsedQuestionCount
+            : 20,
 
         questionType:
-          normalizeRequestedType(
+          normalizeQuestionType(
             questionType
+          ),
+
+        examPattern:
+          normalizeExamPattern(
+            examPattern
+          ),
+
+        language:
+          normalizeLanguage(language),
+
+        totalMarks:
+          Number.isInteger(
+            parsedTotalMarks
+          )
+            ? parsedTotalMarks
+            : 100,
+
+        duration:
+          normalizeDuration(duration),
+
+        bloomLevel:
+          normalizeBloomLevel(
+            bloomLevel
+          ),
+
+        includeExplanations:
+          parseBoolean(
+            includeExplanations,
+            true
           ),
       };
 
       // ======================================
-      // QUESTION COUNT LIMIT
+      // QUESTION COUNT VALIDATION
       // ======================================
 
       if (
@@ -417,21 +670,71 @@ router.post(
           settings.questionCount
         ) ||
         settings.questionCount < 1 ||
-        settings.questionCount > 50
+        settings.questionCount > 100
       ) {
         return res.status(400).json({
           success: false,
           message:
-            "Question count must be a whole number between 1 and 50",
+            "Question count must be a whole number between 1 and 100",
         });
       }
+
+      // ======================================
+      // TOTAL MARKS VALIDATION
+      // ======================================
+
+      if (
+        !Number.isInteger(
+          settings.totalMarks
+        ) ||
+        settings.totalMarks < 1 ||
+        settings.totalMarks > 1000
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Total marks must be a whole number between 1 and 1000",
+        });
+      }
+
+      // ======================================
+      // QUESTION TYPE VALIDATION
+      // ======================================
+
+      if (
+        !ALLOWED_QUESTION_TYPES.includes(
+          settings.questionType
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid question type",
+        });
+      }
+
+      // ======================================
+      // SYLLABUS FALLBACK
+      // ======================================
+
+      if (
+        !settings.syllabus &&
+        settings.unit !== "Full Syllabus"
+      ) {
+        settings.syllabus =
+          settings.unit;
+      }
+
+      // ======================================
+      // LOG REQUEST
+      // ======================================
 
       console.log(
         "================================="
       );
 
       console.log(
-        "GEMINI PAPER REQUEST"
+        "ADVANCED GEMINI PAPER REQUEST"
       );
 
       console.log({
@@ -450,118 +753,299 @@ router.post(
       );
 
       // ======================================
-      // AI PROMPT
+      // UNIT INFORMATION
+      // ======================================
+
+      const unitsText =
+        settings.units.length > 0
+          ? settings.units
+              .map(
+                (item, index) =>
+                  `Unit ${index + 1}: ${item}`
+              )
+              .join("\n")
+          : "Use the supplied syllabus/full syllabus.";
+
+      // ======================================
+      // LANGUAGE INSTRUCTION
+      // ======================================
+
+      let languageInstruction =
+        "Write the entire question paper in clear English.";
+
+      if (
+        settings.language === "Hindi"
+      ) {
+        languageInstruction =
+          "Write the entire question paper in clear Hindi using Devanagari script.";
+      }
+
+      if (
+        settings.language === "Hinglish"
+      ) {
+        languageInstruction =
+          "Write the question paper in simple Hinglish using English letters, suitable for Indian students.";
+      }
+
+      // ======================================
+      // BLOOM INSTRUCTION
+      // ======================================
+
+      let bloomInstruction =
+        "Use a balanced mixture of Bloom's taxonomy levels.";
+
+      if (
+        settings.bloomLevel !== "Mixed"
+      ) {
+        bloomInstruction = `
+Every question must primarily test the "${settings.bloomLevel}" level of Bloom's Taxonomy.
+`;
+      }
+
+      // ======================================
+      // EXPLANATION INSTRUCTION
+      // ======================================
+
+      const explanationInstruction =
+        settings.includeExplanations
+          ? `
+Every question MUST include a useful explanation.
+The explanation must briefly explain why the answer is correct.
+`
+          : `
+Do not generate explanations.
+Set explanation to an empty string.
+`;
+
+      // ======================================
+      // MARK GUIDANCE
+      // ======================================
+
+      const markGuidance =
+        buildMarkGuidance(
+          settings.questionCount,
+          settings.totalMarks
+        );
+
+      // ======================================
+      // ADVANCED AI PROMPT
       // ======================================
 
       const prompt = `
-You are an expert educational question-paper generator.
+You are an expert educational assessment designer and university/polytechnic examination paper generator.
 
-Create a high-quality practice question paper.
+Generate a high-quality examination/practice question paper.
 
-Subject: ${settings.subject}
-Unit: ${settings.unit}
-Difficulty: ${settings.difficulty}
-Number of Questions: ${settings.questionCount}
-Question Type: ${settings.questionType}
+========================================
+PAPER SETTINGS
+========================================
 
-IMPORTANT RULES:
+Subject:
+${settings.subject}
+
+Syllabus:
+${settings.syllabus || "Full syllabus"}
+
+Units:
+${unitsText}
+
+Difficulty:
+${settings.difficulty}
+
+Question Count:
+${settings.questionCount}
+
+Question Type:
+${settings.questionType}
+
+Exam Pattern:
+${settings.examPattern}
+
+Language:
+${settings.language}
+
+Total Marks:
+${settings.totalMarks}
+
+Duration:
+${settings.duration}
+
+Bloom's Taxonomy:
+${settings.bloomLevel}
+
+========================================
+IMPORTANT LANGUAGE RULE
+========================================
+
+${languageInstruction}
+
+========================================
+BLOOM'S TAXONOMY
+========================================
+
+${bloomInstruction}
+
+Available levels:
+
+- Remember
+- Understand
+- Apply
+- Analyze
+- Evaluate
+- Create
+
+========================================
+MARKING RULES
+========================================
+
+${markGuidance}
+
+The marks of ALL questions must add up to EXACTLY ${settings.totalMarks}.
+
+Do not exceed the total marks.
+
+========================================
+GENERAL RULES
+========================================
 
 1. Generate EXACTLY ${settings.questionCount} questions.
 2. Every question must be unique.
-3. Do not repeat or rephrase the same question.
-4. Every question MUST have a real, correct answer.
-5. Never leave the answer empty.
-6. Never use placeholders such as "Answer not provided".
-7. Never use "N/A" as an answer.
-8. Keep every question relevant to the subject.
-9. Keep every question relevant to the selected unit.
-10. Keep the requested difficulty level.
-11. Use clear, student-friendly language.
-12. Return ONLY valid JSON.
-13. Do not return Markdown.
-14. Do not return explanations outside JSON.
+3. Never repeat or merely rephrase another question.
+4. Every question must be academically meaningful.
+5. Every question must be relevant to the supplied subject and syllabus.
+6. Follow the requested difficulty.
+7. Use student-friendly examination language.
+8. Avoid ambiguous questions.
+9. Avoid questions with multiple possible correct answers unless the question type naturally requires it.
+10. Every question MUST have a correct answer.
+11. Never leave answer empty.
+12. Never use "N/A".
+13. Never use "Answer not provided".
+14. Never use placeholders.
+15. Question numbers must be sequential.
+16. Return ONLY structured JSON.
+17. Do not return Markdown.
+18. Do not add comments outside JSON.
 
-QUESTION TYPE RULES:
+========================================
+MCQ RULES
+========================================
 
-If Question Type is MCQ:
+If the question type is MCQ:
+
 - Every question must have type "MCQ".
-- Every MCQ must have exactly 4 options.
+- Exactly 4 options.
 - All 4 options must be different.
-- The answer must EXACTLY match one of the option texts.
-- Do not use A, B, C or D alone as the answer.
-- Put the complete correct option text in answer.
+- Only one option should be clearly correct.
+- The answer must exactly match the complete correct option text.
+- Do not use only "A", "B", "C", or "D" as the answer.
 
-If Question Type is Short Answer:
+========================================
+SHORT ANSWER RULES
+========================================
+
+If the question type is Short Answer:
+
 - Every question must have type "Short Answer".
-- Do not provide options.
-- options must be an empty array.
-- Give a concise but correct answer.
+- options must be [].
+- Answer must be concise but correct.
+- Marks should be appropriate for a short-answer question.
 
-If Question Type is Long Answer:
+========================================
+LONG ANSWER RULES
+========================================
+
+If the question type is Long Answer:
+
 - Every question must have type "Long Answer".
-- Do not provide options.
-- options must be an empty array.
-- Give a useful model answer suitable for a student examination.
+- options must be [].
+- Answer must be a useful model examination answer.
+- Include important points, explanation, and examples where appropriate.
+- Marks should be higher than simple MCQs where possible.
+
+========================================
+MIXED MODE
+========================================
 
 If Question Type is Mixed:
-- Use a mixture of MCQ, Short Answer and Long Answer.
-- For ${settings.questionCount} or more questions, use at least two different question types.
-- MCQ questions must follow all MCQ rules.
-- Short Answer questions must have concise answers.
-- Long Answer questions must have useful model answers.
 
-Return exactly this JSON structure:
+Use a balanced combination of:
 
-{
-  "title": "AI Generated Question Paper",
-  "subject": "${settings.subject}",
-  "unit": "${settings.unit}",
-  "difficulty": "${settings.difficulty}",
-  "questions": [
-    {
-      "number": 1,
-      "type": "MCQ",
-      "question": "Question text",
-      "options": [
-        "Option A",
-        "Option B",
-        "Option C",
-        "Option D"
-      ],
-      "answer": "Option A"
-    }
-  ]
-}
+- MCQ
+- Short Answer
+- Long Answer
 
-For a Short Answer question:
+For 3 or more questions, use at least two different question types.
 
-{
-  "number": 2,
-  "type": "Short Answer",
-  "question": "Question text",
-  "options": [],
-  "answer": "Correct concise answer"
-}
+For larger papers, try to use all three types.
 
-For a Long Answer question:
+========================================
+EXPLANATIONS
+========================================
 
-{
-  "number": 3,
-  "type": "Long Answer",
-  "question": "Question text",
-  "options": [],
-  "answer": "Detailed model answer"
-}
+${explanationInstruction}
 
-The answer property is REQUIRED for EVERY question.
-The question property is REQUIRED for EVERY question.
-The type property is REQUIRED for EVERY question.
-The options property must be [] for non-MCQ questions.
+========================================
+OUTPUT REQUIREMENTS
+========================================
+
+Return one JSON object with:
+
+- title
+- subject
+- unit
+- difficulty
+- questionType
+- examPattern
+- language
+- totalMarks
+- duration
+- bloomLevel
+- questions
+
+Every question must contain:
+
+- number
+- type
+- question
+- options
+- answer
+- explanation
+- marks
+- bloomLevel
+
+The paper-level totalMarks must be exactly:
+${settings.totalMarks}
+
+The sum of question marks must be exactly:
+${settings.totalMarks}
+
+========================================
+FINAL QUALITY CHECK
+========================================
+
+Before returning the JSON, internally verify:
+
+1. Exact question count.
+2. No duplicate questions.
+3. Correct question types.
+4. Exactly 4 options for every MCQ.
+5. MCQ answers match an option exactly.
+6. Non-MCQ options are [].
+7. Every answer is valid.
+8. Every question has valid marks.
+9. Sum of all marks equals ${settings.totalMarks}.
+10. Bloom level is valid.
+11. Language is consistent.
+12. Difficulty is consistent.
+13. Questions are relevant to the syllabus.
+14. Explanations are present when requested.
+
+Return ONLY the final JSON object.
 `;
 
-
       // ======================================
-      // GEMINI STRUCTURED OUTPUT SCHEMA
+      // GEMINI QUESTION SCHEMA
       // ======================================
 
       const questionSchema = {
@@ -591,6 +1075,18 @@ The options property must be [] for non-MCQ questions.
           answer: {
             type: Type.STRING,
           },
+
+          explanation: {
+            type: Type.STRING,
+          },
+
+          marks: {
+            type: Type.INTEGER,
+          },
+
+          bloomLevel: {
+            type: Type.STRING,
+          },
         },
 
         required: [
@@ -598,9 +1094,14 @@ The options property must be [] for non-MCQ questions.
           "type",
           "question",
           "answer",
+          "marks",
+          "bloomLevel",
         ],
       };
 
+      // ======================================
+      // GEMINI PAPER SCHEMA
+      // ======================================
 
       const paperSchema = {
         type: Type.OBJECT,
@@ -622,9 +1123,32 @@ The options property must be [] for non-MCQ questions.
             type: Type.STRING,
           },
 
+          questionType: {
+            type: Type.STRING,
+          },
+
+          examPattern: {
+            type: Type.STRING,
+          },
+
+          language: {
+            type: Type.STRING,
+          },
+
+          totalMarks: {
+            type: Type.INTEGER,
+          },
+
+          duration: {
+            type: Type.STRING,
+          },
+
+          bloomLevel: {
+            type: Type.STRING,
+          },
+
           questions: {
             type: Type.ARRAY,
-
             items: questionSchema,
           },
         },
@@ -634,17 +1158,22 @@ The options property must be [] for non-MCQ questions.
           "subject",
           "unit",
           "difficulty",
+          "questionType",
+          "examPattern",
+          "language",
+          "totalMarks",
+          "duration",
+          "bloomLevel",
           "questions",
         ],
       };
-
 
       // ======================================
       // CALL GEMINI
       // ======================================
 
       console.log(
-        "Sending request to Gemini..."
+        "Sending advanced request to Gemini..."
       );
 
       const response =
@@ -661,13 +1190,12 @@ The options property must be [] for non-MCQ questions.
               paperSchema,
 
             systemInstruction:
-              "You are an expert educational question-paper generator. Always return valid structured JSON and provide a real answer for every question.",
+              "You are an expert educational assessment designer. Generate accurate, structured examination papers. Always return valid JSON matching the requested schema.",
           },
         });
 
-
       // ======================================
-      // READ GEMINI RESPONSE
+      // READ RESPONSE
       // ======================================
 
       const aiText =
@@ -687,9 +1215,8 @@ The options property must be [] for non-MCQ questions.
       }
 
       console.log(
-        "GEMINI RESPONSE RECEIVED"
+        "GEMINI ADVANCED RESPONSE RECEIVED"
       );
-
 
       // ======================================
       // PARSE JSON
@@ -717,7 +1244,6 @@ The options property must be [] for non-MCQ questions.
         });
       }
 
-
       // ======================================
       // PAPER FORMAT CHECK
       // ======================================
@@ -736,9 +1262,8 @@ The options property must be [] for non-MCQ questions.
         });
       }
 
-
       // ======================================
-      // VALIDATE + CLEAN QUESTIONS
+      // VALIDATE + CLEAN
       // ======================================
 
       let cleanedQuestions;
@@ -763,9 +1288,8 @@ The options property must be [] for non-MCQ questions.
         });
       }
 
-
       // ======================================
-      // SAVE PAPER TO MONGODB
+      // SAVE TO MONGODB
       // ======================================
 
       const savedPaper =
@@ -773,19 +1297,27 @@ The options property must be [] for non-MCQ questions.
           user: req.user._id,
 
           title:
-            paper.title ||
-            "AI Generated Question Paper",
+            String(
+              paper.title ||
+                "AI Generated Question Paper"
+            ).trim(),
 
           subject:
-            paper.subject ||
-            settings.subject,
+            String(
+              paper.subject ||
+                settings.subject
+            ).trim(),
 
           unit:
-            paper.unit ||
-            settings.unit,
+            String(
+              paper.unit ||
+                settings.unit
+            ).trim(),
+
+          syllabus:
+            settings.syllabus,
 
           difficulty:
-            paper.difficulty ||
             settings.difficulty,
 
           questionType:
@@ -794,10 +1326,27 @@ The options property must be [] for non-MCQ questions.
           questionCount:
             cleanedQuestions.length,
 
+          examPattern:
+            settings.examPattern,
+
+          language:
+            settings.language,
+
+          totalMarks:
+            settings.totalMarks,
+
+          duration:
+            settings.duration,
+
+          bloomLevel:
+            settings.bloomLevel,
+
+          includeExplanations:
+            settings.includeExplanations,
+
           questions:
             cleanedQuestions,
         });
-
 
       // ======================================
       // SUCCESS LOG
@@ -808,7 +1357,7 @@ The options property must be [] for non-MCQ questions.
       );
 
       console.log(
-        "GEMINI PAPER SAVED SUCCESSFULLY"
+        "ADVANCED GEMINI PAPER SAVED"
       );
 
       console.log(
@@ -827,22 +1376,27 @@ The options property must be [] for non-MCQ questions.
       );
 
       console.log(
+        "Total Marks:",
+        savedPaper.totalMarks
+      );
+
+      console.log(
         "================================="
       );
 
-
       // ======================================
-      // SEND PAPER TO FRONTEND
+      // SEND RESPONSE
       // ======================================
 
       return res.status(200).json({
         success: true,
 
         message:
-          "Question paper generated and saved successfully",
+          "Advanced AI question paper generated and saved successfully",
 
         paper: {
-          _id: savedPaper._id,
+          _id:
+            savedPaper._id,
 
           title:
             savedPaper.title,
@@ -853,6 +1407,9 @@ The options property must be [] for non-MCQ questions.
           unit:
             savedPaper.unit,
 
+          syllabus:
+            savedPaper.syllabus,
+
           difficulty:
             savedPaper.difficulty,
 
@@ -862,6 +1419,24 @@ The options property must be [] for non-MCQ questions.
           questionCount:
             savedPaper.questionCount,
 
+          examPattern:
+            savedPaper.examPattern,
+
+          language:
+            savedPaper.language,
+
+          totalMarks:
+            savedPaper.totalMarks,
+
+          duration:
+            savedPaper.duration,
+
+          bloomLevel:
+            savedPaper.bloomLevel,
+
+          includeExplanations:
+            savedPaper.includeExplanations,
+
           questions:
             savedPaper.questions,
 
@@ -869,14 +1444,13 @@ The options property must be [] for non-MCQ questions.
             savedPaper.createdAt,
         },
       });
-
     } catch (error) {
       console.error(
         "================================="
       );
 
       console.error(
-        "GEMINI PAPER ERROR:",
+        "ADVANCED GEMINI PAPER ERROR:",
         error
       );
 
@@ -894,7 +1468,6 @@ The options property must be [] for non-MCQ questions.
     }
   }
 );
-
 
 // ======================================
 // GET MY SAVED AI QUESTION PAPERS
@@ -919,7 +1492,6 @@ router.get(
         count: papers.length,
         papers,
       });
-
     } catch (error) {
       console.error(
         "GET SAVED PAPERS ERROR:",
@@ -935,6 +1507,5 @@ router.get(
     }
   }
 );
-
 
 module.exports = router;
