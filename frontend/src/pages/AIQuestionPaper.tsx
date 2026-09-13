@@ -384,7 +384,7 @@ export default function AIQuestionPaper() {
             <div>
 
               <label className="block font-semibold text-gray-700 mb-2">
-                📚 Subject Name
+                Subject Name
               </label>
 
               <input
@@ -407,7 +407,7 @@ export default function AIQuestionPaper() {
             <div>
 
               <label className="block font-semibold text-gray-700 mb-2">
-                📖 Syllabus / Units / Topics
+                Syllabus / Units / Topics
               </label>
 
               <textarea
@@ -457,7 +457,7 @@ Unit 3: Applications
               <div>
 
                 <label className="block font-semibold text-gray-700 mb-2">
-                  📝 Exam Pattern
+                  Exam Pattern
                 </label>
 
                 <select
@@ -497,7 +497,7 @@ Unit 3: Applications
               <div>
 
                 <label className="block font-semibold text-gray-700 mb-2">
-                  🎯 Difficulty
+                  Difficulty
                 </label>
 
                 <select
@@ -529,7 +529,7 @@ Unit 3: Applications
               <div>
 
                 <label className="block font-semibold text-gray-700 mb-2">
-                  ❓ Question Type
+                  Question Type
                 </label>
 
                 <select
@@ -565,7 +565,7 @@ Unit 3: Applications
               <div>
 
                 <label className="block font-semibold text-gray-700 mb-2">
-                  🌐 Language
+                  Language
                 </label>
 
                 <select
@@ -597,7 +597,7 @@ Unit 3: Applications
               <div>
 
                 <label className="block font-semibold text-gray-700 mb-2">
-                  🔢 Questions
+                  Questions
                 </label>
 
                 <select
@@ -641,7 +641,7 @@ Unit 3: Applications
               <div>
 
                 <label className="block font-semibold text-gray-700 mb-2">
-                  🧮 Total Marks
+                  Total Marks
                 </label>
 
                 <select
@@ -689,7 +689,7 @@ Unit 3: Applications
               <div>
 
                 <label className="block font-semibold text-gray-700 mb-2">
-                  ⏱️ Duration
+                  Duration
                 </label>
 
                 <select
@@ -729,7 +729,7 @@ Unit 3: Applications
               <div>
 
                 <label className="block font-semibold text-gray-700 mb-2">
-                  🧠 Bloom's Taxonomy
+                  Bloom's Taxonomy
                 </label>
 
                 <select
@@ -796,7 +796,7 @@ Unit 3: Applications
                 <div>
 
                   <p className="font-semibold text-gray-800">
-                    💡 Include Answer Explanations
+                    Include Answer Explanations
                   </p>
 
                   <p className="text-sm text-gray-500">
@@ -823,8 +823,8 @@ Unit 3: Applications
               >
 
                 {loading
-                  ? "⏳ Generating Question Paper..."
-                  : "✨ Generate Question Paper"}
+                  ? "Generating Question Paper..."
+                  : "Generate Question Paper"}
 
               </button>
 
@@ -1031,7 +1031,7 @@ Unit 3: Applications
                       <details className="mt-5">
 
                         <summary className="cursor-pointer inline-block bg-green-100 text-green-700 px-4 py-2 rounded-lg font-semibold">
-                          ✅ Show Answer
+                          Show Answer
                         </summary>
 
                         <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
@@ -1053,7 +1053,7 @@ Unit 3: Applications
                         <details className="mt-3">
 
                           <summary className="cursor-pointer inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-semibold">
-                            💡 Show Explanation
+                            Show Explanation
                           </summary>
 
                           <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-800">
@@ -1091,7 +1091,7 @@ Unit 3: Applications
                 onClick={handlePrint}
                 className="flex-1 bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-lg transition"
               >
-                🖨️ Print / Save as PDF
+                Print / Save as PDF
               </button>
 
               <button
@@ -1099,7 +1099,7 @@ Unit 3: Applications
                 onClick={handleGenerateAnother}
                 className="md:w-56 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-3 rounded-lg transition"
               >
-                🔄 Generate Another
+                Generate Another
               </button>
 
             </div>
@@ -1107,7 +1107,7 @@ Unit 3: Applications
             {/* SUCCESS */}
 
             <div className="mt-6 bg-green-50 border border-green-200 text-green-700 p-4 rounded-lg text-center font-semibold">
-              ✅ Question paper generated and saved successfully!
+              Question paper generated and saved successfully!
             </div>
 
           </div>
@@ -1123,7 +1123,7 @@ Unit 3: Applications
           <div className="bg-white p-6 rounded-xl shadow text-center">
 
             <div className="text-3xl mb-3">
-              ⚡
+              
             </div>
 
             <h3 className="font-bold text-gray-800">
@@ -1140,7 +1140,7 @@ Unit 3: Applications
           <div className="bg-white p-6 rounded-xl shadow text-center">
 
             <div className="text-3xl mb-3">
-              🧠
+              
             </div>
 
             <h3 className="font-bold text-gray-800">
@@ -1157,7 +1157,7 @@ Unit 3: Applications
           <div className="bg-white p-6 rounded-xl shadow text-center">
 
             <div className="text-3xl mb-3">
-              📊
+              
             </div>
 
             <h3 className="font-bold text-gray-800">
