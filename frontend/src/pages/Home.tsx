@@ -93,7 +93,7 @@ export default function Home() {
                 className="rounded-2xl border border-blue-100 bg-blue-50 p-7 transition duration-300 hover:-translate-y-2 hover:bg-blue-100 hover:shadow-xl"
               >
                 <div className="text-4xl">
-                  💻
+                  
                 </div>
 
                 <h3 className="mt-5 text-xl font-extrabold text-gray-900">
@@ -117,7 +117,7 @@ export default function Home() {
                 className="rounded-2xl border border-amber-100 bg-amber-50 p-7 transition duration-300 hover:-translate-y-2 hover:bg-amber-100 hover:shadow-xl"
               >
                 <div className="text-4xl">
-                  ⚡
+                  
                 </div>
 
                 <h3 className="mt-5 text-xl font-extrabold text-gray-900">
@@ -141,7 +141,7 @@ export default function Home() {
                 className="rounded-2xl border border-slate-200 bg-slate-50 p-7 transition duration-300 hover:-translate-y-2 hover:bg-slate-100 hover:shadow-xl"
               >
                 <div className="text-4xl">
-                  ⚙️
+                  
                 </div>
 
                 <h3 className="mt-5 text-xl font-extrabold text-gray-900">
@@ -165,7 +165,7 @@ export default function Home() {
                 className="rounded-2xl border border-emerald-100 bg-emerald-50 p-7 transition duration-300 hover:-translate-y-2 hover:bg-emerald-100 hover:shadow-xl"
               >
                 <div className="text-4xl">
-                  🏗️
+                  
                 </div>
 
                 <h3 className="mt-5 text-xl font-extrabold text-gray-900">
@@ -189,7 +189,7 @@ export default function Home() {
                 className="rounded-2xl border border-violet-100 bg-violet-50 p-7 transition duration-300 hover:-translate-y-2 hover:bg-violet-100 hover:shadow-xl"
               >
                 <div className="text-4xl">
-                  📡
+                  
                 </div>
 
                 <h3 className="mt-5 text-xl font-extrabold text-gray-900">
@@ -212,8 +212,8 @@ export default function Home() {
                 href="/branch/leather-technology"
                 className="rounded-2xl border border-rose-100 bg-rose-50 p-7 transition duration-300 hover:-translate-y-2 hover:bg-rose-100 hover:shadow-xl"
               >
-                <div className="text-4xl">
-                  🧪
+                <div cassName="text-4xl">
+                  
                 </div>
 
                 <h3 className="mt-5 text-xl font-extrabold text-gray-900">
