@@ -212,7 +212,7 @@ export default function Home() {
                 href="/branch/leather-technology"
                 className="rounded-2xl border border-rose-100 bg-rose-50 p-7 transition duration-300 hover:-translate-y-2 hover:bg-rose-100 hover:shadow-xl"
               >
-                <div cassName="text-4xl">
+                <div className="text-4xl">
                   
                 </div>
 

@@ -1,5 +1,4 @@
-import { FormEvent, useState } from "react";
-
+import { useState, type FormEvent } from "react";
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;

@@ -1,5 +1,5 @@
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 
 interface Question {
   number: number;
