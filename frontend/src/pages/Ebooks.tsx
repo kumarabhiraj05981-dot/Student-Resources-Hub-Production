@@ -7,11 +7,12 @@ interface Resource {
   title: string;
   description?: string;
   category: string;
-  semester: string;
+  branch?: string;
+  semester?: string;
   subject?: string;
   fileUrl: string;
   fileName?: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export default function Ebooks() {
@@ -34,7 +35,10 @@ export default function Ebooks() {
           "/api/resources/category/Ebooks"
         );
 
-        console.log("E-BOOKS API RESPONSE:", res.data);
+        console.log(
+          "E-BOOKS API RESPONSE:",
+          res.data
+        );
 
         const allResources = Array.isArray(
           res.data?.resources
@@ -103,7 +107,9 @@ export default function Ebooks() {
         );
 
         setBookmarkedIds(
-          Array.isArray(res.data?.resourceIds)
+          Array.isArray(
+            res.data?.resourceIds
+          )
             ? res.data.resourceIds
             : []
         );
@@ -113,8 +119,6 @@ export default function Ebooks() {
           err.response?.data || err
         );
 
-        // If token is invalid, simply show
-        // resources without bookmark state.
         setBookmarkedIds([]);
       }
     };
@@ -151,21 +155,23 @@ export default function Ebooks() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-blue-50 flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="text-6xl mb-4">
-            📚
+      <main className="min-h-screen bg-blue-50 px-4 py-16">
+        <div className="mx-auto max-w-7xl text-center">
+          <div className="rounded-2xl border border-gray-200 bg-white p-10 shadow-sm">
+            <div className="mb-4 text-5xl">
+              📚
+            </div>
+
+            <p className="text-lg font-semibold text-gray-700">
+              Loading E-Books...
+            </p>
+
+            <p className="mt-2 text-sm text-gray-500">
+              Please wait
+            </p>
           </div>
-
-          <p className="text-xl font-semibold text-gray-700">
-            Loading E-Books...
-          </p>
-
-          <p className="text-sm text-gray-500 mt-2">
-            Please wait
-          </p>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -174,25 +180,28 @@ export default function Ebooks() {
   // ==============================
 
   return (
-    <div className="min-h-screen bg-blue-50 py-10 px-4">
-      <div className="max-w-7xl mx-auto">
+    <main className="min-h-screen bg-blue-50 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
 
         {/* ==============================
             HEADER
         ============================== */}
 
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-green-700 mb-2">
+          <h1 className="text-2xl font-bold text-green-700 sm:text-4xl">
             Student E-Books
           </h1>
 
-          <p className="text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 sm:text-base">
             Semester-wise books and study materials
           </p>
 
           {resources.length > 0 && (
-            <p className="text-sm text-gray-500 mt-2">
-              {resources.length} E-Book
+            <p className="mt-2 text-sm text-gray-500">
+              <span className="font-semibold text-green-700">
+                {resources.length}
+              </span>{" "}
+              E-Book
               {resources.length !== 1
                 ? "s"
                 : ""}{" "}
@@ -206,9 +215,9 @@ export default function Ebooks() {
         ============================== */}
 
         {error && (
-          <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-xl mb-6">
-            <p className="font-semibold">
-              ❌ {error}
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
+            <p className="font-semibold text-red-700">
+              {error}
             </p>
           </div>
         )}
@@ -218,8 +227,8 @@ export default function Ebooks() {
         ============================== */}
 
         {resources.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
-            <div className="text-6xl mb-4">
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-10">
+            <div className="mb-4 text-5xl">
               📚
             </div>
 
@@ -227,17 +236,18 @@ export default function Ebooks() {
               No E-Books uploaded yet.
             </p>
 
-            <p className="text-gray-500 mt-2">
+            <p className="mt-2 text-sm text-gray-500">
               E-Books uploaded by the admin will
               appear here.
             </p>
           </div>
         ) : (
+
           /* ==============================
              E-BOOK CARDS
           ============================== */
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {resources.map((resource) => {
               const isBookmarked =
                 bookmarkedIds.includes(
@@ -245,21 +255,21 @@ export default function Ebooks() {
                 );
 
               return (
-                <div
+                <article
                   key={resource._id}
-                  className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl hover:-translate-y-1 transition duration-300"
+                  className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md sm:p-6"
                 >
 
                   {/* ==============================
                       TITLE + CATEGORY
                   ============================== */}
 
-                  <div className="flex justify-between items-start gap-3">
-                    <h2 className="text-xl font-bold text-gray-800 break-words">
+                  <div className="flex items-start justify-between gap-3">
+                    <h2 className="min-w-0 break-words text-lg font-bold text-gray-800 sm:text-xl">
                       {resource.title}
                     </h2>
 
-                    <span className="shrink-0 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
+                    <span className="shrink-0 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 sm:text-sm">
                       E-Book
                     </span>
                   </div>
@@ -274,7 +284,7 @@ export default function Ebooks() {
                         Semester
                       </p>
 
-                      <p className="text-gray-700 mt-1">
+                      <p className="mt-1 text-sm text-gray-700">
                         {resource.semester}
                       </p>
                     </div>
@@ -290,8 +300,24 @@ export default function Ebooks() {
                         Subject
                       </p>
 
-                      <p className="text-gray-700 mt-1">
+                      <p className="mt-1 text-sm text-gray-700">
                         {resource.subject}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* ==============================
+                      BRANCH
+                  ============================== */}
+
+                  {resource.branch && (
+                    <div className="mt-3">
+                      <p className="text-sm font-semibold text-gray-500">
+                        Branch
+                      </p>
+
+                      <p className="mt-1 text-sm text-gray-700">
+                        {resource.branch}
                       </p>
                     </div>
                   )}
@@ -301,11 +327,9 @@ export default function Ebooks() {
                   ============================== */}
 
                   {resource.description && (
-                    <div className="mt-3">
-                      <p className="text-gray-600 line-clamp-3">
-                        {resource.description}
-                      </p>
-                    </div>
+                    <p className="mt-3 line-clamp-4 text-sm leading-6 text-gray-600">
+                      {resource.description}
+                    </p>
                   )}
 
                   {/* ==============================
@@ -313,9 +337,13 @@ export default function Ebooks() {
                   ============================== */}
 
                   {resource.fileName && (
-                    <div className="mt-4 bg-gray-50 rounded-lg p-3">
+                    <div className="mt-4 rounded-lg bg-gray-50 p-3">
+                      <p className="mb-1 text-xs font-semibold text-gray-500">
+                        E-BOOK FILE
+                      </p>
+
                       <p
-                        className="text-sm text-gray-600 truncate"
+                        className="truncate text-sm text-gray-700"
                         title={resource.fileName}
                       >
                         {resource.fileName}
@@ -324,43 +352,13 @@ export default function Ebooks() {
                   )}
 
                   {/* ==============================
-                      OPEN + DOWNLOAD
+                      ACTIONS
                   ============================== */}
 
-                  <div className="flex gap-3 mt-6">
+                  <div className="mt-auto pt-5">
 
-                    {/* OPEN */}
+                    {/* BOOKMARK */}
 
-                    <a
-                      href={resource.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 text-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2.5 px-4 rounded-lg transition"
-                    >
-                      Open
-                    </a>
-
-                    {/* DOWNLOAD */}
-
-                    <a
-                      href={resource.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download={
-                        resource.fileName ||
-                        true
-                      }
-                      className="flex-1 text-center bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-2.5 px-4 rounded-lg transition"
-                    >
-                      Download
-                    </a>
-                  </div>
-
-                  {/* ==============================
-                      BOOKMARK
-                  ============================== */}
-
-                  <div className="mt-3">
                     <BookmarkButton
                       resourceId={resource._id}
                       bookmarked={isBookmarked}
@@ -368,14 +366,46 @@ export default function Ebooks() {
                         handleBookmarkChange
                       }
                     />
+
+                    {/* OPEN + DOWNLOAD */}
+
+                    <div className="mt-3 flex w-full flex-col gap-3 sm:flex-row">
+
+                      {/* OPEN */}
+
+                      <a
+                        href={resource.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700 active:bg-blue-800 sm:flex-1"
+                      >
+                        Open
+                      </a>
+
+                      {/* DOWNLOAD */}
+
+                      <a
+                        href={resource.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download={
+                          resource.fileName ||
+                          undefined
+                        }
+                        className="w-full rounded-lg bg-green-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-green-700 active:bg-green-800 sm:flex-1"
+                      >
+                        Download
+                      </a>
+
+                    </div>
                   </div>
 
-                </div>
+                </article>
               );
             })}
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

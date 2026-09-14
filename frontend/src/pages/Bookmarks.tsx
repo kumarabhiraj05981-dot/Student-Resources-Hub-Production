@@ -9,11 +9,12 @@ interface Resource {
   title: string;
   description?: string;
   category: string;
-  semester: string;
+  branch?: string;
+  semester?: string;
   subject?: string;
   fileUrl: string;
   fileName?: string;
-  createdAt: string;
+  createdAt?: string;
   bookmarkId?: string;
   bookmarkedAt?: string;
 }
@@ -24,14 +25,16 @@ export default function Bookmarks() {
   const [error, setError] = useState("");
   const [removingId, setRemovingId] = useState("");
 
+  const token = localStorage.getItem("token");
+
   // ==========================================
   // LOAD BOOKMARKS
   // ==========================================
 
   const loadBookmarks = async () => {
-    const token = localStorage.getItem("token");
+    const currentToken = localStorage.getItem("token");
 
-    if (!token) {
+    if (!currentToken) {
       setLoading(false);
       return;
     }
@@ -40,18 +43,15 @@ export default function Bookmarks() {
       setLoading(true);
       setError("");
 
-      const res = await api.get("/api/bookmarks", {
+      const response = await api.get("/api/bookmarks", {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${currentToken}`,
         },
       });
 
-      setResources(res.data.resources || []);
+      setResources(response.data.resources || []);
     } catch (err: any) {
-      console.error(
-        "Bookmarks loading error:",
-        err.response?.data || err
-      );
+      console.error("Bookmarks loading error:", err);
 
       if (err.response?.status === 401) {
         setError("Please login again to view your bookmarks.");
@@ -75,9 +75,9 @@ export default function Bookmarks() {
   // ==========================================
 
   const removeBookmark = async (resourceId: string) => {
-    const token = localStorage.getItem("token");
+    const currentToken = localStorage.getItem("token");
 
-    if (!token) {
+    if (!currentToken) {
       setError("Please login first.");
       return;
     }
@@ -85,26 +85,19 @@ export default function Bookmarks() {
     try {
       setRemovingId(resourceId);
 
-      await api.delete(
-        `/api/bookmarks/${resourceId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await api.delete(`/api/bookmarks/${resourceId}`, {
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+        },
+      });
 
       setResources((currentResources) =>
         currentResources.filter(
-          (resource) =>
-            resource._id !== resourceId
+          (resource) => resource._id !== resourceId
         )
       );
     } catch (err: any) {
-      console.error(
-        "Remove bookmark error:",
-        err.response?.data || err
-      );
+      console.error("Remove bookmark error:", err);
 
       alert(
         err.response?.data?.message ||
@@ -119,36 +112,32 @@ export default function Bookmarks() {
   // NOT LOGGED IN
   // ==========================================
 
-  const token = localStorage.getItem("token");
-
   if (!token) {
     return (
       <div className="min-h-screen bg-blue-50 flex flex-col">
         <Navbar />
 
-        <main className="flex-1 flex items-center justify-center px-4 py-16">
-          <div className="bg-white rounded-2xl shadow-lg p-10 text-center max-w-lg w-full">
-
-            <div className="text-6xl mb-5">
+        <main className="flex-1 flex items-center justify-center px-4 py-12 sm:py-16">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 sm:p-10 text-center shadow-lg">
+            <div className="mb-5 text-5xl sm:text-6xl">
               🔖
             </div>
 
-            <h1 className="text-3xl font-bold text-gray-800">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
               Login Required
             </h1>
 
-            <p className="text-gray-600 mt-3">
-              Please login to view and manage
-              your bookmarked resources.
+            <p className="mt-3 text-sm sm:text-base text-gray-600">
+              Please login to view and manage your bookmarked
+              resources.
             </p>
 
             <Link
               to="/login"
-              className="inline-block mt-6 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition"
+              className="mt-6 inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-purple-600 px-6 py-3 font-semibold text-white transition hover:bg-purple-700"
             >
               Login
             </Link>
-
           </div>
         </main>
 
@@ -166,24 +155,20 @@ export default function Bookmarks() {
       <div className="min-h-screen bg-blue-50 flex flex-col">
         <Navbar />
 
-        <main className="flex-1 flex items-center justify-center px-4">
-
+        <main className="flex flex-1 items-center justify-center px-4 py-16">
           <div className="text-center">
-
-            <div className="text-5xl mb-4">
+            <div className="mb-4 text-5xl">
               🔖
             </div>
 
-            <p className="text-xl font-semibold text-gray-700">
+            <p className="text-lg sm:text-xl font-semibold text-gray-700">
               Loading Bookmarks...
             </p>
 
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="mt-2 text-sm text-gray-500">
               Please wait
             </p>
-
           </div>
-
         </main>
 
         <Footer />
@@ -197,55 +182,54 @@ export default function Bookmarks() {
 
   return (
     <div className="min-h-screen bg-blue-50 flex flex-col">
-
       <Navbar />
 
-      <main className="flex-1 py-10 px-4">
-
-        <div className="max-w-7xl mx-auto">
+      <main className="flex-1 px-4 py-8 sm:py-10">
+        <div className="mx-auto max-w-7xl">
 
           {/* HEADER */}
 
           <div className="mb-8">
-
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
 
               <div>
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl sm:text-4xl">
+                    🔖
+                  </span>
 
-                <h1 className="text-4xl font-bold text-purple-700 mb-2">
-                  My Bookmarks
-                </h1>
+                  <h1 className="text-3xl sm:text-4xl font-bold text-purple-700">
+                    My Bookmarks
+                  </h1>
+                </div>
 
-                <p className="text-gray-600">
+                <p className="mt-2 text-sm sm:text-base text-gray-600">
                   Your saved study resources in one place
                 </p>
 
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="mt-2 text-sm font-medium text-gray-500">
                   {resources.length}{" "}
                   {resources.length === 1
                     ? "resource"
                     : "resources"}{" "}
                   saved
                 </p>
-
               </div>
 
               <Link
                 to="/"
-                className="inline-flex items-center justify-center bg-white border border-gray-300 hover:border-purple-400 hover:bg-purple-50 text-gray-700 font-semibold px-5 py-3 rounded-xl transition"
+                className="inline-flex w-full md:w-auto items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm sm:text-base font-semibold text-gray-700 transition hover:border-purple-400 hover:bg-purple-50"
               >
                 ← Browse Resources
               </Link>
 
             </div>
-
           </div>
 
           {/* ERROR */}
 
           {error && (
-            <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-xl mb-6">
-
+            <div className="mb-6 rounded-xl border border-red-300 bg-red-100 p-4 text-red-700">
               <p className="font-semibold">
                 ❌ {error}
               </p>
@@ -253,21 +237,18 @@ export default function Bookmarks() {
               <button
                 type="button"
                 onClick={loadBookmarks}
-                className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold"
+                className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
               >
                 Try Again
               </button>
-
             </div>
           )}
 
           {/* EMPTY STATE */}
 
           {!error && resources.length === 0 ? (
-
-            <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
-
-              <div className="text-6xl mb-5">
+            <div className="rounded-2xl bg-white p-7 sm:p-10 text-center shadow-lg">
+              <div className="mb-5 text-5xl sm:text-6xl">
                 🔖
               </div>
 
@@ -275,61 +256,68 @@ export default function Bookmarks() {
                 No Bookmarks Yet
               </h2>
 
-              <p className="text-gray-500 mt-2 max-w-md mx-auto">
-                Save Notes, PYQs, Syllabus and
-                Ebooks using the Bookmark button.
-                Your saved resources will appear here.
+              <p className="mx-auto mt-2 max-w-md text-sm sm:text-base text-gray-500">
+                Save Notes, PYQs, Syllabus and Ebooks
+                using the Bookmark button. Your saved
+                resources will appear here.
               </p>
 
               <Link
                 to="/"
-                className="inline-block mt-6 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition"
+                className="mt-6 inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-purple-600 px-6 py-3 font-semibold text-white transition hover:bg-purple-700"
               >
                 Explore Resources
               </Link>
-
             </div>
-
           ) : (
 
             /* BOOKMARK CARDS */
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
 
               {resources.map((resource) => (
-
                 <div
                   key={resource._id}
-                  className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl hover:-translate-y-1 transition duration-300"
+                  className="flex h-full flex-col rounded-2xl bg-white p-5 sm:p-6 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
 
                   {/* TITLE + CATEGORY */}
 
-                  <div className="flex justify-between items-start gap-3">
-
-                    <h2 className="text-xl font-bold text-gray-800 break-words">
+                  <div className="flex items-start justify-between gap-3">
+                    <h2 className="min-w-0 text-lg sm:text-xl font-bold text-gray-800 break-words">
                       {resource.title}
                     </h2>
 
-                    <span className="shrink-0 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
+                    <span className="shrink-0 rounded-full bg-purple-100 px-2.5 sm:px-3 py-1 text-xs sm:text-sm font-semibold text-purple-700">
                       {resource.category}
                     </span>
-
                   </div>
+
+                  {/* BRANCH */}
+
+                  {resource.branch && (
+                    <div className="mt-4">
+                      <p className="text-xs sm:text-sm font-semibold text-purple-600">
+                        Branch
+                      </p>
+
+                      <p className="mt-1 text-sm sm:text-base text-gray-700">
+                        {resource.branch}
+                      </p>
+                    </div>
+                  )}
 
                   {/* SEMESTER */}
 
                   {resource.semester && (
-                    <div className="mt-4">
-
-                      <p className="text-sm font-semibold text-purple-600">
+                    <div className="mt-3">
+                      <p className="text-xs sm:text-sm font-semibold text-purple-600">
                         Semester
                       </p>
 
-                      <p className="text-gray-700 mt-1">
+                      <p className="mt-1 text-sm sm:text-base text-gray-700">
                         {resource.semester}
                       </p>
-
                     </div>
                   )}
 
@@ -337,49 +325,41 @@ export default function Bookmarks() {
 
                   {resource.subject && (
                     <div className="mt-3">
-
-                      <p className="text-sm font-semibold text-gray-500">
+                      <p className="text-xs sm:text-sm font-semibold text-gray-500">
                         Subject
                       </p>
 
-                      <p className="text-gray-700 mt-1">
+                      <p className="mt-1 text-sm sm:text-base text-gray-700">
                         {resource.subject}
                       </p>
-
                     </div>
                   )}
 
                   {/* DESCRIPTION */}
 
                   {resource.description && (
-                    <div className="mt-3">
-
-                      <p className="text-gray-600 line-clamp-3">
-                        {resource.description}
-                      </p>
-
-                    </div>
+                    <p className="mt-3 line-clamp-3 text-sm sm:text-base text-gray-600">
+                      {resource.description}
+                    </p>
                   )}
 
                   {/* FILE NAME */}
 
                   {resource.fileName && (
-                    <div className="mt-4 bg-gray-50 rounded-lg p-3">
-
+                    <div className="mt-4 rounded-lg bg-gray-50 p-3">
                       <p
-                        className="text-sm text-gray-600 truncate"
+                        className="truncate text-xs sm:text-sm text-gray-600"
                         title={resource.fileName}
                       >
-                        {resource.fileName}
+                        📄 {resource.fileName}
                       </p>
-
                     </div>
                   )}
 
                   {/* BOOKMARK INFO */}
 
                   {resource.bookmarkedAt && (
-                    <p className="text-xs text-gray-400 mt-3">
+                    <p className="mt-3 text-xs text-gray-400">
                       Saved on{" "}
                       {new Date(
                         resource.bookmarkedAt
@@ -387,65 +367,62 @@ export default function Bookmarks() {
                     </p>
                   )}
 
-                  {/* BUTTONS */}
+                  {/* ACTIONS */}
 
-                  <div className="flex gap-3 mt-6">
+                  <div className="mt-auto pt-5">
 
-                    <a
-                      href={resource.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 text-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2.5 px-4 rounded-lg transition"
-                    >
-                      Open
-                    </a>
+                    {/* OPEN + DOWNLOAD */}
 
-                    <a
-                      href={resource.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download={
-                        resource.fileName ||
-                        undefined
+                    <div className="flex w-full flex-col gap-3 sm:flex-row">
+                      <a
+                        href={resource.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex w-full sm:flex-1 items-center justify-center rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 active:bg-blue-800"
+                      >
+                        📖 Open
+                      </a>
+
+                      <a
+                        href={resource.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download={
+                          resource.fileName || undefined
+                        }
+                        className="flex w-full sm:flex-1 items-center justify-center rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700 active:bg-green-800"
+                      >
+                        ⬇️ Download
+                      </a>
+                    </div>
+
+                    {/* REMOVE */}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        removeBookmark(resource._id)
                       }
-                      className="flex-1 text-center bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-2.5 px-4 rounded-lg transition"
+                      disabled={
+                        removingId === resource._id
+                      }
+                      className="mt-3 flex w-full items-center justify-center rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Download
-                    </a>
+                      {removingId === resource._id
+                        ? "Removing..."
+                        : "★ Remove Bookmark"}
+                    </button>
 
                   </div>
-
-                  {/* REMOVE BOOKMARK */}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      removeBookmark(resource._id)
-                    }
-                    disabled={
-                      removingId === resource._id
-                    }
-                    className="w-full mt-3 border border-red-300 bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2.5 px-4 rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {removingId === resource._id
-                      ? "Removing..."
-                      : "★ Remove Bookmark"}
-                  </button>
-
                 </div>
-
               ))}
 
             </div>
-
           )}
-
         </div>
-
       </main>
 
       <Footer />
-
     </div>
   );
 }

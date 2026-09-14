@@ -7,6 +7,7 @@ interface Resource {
   title: string;
   description?: string;
   category: string;
+  branch?: string;
   subject?: string;
   semester: string;
   fileUrl: string;
@@ -26,6 +27,7 @@ export default function Notes() {
   // Bookmark state
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
 
+  // Load notes
   useEffect(() => {
     const loadNotes = async () => {
       try {
@@ -54,7 +56,7 @@ export default function Notes() {
     loadNotes();
   }, []);
 
-  // Load bookmark IDs for logged-in user
+  // Load bookmarks
   useEffect(() => {
     const loadBookmarks = async () => {
       const token = localStorage.getItem("token");
@@ -80,6 +82,7 @@ export default function Notes() {
     loadBookmarks();
   }, []);
 
+  // Bookmark change
   const handleBookmarkChange = (
     resourceId: string,
     bookmarked: boolean
@@ -97,6 +100,7 @@ export default function Notes() {
     });
   };
 
+  // Semester options
   const semesters = useMemo(() => {
     const values = resources
       .map((resource) => resource.semester?.trim())
@@ -105,6 +109,7 @@ export default function Notes() {
     return Array.from(new Set(values));
   }, [resources]);
 
+  // Subject options
   const subjects = useMemo(() => {
     const values = resources
       .map((resource) => resource.subject?.trim())
@@ -113,6 +118,7 @@ export default function Notes() {
     return Array.from(new Set(values)).sort();
   }, [resources]);
 
+  // Filter resources
   const filteredResources = useMemo(() => {
     const searchText = search.trim().toLowerCase();
 
@@ -121,6 +127,7 @@ export default function Notes() {
       const description = resource.description?.toLowerCase() || "";
       const subject = resource.subject?.toLowerCase() || "";
       const semester = resource.semester?.toLowerCase() || "";
+      const branch = resource.branch?.toLowerCase() || "";
       const fileName = resource.fileName?.toLowerCase() || "";
 
       const matchesSearch =
@@ -129,6 +136,7 @@ export default function Notes() {
         description.includes(searchText) ||
         subject.includes(searchText) ||
         semester.includes(searchText) ||
+        branch.includes(searchText) ||
         fileName.includes(searchText);
 
       const matchesSemester =
@@ -139,10 +147,20 @@ export default function Notes() {
         subjectFilter === "All" ||
         resource.subject === subjectFilter;
 
-      return matchesSearch && matchesSemester && matchesSubject;
+      return (
+        matchesSearch &&
+        matchesSemester &&
+        matchesSubject
+      );
     });
-  }, [resources, search, semesterFilter, subjectFilter]);
+  }, [
+    resources,
+    search,
+    semesterFilter,
+    subjectFilter,
+  ]);
 
+  // Clear filters
   const clearFilters = () => {
     setSearch("");
     setSemesterFilter("All");
@@ -154,43 +172,46 @@ export default function Notes() {
     semesterFilter !== "All" ||
     subjectFilter !== "All";
 
+  // Loading
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-16">
+      <main className="min-h-screen bg-gray-50 px-4 py-16">
         <div className="mx-auto max-w-7xl text-center">
-          <p className="text-lg font-semibold text-gray-700">
-            Loading notes...
-          </p>
+          <div className="rounded-2xl border border-gray-200 bg-white p-10 shadow-sm">
+            <p className="text-lg font-semibold text-gray-700">
+              Loading notes...
+            </p>
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
+    <main className="min-h-screen bg-gray-50 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
 
-        {/* Header */}
+        {/* ================= HEADER ================= */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             Student Notes
           </h1>
 
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 sm:text-base">
             Semester-wise study notes and learning materials.
           </p>
         </div>
 
-        {/* Error */}
+        {/* ================= ERROR ================= */}
         {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </div>
         )}
 
-        {/* Filters */}
+        {/* ================= FILTERS ================= */}
         {resources.length > 0 && (
-          <section className="mb-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <section className="mb-8 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="grid gap-4 md:grid-cols-3">
 
               {/* Search */}
@@ -204,7 +225,7 @@ export default function Notes() {
                   placeholder="Search by title or subject"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
@@ -216,13 +237,20 @@ export default function Notes() {
 
                 <select
                   value={semesterFilter}
-                  onChange={(e) => setSemesterFilter(e.target.value)}
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  onChange={(e) =>
+                    setSemesterFilter(e.target.value)
+                  }
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 >
-                  <option value="All">All Semesters</option>
+                  <option value="All">
+                    All Semesters
+                  </option>
 
                   {semesters.map((semester) => (
-                    <option key={semester} value={semester}>
+                    <option
+                      key={semester}
+                      value={semester}
+                    >
                       {semester}
                     </option>
                   ))}
@@ -237,13 +265,20 @@ export default function Notes() {
 
                 <select
                   value={subjectFilter}
-                  onChange={(e) => setSubjectFilter(e.target.value)}
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  onChange={(e) =>
+                    setSubjectFilter(e.target.value)
+                  }
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 >
-                  <option value="All">All Subjects</option>
+                  <option value="All">
+                    All Subjects
+                  </option>
 
                   {subjects.map((subject) => (
-                    <option key={subject} value={subject}>
+                    <option
+                      key={subject}
+                      value={subject}
+                    >
                       {subject}
                     </option>
                   ))}
@@ -251,7 +286,8 @@ export default function Notes() {
               </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
+            {/* Filter summary */}
+            <div className="mt-5 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-gray-600">
                 Showing{" "}
                 <span className="font-bold text-blue-600">
@@ -268,7 +304,7 @@ export default function Notes() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-200"
+                  className="w-full rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-200 sm:w-auto"
                 >
                   Clear Filters
                 </button>
@@ -277,47 +313,52 @@ export default function Notes() {
           </section>
         )}
 
-        {/* No Notes */}
+        {/* ================= NO NOTES ================= */}
         {resources.length === 0 ? (
-          <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-10">
             <h2 className="text-xl font-semibold text-gray-800">
               No notes uploaded yet.
             </h2>
 
-            <p className="mt-2 text-gray-500">
+            <p className="mt-2 text-sm text-gray-500">
               Notes uploaded by the admin will appear here.
             </p>
           </div>
+
         ) : filteredResources.length === 0 ? (
-          /* No Search Result */
-          <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+
+          /* ================= NO SEARCH RESULT ================= */
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-10">
             <h2 className="text-xl font-semibold text-gray-800">
               No matching notes found.
             </h2>
 
-            <p className="mt-2 text-gray-500">
+            <p className="mt-2 text-sm text-gray-500">
               Try another search, semester, or subject.
             </p>
 
             <button
               type="button"
               onClick={clearFilters}
-              className="mt-5 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
+              className="mt-5 w-full rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 sm:w-auto"
             >
               Show All Notes
             </button>
           </div>
+
         ) : (
-          /* Notes Cards */
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+
+          /* ================= NOTES CARDS ================= */
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filteredResources.map((resource) => (
               <article
                 key={resource._id}
-                className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md sm:p-6"
               >
+
                 {/* Title + Category */}
                 <div className="flex items-start justify-between gap-3">
-                  <h2 className="break-words text-xl font-bold text-gray-900">
+                  <h2 className="min-w-0 break-words text-lg font-bold text-gray-900 sm:text-xl">
                     {resource.title}
                   </h2>
 
@@ -326,60 +367,80 @@ export default function Notes() {
                   </span>
                 </div>
 
+                {/* Semester */}
                 {resource.semester && (
                   <p className="mt-4 text-sm font-semibold text-blue-600">
                     Semester: {resource.semester}
                   </p>
                 )}
 
+                {/* Subject */}
                 {resource.subject && (
                   <p className="mt-2 text-sm text-gray-600">
                     Subject: {resource.subject}
                   </p>
                 )}
 
+                {/* Branch */}
+                {resource.branch && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    Branch: {resource.branch}
+                  </p>
+                )}
+
+                {/* Description */}
                 {resource.description && (
-                  <p className="mt-3 text-sm leading-6 text-gray-600">
+                  <p className="mt-3 line-clamp-4 text-sm leading-6 text-gray-600">
                     {resource.description}
                   </p>
                 )}
 
+                {/* File name */}
                 {resource.fileName && (
                   <p className="mt-4 truncate text-sm text-gray-500">
                     File: {resource.fileName}
                   </p>
                 )}
 
-                {/* Bookmark */}
-                <div className="mt-5">
-                  <BookmarkButton
-                    resourceId={resource._id}
-                    bookmarked={bookmarkedIds.includes(resource._id)}
-                    onChange={handleBookmarkChange}
-                  />
+                {/* ================= ACTIONS ================= */}
+                <div className="mt-auto pt-5">
+
+                  {/* Bookmark */}
+                  <div className="w-full">
+                    <BookmarkButton
+                      resourceId={resource._id}
+                      bookmarked={bookmarkedIds.includes(
+                        resource._id
+                      )}
+                      onChange={handleBookmarkChange}
+                    />
+                  </div>
+
+                  {/* View + Download */}
+                  <div className="mt-3 flex w-full flex-col gap-3 sm:flex-row">
+
+                    <a
+                      href={resource.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700 sm:flex-1"
+                    >
+                      View PDF
+                    </a>
+
+                    <a
+                      href={resource.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download={resource.fileName || true}
+                      className="w-full rounded-lg bg-gray-900 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-gray-800 sm:flex-1"
+                    >
+                      Download
+                    </a>
+
+                  </div>
                 </div>
 
-                {/* View + Download */}
-                <div className="mt-4 flex gap-3">
-                  <a
-                    href={resource.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
-                  >
-                    View PDF
-                  </a>
-
-                  <a
-                    href={resource.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download={resource.fileName || true}
-                    className="flex-1 rounded-lg bg-gray-900 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-gray-800"
-                  >
-                    Download
-                  </a>
-                </div>
               </article>
             ))}
           </div>

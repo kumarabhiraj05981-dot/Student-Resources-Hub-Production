@@ -7,11 +7,12 @@ interface Resource {
   title: string;
   description?: string;
   category: string;
-  semester: string;
+  branch?: string;
+  semester?: string;
   subject?: string;
   fileUrl: string;
   fileName?: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export default function Syllabus() {
@@ -19,61 +20,57 @@ export default function Syllabus() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // ==========================================
-  // BOOKMARK STATES
-  // ==========================================
-
+  // ================= BOOKMARK =================
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
 
-  // ==========================================
-  // FILTER STATES
-  // ==========================================
-
+  // ================= FILTERS =================
   const [search, setSearch] = useState("");
   const [semesterFilter, setSemesterFilter] = useState("All");
   const [subjectFilter, setSubjectFilter] = useState("All");
 
-  // ==========================================
-  // LOAD SYLLABUS
-  // ==========================================
-
+  // ================= LOAD SYLLABUS =================
   const loadSyllabus = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const res = await api.get(
+      const response = await api.get(
         "/api/resources/category/Syllabus"
       );
 
-      console.log("SYLLABUS API RESPONSE:", res.data);
+      const data = response.data;
+
+      if (!data?.success) {
+        throw new Error(
+          data?.message || "Unable to load syllabus"
+        );
+      }
 
       const allResources = Array.isArray(
-        res.data?.resources
+        data.resources
       )
-        ? res.data.resources
+        ? data.resources
         : [];
 
       const syllabusOnly = allResources.filter(
-        (item: Resource) =>
-          item.category?.trim().toLowerCase() ===
-          "syllabus"
-      );
-
-      console.log(
-        "SYLLABUS FILTERED:",
-        syllabusOnly
+        (resource: Resource) =>
+          String(resource.category || "")
+            .trim()
+            .toLowerCase() === "syllabus"
       );
 
       setResources(syllabusOnly);
     } catch (err: any) {
       console.error(
         "Syllabus loading error:",
-        err.response?.data || err
+        err
       );
+
+      setResources([]);
 
       setError(
         err.response?.data?.message ||
+          err.message ||
           "Unable to load syllabus. Please try again."
       );
     } finally {
@@ -85,10 +82,7 @@ export default function Syllabus() {
     loadSyllabus();
   }, []);
 
-  // ==========================================
-  // LOAD BOOKMARKS
-  // ==========================================
-
+  // ================= LOAD BOOKMARKS =================
   useEffect(() => {
     const loadBookmarks = async () => {
       const token = localStorage.getItem("token");
@@ -99,7 +93,7 @@ export default function Syllabus() {
       }
 
       try {
-        const res = await api.get(
+        const response = await api.get(
           "/api/bookmarks/ids",
           {
             headers: {
@@ -109,7 +103,7 @@ export default function Syllabus() {
         );
 
         setBookmarkedIds(
-          res.data.resourceIds || []
+          response.data.resourceIds || []
         );
       } catch (err) {
         console.error(
@@ -122,10 +116,7 @@ export default function Syllabus() {
     loadBookmarks();
   }, []);
 
-  // ==========================================
-  // BOOKMARK CHANGE HANDLER
-  // ==========================================
-
+  // ================= BOOKMARK CHANGE =================
   const handleBookmarkChange = (
     resourceId: string,
     bookmarked: boolean
@@ -145,10 +136,7 @@ export default function Syllabus() {
     });
   };
 
-  // ==========================================
-  // UNIQUE SEMESTERS
-  // ==========================================
-
+  // ================= SEMESTERS =================
   const semesters = useMemo(() => {
     const values = resources
       .map((resource) =>
@@ -156,15 +144,10 @@ export default function Syllabus() {
       )
       .filter(Boolean);
 
-    return Array.from(
-      new Set(values)
-    );
+    return Array.from(new Set(values));
   }, [resources]);
 
-  // ==========================================
-  // UNIQUE SUBJECTS
-  // ==========================================
-
+  // ================= SUBJECTS =================
   const subjects = useMemo(() => {
     const values = resources
       .map((resource) =>
@@ -172,18 +155,14 @@ export default function Syllabus() {
       )
       .filter(Boolean);
 
-    return Array.from(
-      new Set(values)
-    ).sort();
+    return Array.from(new Set(values)).sort();
   }, [resources]);
 
-  // ==========================================
-  // FILTER SYLLABUS
-  // ==========================================
-
+  // ================= FILTER =================
   const filteredResources = useMemo(() => {
-    const searchText =
-      search.trim().toLowerCase();
+    const searchText = search
+      .trim()
+      .toLowerCase();
 
     return resources.filter((resource) => {
       const title =
@@ -198,10 +177,11 @@ export default function Syllabus() {
       const semester =
         resource.semester?.toLowerCase() || "";
 
+      const branch =
+        resource.branch?.toLowerCase() || "";
+
       const fileName =
         resource.fileName?.toLowerCase() || "";
-
-      // SEARCH
 
       const matchesSearch =
         !searchText ||
@@ -209,15 +189,12 @@ export default function Syllabus() {
         description.includes(searchText) ||
         subject.includes(searchText) ||
         semester.includes(searchText) ||
+        branch.includes(searchText) ||
         fileName.includes(searchText);
-
-      // SEMESTER
 
       const matchesSemester =
         semesterFilter === "All" ||
         resource.semester === semesterFilter;
-
-      // SUBJECT
 
       const matchesSubject =
         subjectFilter === "All" ||
@@ -236,10 +213,7 @@ export default function Syllabus() {
     subjectFilter,
   ]);
 
-  // ==========================================
-  // CLEAR FILTERS
-  // ==========================================
-
+  // ================= CLEAR FILTERS =================
   const clearFilters = () => {
     setSearch("");
     setSemesterFilter("All");
@@ -251,55 +225,48 @@ export default function Syllabus() {
     semesterFilter !== "All" ||
     subjectFilter !== "All";
 
-  // ==========================================
-  // LOADING
-  // ==========================================
-
+  // ================= LOADING =================
   if (loading) {
     return (
-      <div className="min-h-screen bg-blue-50 flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="text-6xl mb-4"></div>
+      <main className="min-h-screen bg-blue-50 px-4 py-16">
+        <div className="mx-auto max-w-7xl text-center">
+          <div className="rounded-2xl border border-gray-200 bg-white p-10 shadow-sm">
+            <p className="text-lg font-semibold text-gray-700">
+              Loading Syllabus...
+            </p>
 
-          <p className="text-xl font-semibold text-gray-700">
-            Loading Syllabus...
-          </p>
-
-          <p className="text-sm text-gray-500 mt-2">
-            Please wait
-          </p>
+            <p className="mt-2 text-sm text-gray-500">
+              Please wait
+            </p>
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
-  // ==========================================
-  // MAIN PAGE
-  // ==========================================
-
+  // ================= PAGE =================
   return (
-    <div className="min-h-screen bg-blue-50 py-10 px-4">
-      <div className="max-w-7xl mx-auto">
+    <main className="min-h-screen bg-blue-50 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
 
-        {/* HEADER */}
-
+        {/* ================= HEADER ================= */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-purple-700 mb-2">
+          <h1 className="text-2xl font-bold text-purple-700 sm:text-4xl">
             Student Syllabus
           </h1>
 
-          <p className="text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 sm:text-base">
             Semester-wise syllabus and course documents
           </p>
 
           {resources.length > 0 && (
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="mt-2 text-sm text-gray-500">
               Showing{" "}
-              <span className="font-semibold">
+              <span className="font-semibold text-purple-600">
                 {filteredResources.length}
               </span>{" "}
               of{" "}
-              <span className="font-semibold">
+              <span className="font-semibold text-gray-900">
                 {resources.length}
               </span>{" "}
               syllabus
@@ -307,36 +274,31 @@ export default function Syllabus() {
           )}
         </div>
 
-        {/* ERROR */}
-
+        {/* ================= ERROR ================= */}
         {error && (
-          <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-xl mb-6">
-            <p className="font-semibold">
-              ❌ {error}
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
+            <p className="font-semibold text-red-700">
+              {error}
             </p>
 
             <button
+              type="button"
               onClick={loadSyllabus}
-              className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold"
+              className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
             >
               Try Again
             </button>
           </div>
         )}
 
-        {/* ======================================
-            SEARCH + FILTERS
-        ====================================== */}
-
+        {/* ================= FILTERS ================= */}
         {resources.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-lg p-5 mb-8">
+          <section className="mb-8 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="grid gap-4 md:grid-cols-3">
 
-            <div className="grid md:grid-cols-3 gap-4">
-
-              {/* SEARCH */}
-
+              {/* Search */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
                   Search Syllabus
                 </label>
 
@@ -347,14 +309,13 @@ export default function Syllabus() {
                   onChange={(e) =>
                     setSearch(e.target.value)
                   }
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                 />
               </div>
 
-              {/* SEMESTER */}
-
+              {/* Semester */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
                   Semester
                 </label>
 
@@ -365,29 +326,26 @@ export default function Syllabus() {
                       e.target.value
                     )
                   }
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                 >
                   <option value="All">
                     All Semesters
                   </option>
 
-                  {semesters.map(
-                    (semester) => (
-                      <option
-                        key={semester}
-                        value={semester}
-                      >
-                        {semester}
-                      </option>
-                    )
-                  )}
+                  {semesters.map((semester) => (
+                    <option
+                      key={semester}
+                      value={semester}
+                    >
+                      {semester}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              {/* SUBJECT */}
-
+              {/* Subject */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
                   Subject
                 </label>
 
@@ -398,38 +356,33 @@ export default function Syllabus() {
                       e.target.value
                     )
                   }
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                 >
                   <option value="All">
                     All Subjects
                   </option>
 
-                  {subjects.map(
-                    (subject) => (
-                      <option
-                        key={subject}
-                        value={subject}
-                      >
-                        {subject}
-                      </option>
-                    )
-                  )}
+                  {subjects.map((subject) => (
+                    <option
+                      key={subject}
+                      value={subject}
+                    >
+                      {subject}
+                    </option>
+                  ))}
                 </select>
               </div>
-
             </div>
 
-            {/* FILTER INFO */}
-
-            <div className="flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t">
-
-              <p className="text-gray-600">
+            {/* Filter Summary */}
+            <div className="mt-5 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-gray-600">
                 Showing{" "}
                 <span className="font-bold text-purple-600">
                   {filteredResources.length}
                 </span>{" "}
                 of{" "}
-                <span className="font-bold">
+                <span className="font-bold text-gray-900">
                   {resources.length}
                 </span>{" "}
                 syllabus
@@ -439,175 +392,153 @@ export default function Syllabus() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-lg transition"
+                  className="w-full rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-200 sm:w-auto"
                 >
-                  ✖ Clear Filters
+                  Clear Filters
                 </button>
               )}
-
             </div>
-
-          </div>
+          </section>
         )}
 
-        {/* ======================================
-            NO SYLLABUS
-        ====================================== */}
-
+        {/* ================= EMPTY STATE ================= */}
         {!error && resources.length === 0 ? (
-
-          <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
-
-            <div className="text-6xl mb-4"></div>
-
-            <p className="text-xl font-semibold text-gray-700">
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-10">
+            <h2 className="text-xl font-semibold text-gray-800">
               No Syllabus uploaded yet.
-            </p>
+            </h2>
 
-            <p className="text-gray-500 mt-2">
+            <p className="mt-2 text-sm text-gray-500">
               Syllabus uploaded by the admin
               will appear here.
             </p>
-
           </div>
 
         ) : filteredResources.length === 0 ? (
 
-          /* NO SEARCH RESULT */
-
-          <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
-
-            <div className="text-6xl mb-4"></div>
-
-            <p className="text-xl font-semibold text-gray-700">
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-10">
+            <h2 className="text-xl font-semibold text-gray-800">
               No matching syllabus found.
-            </p>
+            </h2>
 
-            <p className="text-gray-500 mt-2">
-              Try another search, semester
-              or subject.
+            <p className="mt-2 text-sm text-gray-500">
+              Try another search, semester or subject.
             </p>
 
             <button
               type="button"
               onClick={clearFilters}
-              className="mt-5 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition"
+              className="mt-5 w-full rounded-xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-purple-700 sm:w-auto"
             >
               Show All Syllabus
             </button>
-
           </div>
 
         ) : (
 
-          /* ======================================
-             SYLLABUS CARDS
-          ====================================== */
+          /* ================= SYLLABUS CARDS ================= */
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredResources.map((resource) => (
+              <article
+                key={resource._id}
+                className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md sm:p-6"
+              >
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Title + Category */}
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="min-w-0 break-words text-lg font-bold text-gray-800 sm:text-xl">
+                    {resource.title}
+                  </h2>
 
-            {filteredResources.map(
-              (resource) => (
+                  <span className="shrink-0 rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700 sm:text-sm">
+                    Syllabus
+                  </span>
+                </div>
 
-                <div
-                  key={resource._id}
-                  className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl hover:-translate-y-1 transition duration-300"
-                >
+                {/* Semester */}
+                {resource.semester && (
+                  <div className="mt-4">
+                    <p className="text-sm font-semibold text-purple-600">
+                      Semester
+                    </p>
 
-                  {/* TITLE + CATEGORY */}
-
-                  <div className="flex justify-between items-start gap-3">
-
-                    <h2 className="text-xl font-bold text-gray-800 break-words">
-                      {resource.title}
-                    </h2>
-
-                    <span className="shrink-0 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
-                      Syllabus
-                    </span>
-
+                    <p className="mt-1 text-sm text-gray-700">
+                      {resource.semester}
+                    </p>
                   </div>
+                )}
 
-                  {/* SEMESTER */}
+                {/* Subject */}
+                {resource.subject && (
+                  <div className="mt-3">
+                    <p className="text-sm font-semibold text-gray-500">
+                      Subject
+                    </p>
 
-                  {resource.semester && (
-                    <div className="mt-4">
-
-                      <p className="text-sm font-semibold text-purple-600">
-                        Semester
-                      </p>
-
-                      <p className="text-gray-700 mt-1">
-                        {resource.semester}
-                      </p>
-
-                    </div>
-                  )}
-
-                  {/* SUBJECT */}
-
-                  {resource.subject && (
-                    <div className="mt-3">
-
-                      <p className="text-sm font-semibold text-gray-500">
-                        Subject
-                      </p>
-
-                      <p className="text-gray-700 mt-1">
-                        {resource.subject}
-                      </p>
-
-                    </div>
-                  )}
-
-                  {/* DESCRIPTION */}
-
-                  {resource.description && (
-                    <div className="mt-3">
-
-                      <p className="text-gray-600 line-clamp-3">
-                        {resource.description}
-                      </p>
-
-                    </div>
-                  )}
-
-                  {/* FILE NAME */}
-
-                  {resource.fileName && (
-                    <div className="mt-4 bg-gray-50 rounded-lg p-3">
-
-                      <p
-                        className="text-sm text-gray-600 truncate"
-                        title={resource.fileName}
-                      >
-                        {resource.fileName}
-                      </p>
-
-                    </div>
-                  )}
-
-                  {/* BOOKMARK */}
-
-                  <div className="mt-5">
-                    <BookmarkButton
-                      resourceId={resource._id}
-                      bookmarked={bookmarkedIds.includes(
-                        resource._id
-                      )}
-                      onChange={handleBookmarkChange}
-                    />
+                    <p className="mt-1 text-sm text-gray-700">
+                      {resource.subject}
+                    </p>
                   </div>
+                )}
 
-                  {/* OPEN + DOWNLOAD */}
+                {/* Branch */}
+                {resource.branch && (
+                  <div className="mt-3">
+                    <p className="text-sm font-semibold text-gray-500">
+                      Branch
+                    </p>
 
-                  <div className="flex gap-3 mt-6">
+                    <p className="mt-1 text-sm text-gray-700">
+                      {resource.branch}
+                    </p>
+                  </div>
+                )}
+
+                {/* Description */}
+                {resource.description && (
+                  <p className="mt-3 line-clamp-4 text-sm leading-6 text-gray-600">
+                    {resource.description}
+                  </p>
+                )}
+
+                {/* File */}
+                {resource.fileName && (
+                  <div className="mt-4 rounded-lg bg-gray-50 p-3">
+                    <p className="mb-1 text-xs font-semibold text-gray-500">
+                      PDF FILE
+                    </p>
+
+                    <p
+                      className="truncate text-sm text-gray-700"
+                      title={resource.fileName}
+                    >
+                      {resource.fileName}
+                    </p>
+                  </div>
+                )}
+
+                {/* ================= ACTIONS ================= */}
+                <div className="mt-auto pt-5">
+
+                  {/* Bookmark */}
+                  <BookmarkButton
+                    resourceId={resource._id}
+                    bookmarked={bookmarkedIds.includes(
+                      resource._id
+                    )}
+                    onChange={
+                      handleBookmarkChange
+                    }
+                  />
+
+                  {/* Open + Download */}
+                  <div className="mt-3 flex w-full flex-col gap-3 sm:flex-row">
 
                     <a
                       href={resource.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 text-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2.5 px-4 rounded-lg transition"
+                      className="w-full rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700 active:bg-blue-800 sm:flex-1"
                     >
                       Open
                     </a>
@@ -620,23 +551,19 @@ export default function Syllabus() {
                         resource.fileName ||
                         undefined
                       }
-                      className="flex-1 text-center bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-2.5 px-4 rounded-lg transition"
+                      className="w-full rounded-lg bg-green-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-green-700 active:bg-green-800 sm:flex-1"
                     >
                       Download
                     </a>
 
                   </div>
-
                 </div>
 
-              )
-            )}
-
+              </article>
+            ))}
           </div>
-
         )}
-
       </div>
-    </div>
+    </main>
   );
 }
