@@ -61,6 +61,43 @@ router.get("/", async (req, res) => {
 });
 
 // ==========================================
+// GET RECENTLY ADDED RESOURCES
+// ==========================================
+
+router.get("/recent", async (req, res) => {
+  try {
+    const requestedLimit = Number(req.query.limit) || 6;
+
+    const limit = Math.min(
+      Math.max(requestedLimit, 1),
+      20
+    );
+
+    const resources = await Resource.find()
+      .populate("uploadedBy", "name email")
+      .sort({ createdAt: -1 })
+      .limit(limit);
+
+    return res.status(200).json({
+      success: true,
+      count: resources.length,
+      resources,
+    });
+  } catch (error) {
+    console.error(
+      "GET RECENT RESOURCES ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load recently added resources",
+    });
+  }
+});
+
+
+// ==========================================
 // GET RESOURCES BY BRANCH
 // ==========================================
 
