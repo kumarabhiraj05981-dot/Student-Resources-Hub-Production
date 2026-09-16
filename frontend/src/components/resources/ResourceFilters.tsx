@@ -1,19 +1,21 @@
-import { useMemo } from "react";
+import type { ChangeEvent } from "react";
 
 interface ResourceFiltersProps {
   search: string;
   branch: string;
   semester: string;
   category: string;
+
   onSearchChange: (value: string) => void;
   onBranchChange: (value: string) => void;
   onSemesterChange: (value: string) => void;
   onCategoryChange: (value: string) => void;
   onClear: () => void;
+
+  branchOptions?: string[];
 }
 
-const branches = [
-  "All Branches",
+const defaultBranches = [
   "CSE",
   "IT",
   "ECE",
@@ -22,20 +24,9 @@ const branches = [
   "CE",
 ];
 
-const semesters = [
-  "All Semesters",
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-];
+const semesters = ["1", "2", "3", "4", "5", "6", "7", "8"];
 
 const categories = [
-  "All Categories",
   "Notes",
   "PYQ",
   "Syllabus",
@@ -52,56 +43,70 @@ export default function ResourceFilters({
   onSemesterChange,
   onCategoryChange,
   onClear,
+  branchOptions = defaultBranches,
 }: ResourceFiltersProps) {
-  const hasFilters = useMemo(() => {
-    return (
-      search.trim() !== "" ||
-      branch !== "All Branches" ||
-      semester !== "All Semesters" ||
-      category !== "All Categories"
-    );
-  }, [search, branch, semester, category]);
+  const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
+    onSearchChange(event.target.value);
+  };
+
+  const hasFilters =
+    search.trim() !== "" ||
+    branch !== "" ||
+    semester !== "" ||
+    category !== "";
 
   return (
-    <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+    <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-gray-900">
+          Find Resources
+        </h2>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Search and filter resources by branch, semester and category.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Search */}
         <div className="lg:col-span-1">
           <label
             htmlFor="resource-search"
             className="mb-2 block text-sm font-semibold text-gray-700"
           >
-            🔎 Search Resources
+            Search
           </label>
 
           <input
             id="resource-search"
             type="text"
             value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search by title or subject..."
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            onChange={handleSearch}
+            placeholder="Search resources..."
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
         </div>
 
         {/* Branch */}
         <div>
           <label
-            htmlFor="branch-filter"
+            htmlFor="resource-branch"
             className="mb-2 block text-sm font-semibold text-gray-700"
           >
-            📚 Branch
+            Branch
           </label>
 
           <select
-            id="branch-filter"
+            id="resource-branch"
             value={branch}
             onChange={(e) => onBranchChange(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           >
-            {branches.map((item) => (
-              <option key={item} value={item}>
-                {item}
+            <option value="">All Branches</option>
+
+            {branchOptions.map((branchName) => (
+              <option key={branchName} value={branchName}>
+                {branchName}
               </option>
             ))}
           </select>
@@ -110,21 +115,23 @@ export default function ResourceFilters({
         {/* Semester */}
         <div>
           <label
-            htmlFor="semester-filter"
+            htmlFor="resource-semester"
             className="mb-2 block text-sm font-semibold text-gray-700"
           >
-            🎓 Semester
+            Semester
           </label>
 
           <select
-            id="semester-filter"
+            id="resource-semester"
             value={semester}
             onChange={(e) => onSemesterChange(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           >
-            {semesters.map((item) => (
-              <option key={item} value={item}>
-                {item}
+            <option value="">All Semesters</option>
+
+            {semesters.map((semesterNumber) => (
+              <option key={semesterNumber} value={semesterNumber}>
+                Semester {semesterNumber}
               </option>
             ))}
           </select>
@@ -133,35 +140,38 @@ export default function ResourceFilters({
         {/* Category */}
         <div>
           <label
-            htmlFor="category-filter"
+            htmlFor="resource-category"
             className="mb-2 block text-sm font-semibold text-gray-700"
           >
-            📂 Category
+            Category
           </label>
 
           <select
-            id="category-filter"
+            id="resource-category"
             value={category}
             onChange={(e) => onCategoryChange(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           >
-            {categories.map((item) => (
-              <option key={item} value={item}>
-                {item}
+            <option value="">All Categories</option>
+
+            {categories.map((categoryName) => (
+              <option key={categoryName} value={categoryName}>
+                {categoryName}
               </option>
             ))}
           </select>
         </div>
       </div>
 
+      {/* Clear */}
       {hasFilters && (
         <div className="mt-4 flex justify-end">
           <button
             type="button"
             onClick={onClear}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 sm:w-auto"
+            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 sm:w-auto"
           >
-            ✕ Clear Filters
+            Clear Filters
           </button>
         </div>
       )}
