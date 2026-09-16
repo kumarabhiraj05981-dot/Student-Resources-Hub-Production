@@ -14,6 +14,7 @@ import StudyAssistant from "./pages/StudyAssistant";
 import StudyPlanner from "./pages/StudyPlanner";
 import Bookmarks from "./pages/Bookmarks";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
         <Route path="/study-planner" element={<StudyPlanner />} />
         <Route path="/bookmarks" element={<Bookmarks />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
 
         {/* AI Study Assistant */}
         <Route

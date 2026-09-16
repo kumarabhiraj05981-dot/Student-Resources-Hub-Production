@@ -103,9 +103,7 @@ export default function Navbar() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex min-h-[72px] items-center justify-between gap-4">
 
-          {/* =========================
-              BRAND
-          ========================== */}
+          {/* BRAND */}
           <Link
             to="/"
             onClick={closeMobileMenu}
@@ -126,9 +124,7 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* =========================
-              DESKTOP NAVIGATION
-          ========================== */}
+          {/* DESKTOP NAVIGATION */}
           <nav className="hidden items-center gap-1 lg:flex">
 
             <NavLink to="/" end className={navClass}>
@@ -161,6 +157,13 @@ export default function Navbar() {
               </NavLink>
             )}
 
+            {/* PROFILE */}
+            {isLoggedIn && (
+              <NavLink to="/profile" className={navClass}>
+                Profile
+              </NavLink>
+            )}
+
             {/* AI PAPER */}
             <NavLink
               to="/ai-question-paper"
@@ -184,9 +187,7 @@ export default function Navbar() {
             </NavLink>
           </nav>
 
-          {/* =========================
-              DESKTOP ACCOUNT ACTIONS
-          ========================== */}
+          {/* DESKTOP ACCOUNT ACTIONS */}
           <div className="hidden items-center gap-2 md:flex">
 
             {/* ADMIN */}
@@ -224,7 +225,6 @@ export default function Navbar() {
               </button>
             ) : (
               <>
-                {/* LOGIN */}
                 <Link
                   to="/login"
                   className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-all duration-200 hover:border-gray-300 hover:bg-gray-50"
@@ -232,7 +232,6 @@ export default function Navbar() {
                   Login
                 </Link>
 
-                {/* REGISTER */}
                 <Link
                   to="/register"
                   className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow active:scale-[0.98]"
@@ -243,9 +242,7 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* =========================
-              MOBILE MENU BUTTON
-          ========================== */}
+          {/* MOBILE MENU BUTTON */}
           <button
             type="button"
             aria-label={
@@ -261,9 +258,7 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* =========================
-            MOBILE MENU
-        ========================== */}
+        {/* MOBILE MENU */}
         {mobileOpen && (
           <div className="border-t border-gray-100 py-4 md:hidden">
 
@@ -288,6 +283,18 @@ export default function Navbar() {
                   className={mobileNavClass}
                 >
                   <span>Dashboard</span>
+                  <span className="text-gray-400">→</span>
+                </NavLink>
+              )}
+
+              {/* PROFILE */}
+              {isLoggedIn && (
+                <NavLink
+                  to="/profile"
+                  onClick={closeMobileMenu}
+                  className={mobileNavClass}
+                >
+                  <span>Profile</span>
                   <span className="text-gray-400">→</span>
                 </NavLink>
               )}
@@ -413,9 +420,7 @@ export default function Navbar() {
               )}
             </nav>
 
-            {/* =========================
-                MOBILE ACCOUNT ACTIONS
-            ========================== */}
+            {/* MOBILE ACCOUNT ACTIONS */}
             <div className="mt-4 border-t border-gray-100 pt-4">
 
               {isLoggedIn ? (
@@ -429,7 +434,6 @@ export default function Navbar() {
               ) : (
                 <div className="grid grid-cols-2 gap-2">
 
-                  {/* LOGIN */}
                   <Link
                     to="/login"
                     onClick={closeMobileMenu}
@@ -438,7 +442,6 @@ export default function Navbar() {
                     Login
                   </Link>
 
-                  {/* REGISTER */}
                   <Link
                     to="/register"
                     onClick={closeMobileMenu}
