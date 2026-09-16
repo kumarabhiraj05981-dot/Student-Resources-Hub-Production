@@ -1,6 +1,8 @@
+
 import { useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import BookmarkButton from "../components/bookmarks/BookmarkButton";
+import ResourceFilters from "../components/resources/ResourceFilters";
 
 interface Resource {
   _id: string;
@@ -21,8 +23,9 @@ export default function Notes() {
   const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
-  const [semesterFilter, setSemesterFilter] = useState("All");
-  const [subjectFilter, setSubjectFilter] = useState("All");
+  const [branchFilter, setBranchFilter] = useState("All Branches");
+  const [semesterFilter, setSemesterFilter] = useState("All Semesters");
+  const [categoryFilter, setCategoryFilter] = useState("All Categories");
 
   // Bookmark state
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
@@ -100,24 +103,6 @@ export default function Notes() {
     });
   };
 
-  // Semester options
-  const semesters = useMemo(() => {
-    const values = resources
-      .map((resource) => resource.semester?.trim())
-      .filter(Boolean);
-
-    return Array.from(new Set(values));
-  }, [resources]);
-
-  // Subject options
-  const subjects = useMemo(() => {
-    const values = resources
-      .map((resource) => resource.subject?.trim())
-      .filter(Boolean);
-
-    return Array.from(new Set(values)).sort();
-  }, [resources]);
-
   // Filter resources
   const filteredResources = useMemo(() => {
     const searchText = search.trim().toLowerCase();
@@ -139,38 +124,48 @@ export default function Notes() {
         branch.includes(searchText) ||
         fileName.includes(searchText);
 
-      const matchesSemester =
-        semesterFilter === "All" ||
-        resource.semester === semesterFilter;
+      const matchesBranch =
+        branchFilter === "All Branches" ||
+        resource.branch?.trim().toLowerCase() ===
+          branchFilter.trim().toLowerCase();
 
-      const matchesSubject =
-        subjectFilter === "All" ||
-        resource.subject === subjectFilter;
+      const matchesSemester =
+        semesterFilter === "All Semesters" ||
+        resource.semester?.trim() === semesterFilter;
+
+      const matchesCategory =
+        categoryFilter === "All Categories" ||
+        resource.category?.trim().toLowerCase() ===
+          categoryFilter.trim().toLowerCase();
 
       return (
         matchesSearch &&
+        matchesBranch &&
         matchesSemester &&
-        matchesSubject
+        matchesCategory
       );
     });
   }, [
     resources,
     search,
+    branchFilter,
     semesterFilter,
-    subjectFilter,
+    categoryFilter,
   ]);
 
   // Clear filters
   const clearFilters = () => {
     setSearch("");
-    setSemesterFilter("All");
-    setSubjectFilter("All");
+    setBranchFilter("All Branches");
+    setSemesterFilter("All Semesters");
+    setCategoryFilter("All Categories");
   };
 
   const filtersActive =
     search.trim() !== "" ||
-    semesterFilter !== "All" ||
-    subjectFilter !== "All";
+    branchFilter !== "All Branches" ||
+    semesterFilter !== "All Semesters" ||
+    categoryFilter !== "All Categories";
 
   // Loading
   if (loading) {
@@ -211,106 +206,44 @@ export default function Notes() {
 
         {/* ================= FILTERS ================= */}
         {resources.length > 0 && (
-          <section className="mb-8 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="grid gap-4 md:grid-cols-3">
+          <ResourceFilters
+            search={search}
+            branch={branchFilter}
+            semester={semesterFilter}
+            category={categoryFilter}
+            onSearchChange={setSearch}
+            onBranchChange={setBranchFilter}
+            onSemesterChange={setSemesterFilter}
+            onCategoryChange={setCategoryFilter}
+            onClear={clearFilters}
+          />
+        )}
 
-              {/* Search */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-700">
-                  Search Notes
-                </label>
+        {/* ================= FILTER SUMMARY ================= */}
+        {resources.length > 0 && (
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-gray-600">
+              Showing{" "}
+              <span className="font-bold text-blue-600">
+                {filteredResources.length}
+              </span>{" "}
+              of{" "}
+              <span className="font-bold text-gray-900">
+                {resources.length}
+              </span>{" "}
+              notes
+            </p>
 
-                <input
-                  type="text"
-                  placeholder="Search by title or subject"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-              </div>
-
-              {/* Semester */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-700">
-                  Semester
-                </label>
-
-                <select
-                  value={semesterFilter}
-                  onChange={(e) =>
-                    setSemesterFilter(e.target.value)
-                  }
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                >
-                  <option value="All">
-                    All Semesters
-                  </option>
-
-                  {semesters.map((semester) => (
-                    <option
-                      key={semester}
-                      value={semester}
-                    >
-                      {semester}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Subject */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-700">
-                  Subject
-                </label>
-
-                <select
-                  value={subjectFilter}
-                  onChange={(e) =>
-                    setSubjectFilter(e.target.value)
-                  }
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                >
-                  <option value="All">
-                    All Subjects
-                  </option>
-
-                  {subjects.map((subject) => (
-                    <option
-                      key={subject}
-                      value={subject}
-                    >
-                      {subject}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Filter summary */}
-            <div className="mt-5 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-gray-600">
-                Showing{" "}
-                <span className="font-bold text-blue-600">
-                  {filteredResources.length}
-                </span>{" "}
-                of{" "}
-                <span className="font-bold text-gray-900">
-                  {resources.length}
-                </span>{" "}
-                notes
-              </p>
-
-              {filtersActive && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="w-full rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-200 sm:w-auto"
-                >
-                  Clear Filters
-                </button>
-              )}
-            </div>
-          </section>
+            {filtersActive && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-left text-sm font-semibold text-blue-600 hover:text-blue-800 sm:text-right"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
         )}
 
         {/* ================= NO NOTES ================= */}
@@ -324,7 +257,6 @@ export default function Notes() {
               Notes uploaded by the admin will appear here.
             </p>
           </div>
-
         ) : filteredResources.length === 0 ? (
 
           /* ================= NO SEARCH RESULT ================= */
@@ -334,7 +266,7 @@ export default function Notes() {
             </h2>
 
             <p className="mt-2 text-sm text-gray-500">
-              Try another search, semester, or subject.
+              Try another search, branch, semester, or category.
             </p>
 
             <button
@@ -418,7 +350,6 @@ export default function Notes() {
 
                   {/* View + Download */}
                   <div className="mt-3 flex w-full flex-col gap-3 sm:flex-row">
-
                     <a
                       href={resource.fileUrl}
                       target="_blank"
@@ -437,7 +368,6 @@ export default function Notes() {
                     >
                       Download
                     </a>
-
                   </div>
                 </div>
 
@@ -449,3 +379,4 @@ export default function Notes() {
     </main>
   );
 }
+

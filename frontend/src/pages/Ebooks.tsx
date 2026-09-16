@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import BookmarkButton from "../components/bookmarks/BookmarkButton";
+import ResourceFilters from "../components/resources/ResourceFilters";
 
 interface Resource {
   _id: string;
@@ -20,6 +22,18 @@ export default function Ebooks() {
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // ==============================
+  // FILTERS
+  // ==============================
+
+  const [search, setSearch] = useState("");
+  const [branchFilter, setBranchFilter] =
+    useState("All Branches");
+  const [semesterFilter, setSemesterFilter] =
+    useState("All Semesters");
+  const [categoryFilter, setCategoryFilter] =
+    useState("All Categories");
 
   // ==============================
   // LOAD E-BOOKS
@@ -150,6 +164,90 @@ export default function Ebooks() {
   };
 
   // ==============================
+  // FILTER RESOURCES
+  // ==============================
+
+  const filteredResources = useMemo(() => {
+    const searchText = search
+      .trim()
+      .toLowerCase();
+
+    return resources.filter((resource) => {
+      const title =
+        resource.title?.toLowerCase() || "";
+
+      const description =
+        resource.description?.toLowerCase() || "";
+
+      const subject =
+        resource.subject?.toLowerCase() || "";
+
+      const semester =
+        resource.semester?.toLowerCase() || "";
+
+      const branch =
+        resource.branch?.toLowerCase() || "";
+
+      const fileName =
+        resource.fileName?.toLowerCase() || "";
+
+      const matchesSearch =
+        !searchText ||
+        title.includes(searchText) ||
+        description.includes(searchText) ||
+        subject.includes(searchText) ||
+        semester.includes(searchText) ||
+        branch.includes(searchText) ||
+        fileName.includes(searchText);
+
+      const matchesBranch =
+        branchFilter === "All Branches" ||
+        resource.branch?.trim().toLowerCase() ===
+          branchFilter.trim().toLowerCase();
+
+      const matchesSemester =
+        semesterFilter === "All Semesters" ||
+        resource.semester?.trim() ===
+          semesterFilter;
+
+      const matchesCategory =
+        categoryFilter === "All Categories" ||
+        resource.category?.trim().toLowerCase() ===
+          categoryFilter.trim().toLowerCase();
+
+      return (
+        matchesSearch &&
+        matchesBranch &&
+        matchesSemester &&
+        matchesCategory
+      );
+    });
+  }, [
+    resources,
+    search,
+    branchFilter,
+    semesterFilter,
+    categoryFilter,
+  ]);
+
+  // ==============================
+  // CLEAR FILTERS
+  // ==============================
+
+  const clearFilters = () => {
+    setSearch("");
+    setBranchFilter("All Branches");
+    setSemesterFilter("All Semesters");
+    setCategoryFilter("All Categories");
+  };
+
+  const filtersActive =
+    search.trim() !== "" ||
+    branchFilter !== "All Branches" ||
+    semesterFilter !== "All Semesters" ||
+    categoryFilter !== "All Categories";
+
+  // ==============================
   // LOADING
   // ==============================
 
@@ -195,19 +293,6 @@ export default function Ebooks() {
           <p className="mt-2 text-sm text-gray-600 sm:text-base">
             Semester-wise books and study materials
           </p>
-
-          {resources.length > 0 && (
-            <p className="mt-2 text-sm text-gray-500">
-              <span className="font-semibold text-green-700">
-                {resources.length}
-              </span>{" "}
-              E-Book
-              {resources.length !== 1
-                ? "s"
-                : ""}{" "}
-              available
-            </p>
-          )}
         </div>
 
         {/* ==============================
@@ -219,6 +304,57 @@ export default function Ebooks() {
             <p className="font-semibold text-red-700">
               {error}
             </p>
+          </div>
+        )}
+
+        {/* ==============================
+            FILTERS
+        ============================== */}
+
+        {resources.length > 0 && (
+          <ResourceFilters
+            search={search}
+            branch={branchFilter}
+            semester={semesterFilter}
+            category={categoryFilter}
+            onSearchChange={setSearch}
+            onBranchChange={setBranchFilter}
+            onSemesterChange={setSemesterFilter}
+            onCategoryChange={setCategoryFilter}
+            onClear={clearFilters}
+          />
+        )}
+
+        {/* ==============================
+            FILTER SUMMARY
+        ============================== */}
+
+        {resources.length > 0 && (
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-gray-600">
+              Showing{" "}
+              <span className="font-bold text-green-700">
+                {filteredResources.length}
+              </span>{" "}
+              of{" "}
+              <span className="font-bold text-gray-900">
+                {resources.length}
+              </span>{" "}
+              E-Book
+              {resources.length !== 1
+                ? "s"
+                : ""}
+            </p>
+
+            {filtersActive && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-left text-sm font-semibold text-green-700 hover:text-green-900 sm:text-right"
+              >
+                Clear all filters
+              </button>
+            )}
           </div>
         )}
 
@@ -241,6 +377,36 @@ export default function Ebooks() {
               appear here.
             </p>
           </div>
+
+        ) : filteredResources.length === 0 ? (
+
+          /* ==============================
+             NO MATCHING RESULTS
+          ============================== */
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-10">
+            <div className="mb-4 text-5xl">
+              🔍
+            </div>
+
+            <h2 className="text-xl font-semibold text-gray-800">
+              No matching E-Books found.
+            </h2>
+
+            <p className="mt-2 text-sm text-gray-500">
+              Try another search, branch, semester,
+              or category.
+            </p>
+
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="mt-5 w-full rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-green-700 sm:w-auto"
+            >
+              Show All E-Books
+            </button>
+          </div>
+
         ) : (
 
           /* ==============================
@@ -248,7 +414,7 @@ export default function Ebooks() {
           ============================== */
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {resources.map((resource) => {
+            {filteredResources.map((resource) => {
               const isBookmarked =
                 bookmarkedIds.includes(
                   resource._id
@@ -371,8 +537,6 @@ export default function Ebooks() {
 
                     <div className="mt-3 flex w-full flex-col gap-3 sm:flex-row">
 
-                      {/* OPEN */}
-
                       <a
                         href={resource.fileUrl}
                         target="_blank"
@@ -381,8 +545,6 @@ export default function Ebooks() {
                       >
                         Open
                       </a>
-
-                      {/* DOWNLOAD */}
 
                       <a
                         href={resource.fileUrl}
