@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 
@@ -146,10 +147,19 @@ export default function Navbar() {
               Study Planner
             </NavLink>
 
+            {/* DASHBOARD */}
+            {isLoggedIn && (
+              <NavLink to="/dashboard" className={navClass}>
+                Dashboard
+              </NavLink>
+            )}
+
             {/* BOOKMARKS */}
-            <NavLink to="/bookmarks" className={navClass}>
-              Bookmarks
-            </NavLink>
+            {isLoggedIn && (
+              <NavLink to="/bookmarks" className={navClass}>
+                Bookmarks
+              </NavLink>
+            )}
 
             {/* AI PAPER */}
             <NavLink
@@ -270,6 +280,18 @@ export default function Navbar() {
                 <span className="text-gray-400">→</span>
               </NavLink>
 
+              {/* DASHBOARD */}
+              {isLoggedIn && (
+                <NavLink
+                  to="/dashboard"
+                  onClick={closeMobileMenu}
+                  className={mobileNavClass}
+                >
+                  <span>Dashboard</span>
+                  <span className="text-gray-400">→</span>
+                </NavLink>
+              )}
+
               {/* NOTES */}
               <NavLink
                 to="/notes"
@@ -341,14 +363,16 @@ export default function Navbar() {
               </NavLink>
 
               {/* BOOKMARKS */}
-              <NavLink
-                to="/bookmarks"
-                onClick={closeMobileMenu}
-                className={mobileNavClass}
-              >
-                <span>Bookmarks</span>
-                <span className="text-gray-400">→</span>
-              </NavLink>
+              {isLoggedIn && (
+                <NavLink
+                  to="/bookmarks"
+                  onClick={closeMobileMenu}
+                  className={mobileNavClass}
+                >
+                  <span>Bookmarks</span>
+                  <span className="text-gray-400">→</span>
+                </NavLink>
+              )}
 
               {/* AI QUESTION PAPER */}
               <NavLink

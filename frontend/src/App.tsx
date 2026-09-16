@@ -13,6 +13,7 @@ import BranchResources from "./pages/BranchResources";
 import StudyAssistant from "./pages/StudyAssistant";
 import StudyPlanner from "./pages/StudyPlanner";
 import Bookmarks from "./pages/Bookmarks";
+import Dashboard from "./pages/Dashboard";
 
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
         <Route path="/ai-question-paper" element={<AIQuestionPaper />} />
         <Route path="/study-planner" element={<StudyPlanner />} />
         <Route path="/bookmarks" element={<Bookmarks />} />
+        <Route path="/dashboard" element={<Dashboard />} />
 
         {/* AI Study Assistant */}
         <Route
