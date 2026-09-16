@@ -89,7 +89,7 @@ export default function Dashboard() {
                 </p>
 
                 <h1 className="mt-2 text-3xl sm:text-4xl lg:text-5xl font-bold">
-                  Welcome, {firstName}! 👋
+                  Welcome, {firstName}!
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-sm sm:text-base text-blue-100">
@@ -99,9 +99,7 @@ export default function Dashboard() {
               </div>
 
               <div className="shrink-0 rounded-2xl bg-white/15 p-5 text-center backdrop-blur-sm">
-                <div className="text-4xl">
-                  🎓
-                </div>
+               
 
                 <p className="mt-2 text-sm font-semibold">
                   Keep Learning
@@ -120,9 +118,7 @@ export default function Dashboard() {
             <div className="rounded-2xl bg-white p-6 shadow-lg md:col-span-2">
               <div className="flex items-center gap-4">
 
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-purple-100 text-3xl">
-                  👤
-                </div>
+              
 
                 <div className="min-w-0">
                   <h2 className="text-xl font-bold text-gray-800">
@@ -163,7 +159,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="text-4xl">
-                  🔖
+                  
                 </div>
 
               </div>
@@ -194,7 +190,7 @@ export default function Dashboard() {
                 className="group rounded-2xl bg-white p-6 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 <div className="text-4xl">
-                  🔖
+                  
                 </div>
 
                 <h3 className="mt-4 text-lg font-bold text-gray-800 group-hover:text-purple-700">
@@ -217,7 +213,7 @@ export default function Dashboard() {
                 className="group rounded-2xl bg-white p-6 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 <div className="text-4xl">
-                  📅
+                  
                 </div>
 
                 <h3 className="mt-4 text-lg font-bold text-gray-800 group-hover:text-blue-700">
@@ -240,7 +236,7 @@ export default function Dashboard() {
                 className="group rounded-2xl bg-white p-6 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 <div className="text-4xl">
-                  🤖
+                  
                 </div>
 
                 <h3 className="mt-4 text-lg font-bold text-gray-800 group-hover:text-indigo-700">
@@ -263,7 +259,7 @@ export default function Dashboard() {
                 className="group rounded-2xl bg-white p-6 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 <div className="text-4xl">
-                  📝
+                  
                 </div>
 
                 <h3 className="mt-4 text-lg font-bold text-gray-800 group-hover:text-green-700">
@@ -303,7 +299,7 @@ export default function Dashboard() {
                 className="rounded-2xl bg-white p-5 text-center shadow-md transition hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="text-3xl">
-                  📚
+                  
                 </div>
 
                 <p className="mt-3 font-bold text-gray-800">
@@ -316,7 +312,7 @@ export default function Dashboard() {
                 className="rounded-2xl bg-white p-5 text-center shadow-md transition hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="text-3xl">
-                  📄
+                  
                 </div>
 
                 <p className="mt-3 font-bold text-gray-800">
@@ -329,7 +325,7 @@ export default function Dashboard() {
                 className="rounded-2xl bg-white p-5 text-center shadow-md transition hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="text-3xl">
-                  🎓
+                  
                 </div>
 
                 <p className="mt-3 font-bold text-gray-800">
@@ -342,7 +338,7 @@ export default function Dashboard() {
                 className="rounded-2xl bg-white p-5 text-center shadow-md transition hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="text-3xl">
-                  📖
+                  
                 </div>
 
                 <p className="mt-3 font-bold text-gray-800">
@@ -358,7 +354,7 @@ export default function Dashboard() {
           <section className="mt-8 rounded-2xl bg-white p-6 sm:p-8 text-center shadow-lg">
 
             <div className="text-4xl">
-              🚀
+              
             </div>
 
             <h2 className="mt-3 text-2xl font-bold text-gray-800">
