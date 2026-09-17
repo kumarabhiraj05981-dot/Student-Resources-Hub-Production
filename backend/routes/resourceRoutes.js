@@ -2,6 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 
 const Resource = require("../models/Resource");
+const Notification = require("../models/Notification");
+
 const adminAuth = require("../middleware/adminAuth");
 const cloudinary = require("../config/cloudinary");
 
@@ -31,6 +33,50 @@ const ALLOWED_CATEGORIES = [
   "Ebooks",
   "Other",
 ];
+
+// ==========================================
+// CREATE NOTIFICATIONS FOR NEW RESOURCE
+// ==========================================
+
+const createResourceNotifications = async (resource) => {
+  try {
+    const User = require("../models/User");
+
+    const users = await User.find({
+      role: { $ne: "admin" },
+    }).select("_id");
+
+    if (!users.length) {
+      return;
+    }
+
+    const category = resource.category || "Resource";
+    const branch = resource.branch || "your branch";
+
+    const notifications = users.map((user) => ({
+      user: user._id,
+      title: `New ${category} Added`,
+      message: `${resource.title} has been added for ${branch}.`,
+      type: "resource",
+      resource: resource._id,
+      isRead: false,
+    }));
+
+    await Notification.insertMany(notifications);
+
+    console.log(
+      `🔔 ${notifications.length} notifications created`
+    );
+  } catch (error) {
+    console.error(
+      "CREATE RESOURCE NOTIFICATIONS ERROR:",
+      error
+    );
+
+    // Notification failure should not break
+    // the main resource operation.
+  }
+};
 
 // ==========================================
 // GET ALL RESOURCES
@@ -95,7 +141,6 @@ router.get("/recent", async (req, res) => {
     });
   }
 });
-
 
 // ==========================================
 // GET RESOURCES BY BRANCH
@@ -610,9 +655,6 @@ router.delete(
             "CLOUDINARY DELETE ERROR:",
             cloudinaryError
           );
-
-          // We don't stop MongoDB deletion
-          // if Cloudinary deletion fails.
         }
       }
 
@@ -621,6 +663,25 @@ router.delete(
       // ======================================
 
       await Resource.findByIdAndDelete(id);
+
+      // ======================================
+      // DELETE RELATED NOTIFICATIONS
+      // ======================================
+
+      try {
+        await Notification.deleteMany({
+          resource: id,
+        });
+
+        console.log(
+          "Related notifications deleted"
+        );
+      } catch (notificationError) {
+        console.error(
+          "DELETE RESOURCE NOTIFICATIONS ERROR:",
+          notificationError
+        );
+      }
 
       console.log(
         "MongoDB resource deleted:",

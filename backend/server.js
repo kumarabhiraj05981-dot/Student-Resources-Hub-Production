@@ -15,6 +15,7 @@ const resourceRoutes = require("./routes/resourceRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const bookmarkRoutes = require("./routes/bookmarkRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 // ==========================================
 // APP
@@ -206,6 +207,8 @@ app.use(
   "/api/bookmarks",
   bookmarkRoutes
 );
+
+app.use("/api/notifications", notificationRoutes);
 
 // ==========================================
 // UPLOAD ROUTES

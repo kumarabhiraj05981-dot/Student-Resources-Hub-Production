@@ -6,6 +6,8 @@ const path = require("path");
 
 const cloudinary = require("../config/cloudinary");
 const Resource = require("../models/Resource");
+const Notification = require("../models/Notification");
+const User = require("../models/User");
 
 const adminAuth = require("../middleware/adminAuth");
 
@@ -336,45 +338,43 @@ router.post(
         "--------------------------------------"
       );
 
-// ======================================
-// CLOUDINARY UPLOAD PDF FIX
-// ======================================
+      // ======================================
+      // CLOUDINARY UPLOAD PDF
+      // ======================================
 
-const uploadToCloudinary = () => {
-  return new Promise((resolve, reject) => {
+      const uploadToCloudinary = () => {
+        return new Promise((resolve, reject) => {
+          const stream =
+            cloudinary.uploader.upload_stream(
+              {
+                folder:
+                  "student-resources",
 
-    const stream =
-      cloudinary.uploader.upload_stream(
-        {
-          folder: "student-resources",
+                // PDF ko proper document ki tarah upload karega
+                resource_type: "image",
 
-          // PDF ko proper document ki tarah upload karega
-          resource_type: "image",
+                public_id:
+                  publicId,
 
-          public_id: publicId,
+                format: "pdf",
 
-          format: "pdf",
+                overwrite: false,
+              },
 
-          overwrite: false,
+              (error, result) => {
+                if (error) {
+                  reject(error);
+                } else {
+                  resolve(result);
+                }
+              }
+            );
 
-        },
-
-        (error, result) => {
-
-          if (error) {
-            reject(error);
-          } else {
-            resolve(result);
-          }
-
-        }
-      );
-
-
-    stream.end(req.file.buffer);
-
-  });
-};
+          stream.end(
+            req.file.buffer
+          );
+        });
+      };
 
       // ======================================
       // START CLOUDINARY UPLOAD
@@ -448,10 +448,10 @@ const uploadToCloudinary = () => {
             cleanSubject,
 
           fileUrl:
-  cloudinaryResult.secure_url.replace(
-    "/upload/",
-    "/upload/fl_attachment:false/"
-  ),
+            cloudinaryResult.secure_url.replace(
+              "/upload/",
+              "/upload/fl_attachment:false/"
+            ),
 
           filePublicId:
             cloudinaryResult.public_id,
@@ -500,6 +500,62 @@ const uploadToCloudinary = () => {
       console.log(
         "======================================"
       );
+
+      // ======================================
+      // CREATE NOTIFICATIONS FOR STUDENTS
+      // ======================================
+
+      try {
+        console.log(
+          "🔔 CREATING RESOURCE NOTIFICATIONS..."
+        );
+
+        const students =
+          await User.find({
+            role: { $ne: "admin" },
+          }).select("_id");
+
+        if (students.length > 0) {
+          const notifications =
+            students.map((student) => ({
+              user:
+                student._id,
+
+              title:
+                `New ${resource.category || "Resource"} Added`,
+
+              message:
+                `${resource.title} has been added for ${resource.branch || "students"}.`,
+
+              type:
+                "resource",
+
+              resource:
+                resource._id,
+
+              isRead:
+                false,
+            }));
+
+          await Notification.insertMany(
+            notifications
+          );
+
+          console.log(
+            `🔔 NOTIFICATIONS CREATED FOR ${students.length} STUDENTS`
+          );
+        } else {
+          console.log(
+            "ℹ️ NO STUDENTS FOUND FOR NOTIFICATION"
+          );
+        }
+      } catch (notificationError) {
+        // Notification fail hone par upload fail nahi hoga
+        console.error(
+          "❌ NOTIFICATION CREATION ERROR:",
+          notificationError
+        );
+      }
 
       // ======================================
       // SUCCESS RESPONSE
