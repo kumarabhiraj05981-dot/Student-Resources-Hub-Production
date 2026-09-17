@@ -9,6 +9,8 @@ interface User {
   name?: string;
   email?: string;
   role?: string;
+  branch?: string;
+  semester?: string;
   createdAt?: string;
 }
 
@@ -18,9 +20,32 @@ interface ProfileResponse {
   message?: string;
 }
 
+const BRANCHES = [
+  "Computer Science",
+  "Electrical",
+  "Mechanical",
+  "Civil & CTM",
+  "Electronics",
+  "Leather Technology",
+];
+
+const SEMESTERS = [
+  "1st Semester",
+  "2nd Semester",
+  "3rd Semester",
+  "4th Semester",
+  "5th Semester",
+  "6th Semester",
+  "7th Semester",
+  "8th Semester",
+];
+
 export default function Profile() {
   const [user, setUser] = useState<User>({});
+
   const [name, setName] = useState("");
+  const [branch, setBranch] = useState("");
+  const [semester, setSemester] = useState("");
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -35,6 +60,10 @@ export default function Profile() {
 
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
+
+  // ==========================================
+  // LOAD PROFILE
+  // ==========================================
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -58,14 +87,20 @@ export default function Profile() {
         const profileUser = response.data.user;
 
         setUser(profileUser);
+
         setName(profileUser.name || "");
+        setBranch(profileUser.branch || "");
+        setSemester(profileUser.semester || "");
 
         localStorage.setItem(
           "user",
           JSON.stringify(profileUser)
         );
       } catch (error: any) {
-        console.error("Profile loading error:", error);
+        console.error(
+          "Profile loading error:",
+          error
+        );
 
         setProfileError(
           error.response?.data?.message ||
@@ -78,6 +113,10 @@ export default function Profile() {
 
     loadProfile();
   }, []);
+
+  // ==========================================
+  // UPDATE PROFILE
+  // ==========================================
 
   const handleProfileUpdate = async (
     event: FormEvent<HTMLFormElement>
@@ -98,6 +137,7 @@ export default function Profile() {
 
     try {
       setSavingProfile(true);
+
       setProfileMessage("");
       setProfileError("");
 
@@ -105,6 +145,8 @@ export default function Profile() {
         "/api/auth/profile",
         {
           name: name.trim(),
+          branch: branch.trim(),
+          semester: semester.trim(),
         },
         {
           headers: {
@@ -116,7 +158,10 @@ export default function Profile() {
       const updatedUser = response.data.user;
 
       setUser(updatedUser);
+
       setName(updatedUser.name || "");
+      setBranch(updatedUser.branch || "");
+      setSemester(updatedUser.semester || "");
 
       localStorage.setItem(
         "user",
@@ -128,7 +173,10 @@ export default function Profile() {
           "Profile updated successfully."
       );
     } catch (error: any) {
-      console.error("Profile update error:", error);
+      console.error(
+        "Profile update error:",
+        error
+      );
 
       setProfileError(
         error.response?.data?.message ||
@@ -138,6 +186,10 @@ export default function Profile() {
       setSavingProfile(false);
     }
   };
+
+  // ==========================================
+  // CHANGE PASSWORD
+  // ==========================================
 
   const handlePasswordChange = async (
     event: FormEvent<HTMLFormElement>
@@ -151,8 +203,14 @@ export default function Profile() {
       return;
     }
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setPasswordError("Please fill all password fields.");
+    if (
+      !currentPassword ||
+      !newPassword ||
+      !confirmPassword
+    ) {
+      setPasswordError(
+        "Please fill all password fields."
+      );
       return;
     }
 
@@ -164,12 +222,15 @@ export default function Profile() {
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError("New passwords do not match.");
+      setPasswordError(
+        "New passwords do not match."
+      );
       return;
     }
 
     try {
       setChangingPassword(true);
+
       setPasswordMessage("");
       setPasswordError("");
 
@@ -195,7 +256,10 @@ export default function Profile() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
-      console.error("Password change error:", error);
+      console.error(
+        "Password change error:",
+        error
+      );
 
       setPasswordError(
         error.response?.data?.message ||
@@ -206,6 +270,10 @@ export default function Profile() {
     }
   };
 
+  // ==========================================
+  // DISPLAY DATA
+  // ==========================================
+
   const displayName =
     user.name?.trim() ||
     user.email?.split("@")[0] ||
@@ -214,6 +282,10 @@ export default function Profile() {
   const firstLetter = displayName
     .charAt(0)
     .toUpperCase();
+
+  // ==========================================
+  // LOGIN CHECK
+  // ==========================================
 
   if (!localStorage.getItem("token")) {
     return (
@@ -229,7 +301,8 @@ export default function Profile() {
             </h1>
 
             <p className="mt-2 text-sm text-gray-500">
-              Please login to view and manage your profile.
+              Please login to view and manage your
+              profile.
             </p>
 
             <Link
@@ -246,6 +319,10 @@ export default function Profile() {
     );
   }
 
+  // ==========================================
+  // MAIN PROFILE PAGE
+  // ==========================================
+
   return (
     <div className="flex min-h-screen flex-col bg-blue-50">
       <Navbar />
@@ -253,7 +330,10 @@ export default function Profile() {
       <main className="flex-1 px-4 py-8 sm:py-10">
         <div className="mx-auto max-w-6xl">
 
-          {/* HEADER */}
+          {/* ========================================
+              HEADER
+          ======================================== */}
+
           <section className="rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 p-6 text-white shadow-xl sm:p-8">
             <p className="text-sm font-medium text-blue-100">
               Account Settings
@@ -264,15 +344,20 @@ export default function Profile() {
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm text-blue-100 sm:text-base">
-              Manage your personal information and account
-              security.
+              Manage your personal information,
+              academic details and account security.
             </p>
           </section>
 
+          {/* ========================================
+              LOADING
+          ======================================== */}
 
           {loading ? (
             <div className="mt-8 rounded-2xl bg-white p-10 text-center shadow-lg">
-              <div className="text-4xl">⏳</div>
+              <div className="text-4xl">
+                ⏳
+              </div>
 
               <p className="mt-3 font-medium text-gray-600">
                 Loading profile...
@@ -281,7 +366,10 @@ export default function Profile() {
           ) : (
             <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-              {/* PROFILE CARD */}
+              {/* ======================================
+                  PROFILE CARD
+              ====================================== */}
+
               <section className="rounded-2xl bg-white p-6 shadow-lg">
                 <div className="flex flex-col items-center text-center">
 
@@ -294,7 +382,8 @@ export default function Profile() {
                   </h2>
 
                   <p className="mt-1 break-all text-sm text-gray-500">
-                    {user.email || "No email available"}
+                    {user.email ||
+                      "No email available"}
                   </p>
 
                   {user.role && (
@@ -304,7 +393,9 @@ export default function Profile() {
                   )}
                 </div>
 
-                <div className="mt-8 space-y-4 border-t pt-6">
+                <div className="mt-8 space-y-5 border-t pt-6">
+
+                  {/* ACCOUNT ID */}
 
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
@@ -312,9 +403,12 @@ export default function Profile() {
                     </p>
 
                     <p className="mt-1 break-all text-sm text-gray-600">
-                      {user._id || "Not available"}
+                      {user._id ||
+                        "Not available"}
                     </p>
                   </div>
+
+                  {/* EMAIL */}
 
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
@@ -322,9 +416,12 @@ export default function Profile() {
                     </p>
 
                     <p className="mt-1 break-all text-sm text-gray-600">
-                      {user.email || "Not available"}
+                      {user.email ||
+                        "Not available"}
                     </p>
                   </div>
+
+                  {/* ACCOUNT TYPE */}
 
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
@@ -332,17 +429,49 @@ export default function Profile() {
                     </p>
 
                     <p className="mt-1 text-sm capitalize text-gray-600">
-                      {user.role || "Student"}
+                      {user.role ||
+                        "Student"}
+                    </p>
+                  </div>
+
+                  {/* BRANCH */}
+
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                      Branch
+                    </p>
+
+                    <p className="mt-1 text-sm text-gray-600">
+                      {user.branch ||
+                        "Not selected"}
+                    </p>
+                  </div>
+
+                  {/* SEMESTER */}
+
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                      Semester
+                    </p>
+
+                    <p className="mt-1 text-sm text-gray-600">
+                      {user.semester ||
+                        "Not selected"}
                     </p>
                   </div>
                 </div>
               </section>
 
+              {/* ======================================
+                  RIGHT SIDE
+              ====================================== */}
 
-              {/* RIGHT SIDE */}
               <div className="space-y-6 lg:col-span-2">
 
-                {/* EDIT PROFILE */}
+                {/* ====================================
+                    EDIT PROFILE
+                ==================================== */}
+
                 <section className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
 
                   <div className="mb-6">
@@ -351,19 +480,24 @@ export default function Profile() {
                     </h2>
 
                     <p className="mt-1 text-sm text-gray-500">
-                      Update your profile information.
+                      Update your personal and
+                      academic information.
                     </p>
                   </div>
 
+                  {/* SUCCESS MESSAGE */}
+
                   {profileMessage && (
                     <div className="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
-                       {profileMessage}
+                      {profileMessage}
                     </div>
                   )}
 
+                  {/* ERROR MESSAGE */}
+
                   {profileError && (
                     <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                       {profileError}
+                      {profileError}
                     </div>
                   )}
 
@@ -371,6 +505,9 @@ export default function Profile() {
                     onSubmit={handleProfileUpdate}
                     className="space-y-5"
                   >
+
+                    {/* NAME */}
+
                     <div>
                       <label
                         htmlFor="profile-name"
@@ -384,12 +521,16 @@ export default function Profile() {
                         type="text"
                         value={name}
                         onChange={(event) =>
-                          setName(event.target.value)
+                          setName(
+                            event.target.value
+                          )
                         }
                         placeholder="Enter your name"
                         className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                       />
                     </div>
+
+                    {/* EMAIL */}
 
                     <div>
                       <label
@@ -408,9 +549,100 @@ export default function Profile() {
                       />
 
                       <p className="mt-2 text-xs text-gray-400">
-                        Email address cannot be changed here.
+                        Email address cannot be
+                        changed here.
                       </p>
                     </div>
+
+                    {/* ==================================
+                        BRANCH
+                    ================================== */}
+
+                    <div>
+                      <label
+                        htmlFor="profile-branch"
+                        className="mb-2 block text-sm font-semibold text-gray-700"
+                      >
+                        Branch
+                      </label>
+
+                      <select
+                        id="profile-branch"
+                        value={branch}
+                        onChange={(event) =>
+                          setBranch(
+                            event.target.value
+                          )
+                        }
+                        className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="">
+                          Select your branch
+                        </option>
+
+                        {BRANCHES.map(
+                          (branchName) => (
+                            <option
+                              key={branchName}
+                              value={branchName}
+                            >
+                              {branchName}
+                            </option>
+                          )
+                        )}
+                      </select>
+
+                      <p className="mt-2 text-xs text-gray-400">
+                        Select your current
+                        engineering branch.
+                      </p>
+                    </div>
+
+                    {/* ==================================
+                        SEMESTER
+                    ================================== */}
+
+                    <div>
+                      <label
+                        htmlFor="profile-semester"
+                        className="mb-2 block text-sm font-semibold text-gray-700"
+                      >
+                        Semester
+                      </label>
+
+                      <select
+                        id="profile-semester"
+                        value={semester}
+                        onChange={(event) =>
+                          setSemester(
+                            event.target.value
+                          )
+                        }
+                        className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="">
+                          Select your semester
+                        </option>
+
+                        {SEMESTERS.map(
+                          (semesterName) => (
+                            <option
+                              key={semesterName}
+                              value={semesterName}
+                            >
+                              {semesterName}
+                            </option>
+                          )
+                        )}
+                      </select>
+
+                      <p className="mt-2 text-xs text-gray-400">
+                        Select your current
+                        semester.
+                      </p>
+                    </div>
+
+                    {/* SAVE BUTTON */}
 
                     <button
                       type="submit"
@@ -424,8 +656,10 @@ export default function Profile() {
                   </form>
                 </section>
 
+                {/* ====================================
+                    CHANGE PASSWORD
+                ==================================== */}
 
-                {/* CHANGE PASSWORD */}
                 <section className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
 
                   <div className="mb-6">
@@ -434,16 +668,20 @@ export default function Profile() {
                     </h2>
 
                     <p className="mt-1 text-sm text-gray-500">
-                      Keep your account secure with a strong
-                      password.
+                      Keep your account secure with
+                      a strong password.
                     </p>
                   </div>
+
+                  {/* SUCCESS */}
 
                   {passwordMessage && (
                     <div className="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
                       {passwordMessage}
                     </div>
                   )}
+
+                  {/* ERROR */}
 
                   {passwordError && (
                     <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
@@ -455,6 +693,8 @@ export default function Profile() {
                     onSubmit={handlePasswordChange}
                     className="space-y-5"
                   >
+
+                    {/* CURRENT PASSWORD */}
 
                     <div>
                       <label
@@ -478,6 +718,7 @@ export default function Profile() {
                       />
                     </div>
 
+                    {/* NEW PASSWORD */}
 
                     <div>
                       <label
@@ -505,6 +746,7 @@ export default function Profile() {
                       </p>
                     </div>
 
+                    {/* CONFIRM PASSWORD */}
 
                     <div>
                       <label
@@ -528,6 +770,7 @@ export default function Profile() {
                       />
                     </div>
 
+                    {/* CHANGE PASSWORD BUTTON */}
 
                     <button
                       type="submit"
@@ -544,7 +787,6 @@ export default function Profile() {
               </div>
             </div>
           )}
-
         </div>
       </main>
 

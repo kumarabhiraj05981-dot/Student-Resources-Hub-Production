@@ -44,15 +44,13 @@ const upload = multer({
   storage: multer.memoryStorage(),
 
   limits: {
-    fileSize: 500 * 1024 * 1024, // 500 MB
+    fileSize: 500 * 1024 * 1024,
   },
 
   fileFilter: (req, file, cb) => {
     const isPDF =
       file.mimetype === "application/pdf" ||
-      file.originalname
-        .toLowerCase()
-        .endsWith(".pdf");
+      file.originalname.toLowerCase().endsWith(".pdf");
 
     if (!isPDF) {
       return cb(
@@ -91,28 +89,15 @@ router.post(
         "======================================"
       );
 
-      console.log(
-        "📤 RESOURCE UPLOAD REQUEST"
-      );
+      console.log("📤 RESOURCE UPLOAD REQUEST");
 
       console.log(
         "======================================"
       );
 
-      console.log(
-        "BODY:",
-        req.body
-      );
-
-      console.log(
-        "FILE:",
-        req.file?.originalname
-      );
-
-      console.log(
-        "MIME:",
-        req.file?.mimetype
-      );
+      console.log("BODY:", req.body);
+      console.log("FILE:", req.file?.originalname);
+      console.log("MIME:", req.file?.mimetype);
 
       // ======================================
       // CHECK FILE
@@ -121,8 +106,7 @@ router.post(
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          message:
-            "Please select a PDF file",
+          message: "Please select a PDF file",
         });
       }
 
@@ -146,8 +130,7 @@ router.post(
       if (!title || !title.trim()) {
         return res.status(400).json({
           success: false,
-          message:
-            "Resource title is required",
+          message: "Resource title is required",
         });
       }
 
@@ -160,25 +143,17 @@ router.post(
       if (!branch || !branch.trim()) {
         return res.status(400).json({
           success: false,
-          message:
-            "Please select a branch",
+          message: "Please select a branch",
         });
       }
 
-      const cleanBranch =
-        branch.trim();
+      const cleanBranch = branch.trim();
 
-      if (
-        !ALLOWED_BRANCHES.includes(
-          cleanBranch
-        )
-      ) {
+      if (!ALLOWED_BRANCHES.includes(cleanBranch)) {
         return res.status(400).json({
           success: false,
-          message:
-            "Invalid branch",
-          allowedBranches:
-            ALLOWED_BRANCHES,
+          message: "Invalid branch",
+          allowedBranches: ALLOWED_BRANCHES,
         });
       }
 
@@ -186,49 +161,33 @@ router.post(
       // SEMESTER VALIDATION
       // ======================================
 
-      if (
-        !semester ||
-        !semester.trim()
-      ) {
+      if (!semester || !semester.trim()) {
         return res.status(400).json({
           success: false,
-          message:
-            "Please select semester",
+          message: "Please select semester",
         });
       }
 
-      const cleanSemester =
-        semester.trim();
+      const cleanSemester = semester.trim();
 
       // ======================================
       // CATEGORY VALIDATION
       // ======================================
 
-      if (
-        !category ||
-        !category.trim()
-      ) {
+      if (!category || !category.trim()) {
         return res.status(400).json({
           success: false,
-          message:
-            "Please select category",
+          message: "Please select category",
         });
       }
 
-      const cleanCategory =
-        category.trim();
+      const cleanCategory = category.trim();
 
-      if (
-        !ALLOWED_CATEGORIES.includes(
-          cleanCategory
-        )
-      ) {
+      if (!ALLOWED_CATEGORIES.includes(cleanCategory)) {
         return res.status(400).json({
           success: false,
-          message:
-            "Invalid resource category",
-          allowedCategories:
-            ALLOWED_CATEGORIES,
+          message: "Invalid resource category",
+          allowedCategories: ALLOWED_CATEGORIES,
         });
       }
 
@@ -236,19 +195,17 @@ router.post(
       // SUBJECT
       // ======================================
 
-      const cleanSubject =
-        subject
-          ? subject.trim()
-          : "";
+      const cleanSubject = subject
+        ? subject.trim()
+        : "";
 
       // ======================================
       // DESCRIPTION
       // ======================================
 
-      const cleanDescription =
-        description
-          ? description.trim()
-          : "";
+      const cleanDescription = description
+        ? description.trim()
+        : "";
 
       // ======================================
       // ORIGINAL FILE NAME
@@ -258,9 +215,7 @@ router.post(
         req.file.originalname;
 
       const extension =
-        path.extname(
-          originalFileName
-        ).toLowerCase();
+        path.extname(originalFileName).toLowerCase();
 
       const nameWithoutExtension =
         path.basename(
@@ -274,19 +229,12 @@ router.post(
 
       const cleanFileName =
         nameWithoutExtension
-          .replace(
-            /[^a-zA-Z0-9-_ ]/g,
-            ""
-          )
+          .replace(/[^a-zA-Z0-9-_ ]/g, "")
           .trim()
-          .replace(
-            /\s+/g,
-            "-"
-          );
+          .replace(/\s+/g, "-");
 
       const safeFileName =
-        cleanFileName ||
-        "resource";
+        cleanFileName || "resource";
 
       // ======================================
       // UNIQUE CLOUDINARY PUBLIC ID
@@ -299,40 +247,13 @@ router.post(
         "--------------------------------------"
       );
 
-      console.log(
-        "TITLE:",
-        cleanTitle
-      );
-
-      console.log(
-        "BRANCH:",
-        cleanBranch
-      );
-
-      console.log(
-        "SEMESTER:",
-        cleanSemester
-      );
-
-      console.log(
-        "CATEGORY:",
-        cleanCategory
-      );
-
-      console.log(
-        "SUBJECT:",
-        cleanSubject
-      );
-
-      console.log(
-        "FILE:",
-        originalFileName
-      );
-
-      console.log(
-        "PUBLIC ID:",
-        publicId
-      );
+      console.log("TITLE:", cleanTitle);
+      console.log("BRANCH:", cleanBranch);
+      console.log("SEMESTER:", cleanSemester);
+      console.log("CATEGORY:", cleanCategory);
+      console.log("SUBJECT:", cleanSubject);
+      console.log("FILE:", originalFileName);
+      console.log("PUBLIC ID:", publicId);
 
       console.log(
         "--------------------------------------"
@@ -347,14 +268,11 @@ router.post(
           const stream =
             cloudinary.uploader.upload_stream(
               {
-                folder:
-                  "student-resources",
+                folder: "student-resources",
 
-                // PDF ko proper document ki tarah upload karega
                 resource_type: "image",
 
-                public_id:
-                  publicId,
+                public_id: publicId,
 
                 format: "pdf",
 
@@ -370,9 +288,7 @@ router.post(
               }
             );
 
-          stream.end(
-            req.file.buffer
-          );
+          stream.end(req.file.buffer);
         });
       };
 
@@ -408,8 +324,7 @@ router.post(
       ) {
         return res.status(500).json({
           success: false,
-          message:
-            "Cloudinary upload failed",
+          message: "Cloudinary upload failed",
         });
       }
 
@@ -429,23 +344,17 @@ router.post(
 
       const resource =
         new Resource({
-          title:
-            cleanTitle,
+          title: cleanTitle,
 
-          description:
-            cleanDescription,
+          description: cleanDescription,
 
-          branch:
-            cleanBranch,
+          branch: cleanBranch,
 
-          semester:
-            cleanSemester,
+          semester: cleanSemester,
 
-          category:
-            cleanCategory,
+          category: cleanCategory,
 
-          subject:
-            cleanSubject,
+          subject: cleanSubject,
 
           fileUrl:
             cloudinaryResult.secure_url.replace(
@@ -502,39 +411,57 @@ router.post(
       );
 
       // ======================================
-      // CREATE NOTIFICATIONS FOR STUDENTS
+      // CREATE SMART NOTIFICATIONS
       // ======================================
 
       try {
         console.log(
-          "🔔 CREATING RESOURCE NOTIFICATIONS..."
+          "🔔 CREATING SMART RESOURCE NOTIFICATIONS..."
         );
+
+        console.log(
+          "🎯 TARGET BRANCH:",
+          resource.branch
+        );
+
+        console.log(
+          "🎯 TARGET SEMESTER:",
+          resource.semester
+        );
+
+        // ====================================
+        // FIND ONLY MATCHING STUDENTS
+        // ====================================
 
         const students =
           await User.find({
             role: { $ne: "admin" },
-          }).select("_id");
+
+            branch: resource.branch,
+
+            semester: resource.semester,
+          }).select("_id name email branch semester");
+
+        console.log(
+          `🎯 MATCHING STUDENTS FOUND: ${students.length}`
+        );
 
         if (students.length > 0) {
           const notifications =
             students.map((student) => ({
-              user:
-                student._id,
+              user: student._id,
 
               title:
                 `New ${resource.category || "Resource"} Added`,
 
               message:
-                `${resource.title} has been added for ${resource.branch || "students"}.`,
+                `${resource.title} has been added for ${resource.branch}, ${resource.semester}.`,
 
-              type:
-                "resource",
+              type: "resource",
 
-              resource:
-                resource._id,
+              resource: resource._id,
 
-              isRead:
-                false,
+              isRead: false,
             }));
 
           await Notification.insertMany(
@@ -542,11 +469,17 @@ router.post(
           );
 
           console.log(
-            `🔔 NOTIFICATIONS CREATED FOR ${students.length} STUDENTS`
+            `🔔 SMART NOTIFICATIONS CREATED FOR ${students.length} MATCHING STUDENTS`
           );
+
+          students.forEach((student) => {
+            console.log(
+              `   👤 ${student.name || "Student"} | ${student.email} | ${student.branch} | ${student.semester}`
+            );
+          });
         } else {
           console.log(
-            "ℹ️ NO STUDENTS FOUND FOR NOTIFICATION"
+            "ℹ️ NO MATCHING STUDENTS FOUND FOR THIS RESOURCE"
           );
         }
       } catch (notificationError) {
@@ -579,9 +512,7 @@ router.post(
         "❌ RESOURCE UPLOAD ERROR:"
       );
 
-      console.error(
-        error
-      );
+      console.error(error);
 
       console.error(
         "======================================"
@@ -589,6 +520,7 @@ router.post(
 
       return res.status(500).json({
         success: false,
+
         message:
           error.message ||
           "PDF upload failed",

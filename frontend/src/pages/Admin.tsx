@@ -54,8 +54,6 @@ export default function Admin() {
 
   const [file, setFile] = useState<File | null>(null);
 
-  // IMPORTANT:
-  // File input ko reset karne ke liye key use karenge.
   const [fileInputKey, setFileInputKey] = useState(0);
 
   const [uploading, setUploading] = useState(false);
@@ -72,6 +70,22 @@ export default function Admin() {
   const [filterBranch, setFilterBranch] = useState("All");
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // ==========================================
+  // EDIT STATES
+  // ==========================================
+
+  const [editingResource, setEditingResource] =
+    useState<Resource | null>(null);
+
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editBranch, setEditBranch] = useState("Computer Science");
+  const [editSemester, setEditSemester] = useState("");
+  const [editCategory, setEditCategory] = useState("Notes");
+  const [editSubject, setEditSubject] = useState("");
+
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // ==========================================
   // MAX FILE SIZE
@@ -136,8 +150,6 @@ export default function Admin() {
 
   const resetFileInput = () => {
     setFile(null);
-
-    // File input ko completely recreate karega.
     setFileInputKey((prev) => prev + 1);
   };
 
@@ -375,7 +387,6 @@ export default function Admin() {
       // ======================================
 
       await loadResources();
-
     } catch (error: any) {
       console.error(
         "UPLOAD ERROR:",
@@ -389,6 +400,173 @@ export default function Admin() {
       );
     } finally {
       setUploading(false);
+    }
+  };
+
+  // ==========================================
+  // OPEN EDIT MODAL
+  // ==========================================
+
+  const handleEdit = (resource: Resource) => {
+    setEditingResource(resource);
+
+    setEditTitle(resource.title || "");
+    setEditDescription(
+      resource.description || ""
+    );
+    setEditBranch(
+      resource.branch || "Computer Science"
+    );
+    setEditSemester(
+      resource.semester || ""
+    );
+    setEditCategory(
+      resource.category || "Notes"
+    );
+    setEditSubject(
+      resource.subject || ""
+    );
+  };
+
+  // ==========================================
+  // CLOSE EDIT MODAL
+  // ==========================================
+
+  const closeEditModal = () => {
+    if (savingEdit) return;
+
+    setEditingResource(null);
+
+    setEditTitle("");
+    setEditDescription("");
+    setEditBranch("Computer Science");
+    setEditSemester("");
+    setEditCategory("Notes");
+    setEditSubject("");
+  };
+
+  // ==========================================
+  // SAVE EDIT
+  // ==========================================
+
+  const handleSaveEdit = async (
+    e: React.FormEvent
+  ) => {
+    e.preventDefault();
+
+    if (!editingResource) return;
+
+    // ======================================
+    // VALIDATION
+    // ======================================
+
+    if (!editTitle.trim()) {
+      alert("Please enter resource title");
+      return;
+    }
+
+    if (!editBranch) {
+      alert("Please select branch");
+      return;
+    }
+
+    if (!editSemester) {
+      alert("Please select semester");
+      return;
+    }
+
+    if (!editCategory) {
+      alert("Please select category");
+      return;
+    }
+
+    try {
+      setSavingEdit(true);
+
+      const token =
+        localStorage.getItem("token");
+
+      if (!token) {
+        alert("Please login first");
+        return;
+      }
+
+      // ======================================
+      // UPDATE REQUEST
+      // ======================================
+
+      const res = await api.put(
+        `/api/resources/${editingResource._id}`,
+        {
+          title: editTitle.trim(),
+
+          description:
+            editDescription.trim(),
+
+          branch: editBranch,
+
+          semester: editSemester,
+
+          category: editCategory,
+
+          subject:
+            editSubject.trim(),
+        },
+        {
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log(
+        "EDIT RESPONSE:",
+        res.data
+      );
+
+      if (!res.data?.success) {
+        throw new Error(
+          res.data?.message ||
+            "Update failed"
+        );
+      }
+
+      // ======================================
+      // UPDATE LOCAL LIST
+      // ======================================
+
+      if (res.data?.resource) {
+        setResources((prev) =>
+          prev.map((item) =>
+            item._id ===
+            editingResource._id
+              ? res.data.resource
+              : item
+          )
+        );
+      } else {
+        await loadResources();
+      }
+
+      alert(
+        "Resource updated successfully!"
+      );
+
+      closeEditModal();
+    } catch (error: any) {
+      console.error(
+        "EDIT RESOURCE ERROR:",
+        error.response?.data || error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to update resource"
+      );
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -454,7 +632,6 @@ export default function Admin() {
           (item) => item._id !== id
         )
       );
-
     } catch (error: any) {
       console.error(
         "DELETE ERROR:",
@@ -882,6 +1059,10 @@ export default function Admin() {
 
           </div>
 
+          {/* ======================================
+              FILTERS
+          ====================================== */}
+
           <div className="mb-6">
 
             <h3 className="text-xl font-bold text-gray-800">
@@ -1059,6 +1240,10 @@ export default function Admin() {
 
                       </div>
 
+                      {/* ==================================
+                          ACTION BUTTONS
+                      ================================== */}
+
                       <div className="flex flex-wrap gap-2">
 
                         {resource.fileUrl && (
@@ -1071,6 +1256,24 @@ export default function Admin() {
                             Open
                           </a>
                         )}
+
+                        {/* EDIT */}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleEdit(resource)
+                          }
+                          disabled={
+                            deletingId ===
+                            resource._id
+                          }
+                          className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white rounded-lg font-semibold text-sm"
+                        >
+                          Edit
+                        </button>
+
+                        {/* DELETE */}
 
                         <button
                           type="button"
@@ -1105,6 +1308,277 @@ export default function Admin() {
         </div>
 
       </div>
+
+      {/* ==========================================
+          EDIT MODAL
+      ========================================== */}
+
+      {editingResource && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onMouseDown={(e) => {
+            if (
+              e.target === e.currentTarget &&
+              !savingEdit
+            ) {
+              closeEditModal();
+            }
+          }}
+        >
+
+          <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl">
+
+            {/* ======================================
+                MODAL HEADER
+            ====================================== */}
+
+            <div className="flex items-center justify-between gap-4 p-6 border-b border-gray-200">
+
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Edit Resource
+                </h2>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  Update resource information.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeEditModal}
+                disabled={savingEdit}
+                className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 disabled:bg-gray-100 text-gray-700 text-xl font-bold transition"
+                aria-label="Close"
+              >
+                ×
+              </button>
+
+            </div>
+
+            {/* ======================================
+                EDIT FORM
+            ====================================== */}
+
+            <form
+              onSubmit={handleSaveEdit}
+              className="p-6 space-y-5"
+            >
+
+              {/* RESOURCE TITLE */}
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-2">
+                  Resource Title *
+                </label>
+
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) =>
+                    setEditTitle(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Enter resource title"
+                  className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              {/* BRANCH */}
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-2">
+                  Branch *
+                </label>
+
+                <select
+                  value={editBranch}
+                  onChange={(e) =>
+                    setEditBranch(
+                      e.target.value
+                    )
+                  }
+                  className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  {BRANCHES.map(
+                    (branchName) => (
+                      <option
+                        key={branchName}
+                        value={branchName}
+                      >
+                        {branchName}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+
+              {/* DESCRIPTION */}
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-2">
+                  Description
+                </label>
+
+                <textarea
+                  value={editDescription}
+                  onChange={(e) =>
+                    setEditDescription(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Enter resource description"
+                  rows={4}
+                  className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* SEMESTER */}
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-2">
+                  Semester *
+                </label>
+
+                <select
+                  value={editSemester}
+                  onChange={(e) =>
+                    setEditSemester(
+                      e.target.value
+                    )
+                  }
+                  className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="">
+                    Select Semester
+                  </option>
+
+                  {SEMESTERS.map(
+                    (semesterName) => (
+                      <option
+                        key={semesterName}
+                        value={semesterName}
+                      >
+                        {semesterName}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+
+              {/* SUBJECT */}
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-2">
+                  Subject
+                </label>
+
+                <input
+                  type="text"
+                  value={editSubject}
+                  onChange={(e) =>
+                    setEditSubject(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Example: DBMS"
+                  className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* CATEGORY */}
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-2">
+                  Category *
+                </label>
+
+                <select
+                  value={editCategory}
+                  onChange={(e) =>
+                    setEditCategory(
+                      e.target.value
+                    )
+                  }
+                  className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  {CATEGORIES.map(
+                    (categoryName) => (
+                      <option
+                        key={categoryName}
+                        value={categoryName}
+                      >
+                        {categoryName ===
+                        "Ebooks"
+                          ? "E-Books"
+                          : categoryName}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+
+              {/* EXISTING FILE INFO */}
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+
+                <p className="text-sm font-semibold text-blue-800 mb-1">
+                  Existing PDF
+                </p>
+
+                <p className="text-sm text-blue-700 break-all">
+                  {editingResource.fileName ||
+                    "Current Cloudinary PDF"}
+                </p>
+
+                <p className="text-xs text-blue-600 mt-2">
+                  The existing PDF will remain unchanged.
+                </p>
+
+              </div>
+
+              {/* ==================================
+                  MODAL ACTIONS
+              ================================== */}
+
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t border-gray-200">
+
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  disabled={savingEdit}
+                  className="px-5 py-3 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-100 text-gray-700 rounded-lg font-semibold transition"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  className={`px-5 py-3 rounded-lg text-white font-semibold transition ${
+                    savingEdit
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                >
+                  {savingEdit
+                    ? "Saving Changes..."
+                    : "Save Changes"}
+                </button>
+
+              </div>
+
+            </form>
+
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }
