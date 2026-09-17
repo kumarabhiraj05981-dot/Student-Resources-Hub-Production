@@ -1,23 +1,23 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
-import api from "../services/api";
 import BookmarkButton from "../components/bookmarks/BookmarkButton";
 import ResourceFilters from "../components/resources/ResourceFilters";
+import api from "../services/api";
 
 interface Resource {
   _id: string;
   title: string;
   description?: string;
   branch?: string;
-  category: string;
-  semester: string;
+  category?: string;
+  semester?: string;
   subject?: string;
-  fileUrl: string;
+  fileUrl?: string;
   fileName?: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 interface Branch {
@@ -26,6 +26,10 @@ interface Branch {
   shortName: string;
   description: string;
 }
+
+/* =========================================================
+   BRANCHES
+========================================================= */
 
 const branches: Branch[] = [
   {
@@ -72,6 +76,10 @@ const branches: Branch[] = [
   },
 ];
 
+/* =========================================================
+   DATABASE BRANCH NAMES
+========================================================= */
+
 const branchApiNames: Record<string, string> = {
   cse: "Computer Science",
   electrical: "Electrical",
@@ -81,17 +89,35 @@ const branchApiNames: Record<string, string> = {
   leather: "Leather Technology",
 };
 
-const RESOURCE_FOLDERS = [
+/* =========================================================
+   BRANCH FILTER OPTIONS
+========================================================= */
+
+const branchFilterOptions = [
+  "Computer Science",
+  "Information Technology",
+  "Electronics & Communication",
+  "Electrical",
+  "Mechanical",
+  "Civil & CTM",
+  "Leather Technology",
+];
+
+/* =========================================================
+   RESOURCE FOLDERS
+========================================================= */
+
+const resourceFolders = [
   {
     id: "Notes",
     name: "Notes",
     description:
       "Study notes, unit notes and subject-wise learning material.",
-    bg: "bg-blue-50",
-    hover: "hover:bg-blue-100",
-    border: "border-blue-200",
     iconBg: "bg-blue-100",
     iconText: "text-blue-700",
+    cardBg: "bg-blue-50",
+    cardHover: "hover:bg-blue-100",
+    border: "border-blue-200",
     button: "bg-blue-600 hover:bg-blue-700",
   },
   {
@@ -99,11 +125,11 @@ const RESOURCE_FOLDERS = [
     name: "PYQ",
     description:
       "Previous year question papers and exam papers.",
-    bg: "bg-orange-50",
-    hover: "hover:bg-orange-100",
-    border: "border-orange-200",
     iconBg: "bg-orange-100",
     iconText: "text-orange-700",
+    cardBg: "bg-orange-50",
+    cardHover: "hover:bg-orange-100",
+    border: "border-orange-200",
     button: "bg-orange-500 hover:bg-orange-600",
   },
   {
@@ -111,11 +137,11 @@ const RESOURCE_FOLDERS = [
     name: "Syllabus",
     description:
       "Semester-wise syllabus and course documents.",
-    bg: "bg-purple-50",
-    hover: "hover:bg-purple-100",
-    border: "border-purple-200",
     iconBg: "bg-purple-100",
     iconText: "text-purple-700",
+    cardBg: "bg-purple-50",
+    cardHover: "hover:bg-purple-100",
+    border: "border-purple-200",
     button: "bg-purple-600 hover:bg-purple-700",
   },
   {
@@ -123,53 +149,227 @@ const RESOURCE_FOLDERS = [
     name: "E-Books",
     description:
       "Useful books and learning material in PDF format.",
-    bg: "bg-green-50",
-    hover: "hover:bg-green-100",
-    border: "border-green-200",
     iconBg: "bg-green-100",
     iconText: "text-green-700",
+    cardBg: "bg-green-50",
+    cardHover: "hover:bg-green-100",
+    border: "border-green-200",
     button: "bg-green-600 hover:bg-green-700",
   },
 ];
 
+/* =========================================================
+   SEMESTER ALIASES
+========================================================= */
+
+const semesterAliases: Record<string, string[]> = {
+  "1": [
+    "1",
+    "1st",
+    "1st semester",
+    "semester 1",
+    "semester-1",
+  ],
+  "2": [
+    "2",
+    "2nd",
+    "2nd semester",
+    "semester 2",
+    "semester-2",
+  ],
+  "3": [
+    "3",
+    "3rd",
+    "3rd semester",
+    "semester 3",
+    "semester-3",
+  ],
+  "4": [
+    "4",
+    "4th",
+    "4th semester",
+    "semester 4",
+    "semester-4",
+  ],
+  "5": [
+    "5",
+    "5th",
+    "5th semester",
+    "semester 5",
+    "semester-5",
+  ],
+  "6": [
+    "6",
+    "6th",
+    "6th semester",
+    "semester 6",
+    "semester-6",
+  ],
+  "7": [
+    "7",
+    "7th",
+    "7th semester",
+    "semester 7",
+    "semester-7",
+  ],
+  "8": [
+    "8",
+    "8th",
+    "8th semester",
+    "semester 8",
+    "semester-8",
+  ],
+};
+
+/* =========================================================
+   NORMALIZE HELPER
+========================================================= */
+
+const normalize = (value?: string) => {
+  return (value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+};
+
+/* =========================================================
+   BRANCH MATCHING
+========================================================= */
+
+const matchesBranch = (
+  resourceBranch: string,
+  selectedBranch: string
+) => {
+  const resource = normalize(resourceBranch);
+  const selected = normalize(selectedBranch);
+
+  if (!resource || !selected) {
+    return false;
+  }
+
+  if (selected === "computer science") {
+    return [
+      "computer science",
+      "computer science engineering",
+      "cse",
+    ].includes(resource);
+  }
+
+  if (selected === "information technology") {
+    return [
+      "information technology",
+      "information technology engineering",
+      "it",
+    ].includes(resource);
+  }
+
+  if (selected === "electronics & communication") {
+    return [
+      "electronics",
+      "electronics engineering",
+      "electronics & communication",
+      "electronics and communication",
+      "electronics and communication engineering",
+      "ece",
+    ].includes(resource);
+  }
+
+  if (selected === "electrical") {
+    return [
+      "electrical",
+      "electrical engineering",
+      "eee",
+    ].includes(resource);
+  }
+
+  if (selected === "mechanical") {
+    return [
+      "mechanical",
+      "mechanical engineering",
+      "me",
+    ].includes(resource);
+  }
+
+  if (selected === "civil & ctm") {
+    return [
+      "civil & ctm",
+      "civil / ctm",
+      "civil",
+      "civil engineering",
+      "civil engineering / ctm",
+      "civil and ctm",
+    ].includes(resource);
+  }
+
+  if (selected === "leather technology") {
+    return [
+      "leather technology",
+      "leather",
+    ].includes(resource);
+  }
+
+  return resource === selected;
+};
+
+/* =========================================================
+   SEMESTER MATCHING
+========================================================= */
+
+const matchesSemester = (
+  resourceSemester: string,
+  selectedSemester: string
+) => {
+  if (!selectedSemester) {
+    return true;
+  }
+
+  const resourceValue = normalize(resourceSemester);
+
+  const aliases =
+    semesterAliases[selectedSemester] || [
+      normalize(selectedSemester),
+    ];
+
+  return aliases.includes(resourceValue);
+};
+
+/* =========================================================
+   COMPONENT
+========================================================= */
+
 export default function BranchResources() {
   const { branchId } = useParams();
 
-  const selectedBranchId = branchId || "cse";
-
-  const branch =
-    branches.find((item) => item.id === selectedBranchId) ||
+  const currentBranch =
+    branches.find((item) => item.id === branchId) ||
     branches[0];
 
   const apiBranchName =
-    branchApiNames[branch.id] || "Computer Science";
+    branchApiNames[currentBranch.id] ||
+    "Computer Science";
 
-  /* =========================================================
-     STATES
-  ========================================================= */
+  /* =======================================================
+     STATE
+  ======================================================= */
 
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const [selectedFolder, setSelectedFolder] =
-    useState<string | null>(null);
-
-  /* FILTER STATES */
 
   const [search, setSearch] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
   const [semesterFilter, setSemesterFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
 
-  /* BOOKMARK STATES */
+  const [selectedFolder, setSelectedFolder] =
+    useState<string | null>(null);
 
   const [bookmarkedIds, setBookmarkedIds] =
     useState<string[]>([]);
 
-  /* =========================================================
+  /* =======================================================
      LOAD RESOURCES
-  ========================================================= */
+  ======================================================= */
 
   const loadResources = async () => {
     try {
@@ -180,20 +380,15 @@ export default function BranchResources() {
 
       const data = response.data;
 
-      let resourceList: Resource[] = [];
-
       if (Array.isArray(data)) {
-        resourceList = data;
+        setResources(data);
       } else if (Array.isArray(data?.resources)) {
-        resourceList = data.resources;
+        setResources(data.resources);
+      } else {
+        setResources([]);
       }
-
-      setResources(resourceList);
     } catch (err: any) {
-      console.error(
-        "RESOURCE LOAD ERROR:",
-        err?.response?.data || err
-      );
+      console.error("RESOURCE LOAD ERROR:", err);
 
       setError(
         err?.response?.data?.message ||
@@ -206,9 +401,9 @@ export default function BranchResources() {
     }
   };
 
-  /* =========================================================
+  /* =======================================================
      LOAD BOOKMARKS
-  ========================================================= */
+  ======================================================= */
 
   const loadBookmarks = async () => {
     const token = localStorage.getItem("token");
@@ -241,157 +436,134 @@ export default function BranchResources() {
     }
   };
 
-  /* =========================================================
-     PAGE LOAD
-  ========================================================= */
+  /* =======================================================
+     INITIAL LOAD
+  ======================================================= */
 
   useEffect(() => {
     loadResources();
     loadBookmarks();
   }, []);
 
-  /* =========================================================
+  /* =======================================================
+     RESET WHEN URL BRANCH CHANGES
+  ======================================================= */
+
+  useEffect(() => {
+    setSelectedFolder(null);
+    setSearch("");
+    setBranchFilter("");
+    setSemesterFilter("");
+    setCategoryFilter("");
+  }, [currentBranch.id]);
+
+  /* =======================================================
      BOOKMARK CHANGE
-  ========================================================= */
+  ======================================================= */
 
   const handleBookmarkChange = (
     resourceId: string,
     bookmarked: boolean
   ) => {
-    setBookmarkedIds((prev) => {
+    setBookmarkedIds((previous) => {
       if (bookmarked) {
-        return prev.includes(resourceId)
-          ? prev
-          : [...prev, resourceId];
+        if (previous.includes(resourceId)) {
+          return previous;
+        }
+
+        return [...previous, resourceId];
       }
 
-      return prev.filter(
+      return previous.filter(
         (id) => id !== resourceId
       );
     });
   };
 
-  /* =========================================================
-     BRANCH RESOURCES
-  ========================================================= */
+  /* =======================================================
+     CURRENT BRANCH RESOURCES
+  ======================================================= */
 
   const branchResources = useMemo(() => {
-    const selectedBranch =
-      apiBranchName.trim().toLowerCase();
-
-    return resources.filter((resource) => {
-      const resourceBranch =
-        resource.branch
-          ?.trim()
-          .toLowerCase();
-
-      return resourceBranch === selectedBranch;
-    });
+    return resources.filter((resource) =>
+      matchesBranch(
+        resource.branch || "",
+        apiBranchName
+      )
+    );
   }, [resources, apiBranchName]);
 
-  /* =========================================================
-     FILTERED BRANCH RESOURCES
-  ========================================================= */
+  /* =======================================================
+     FILTERED RESOURCES
+  ======================================================= */
 
-  const filteredBranchResources = useMemo(() => {
-    const searchText = search
-      .trim()
-      .toLowerCase();
+  const filteredResources = useMemo(() => {
+    const searchValue = normalize(search);
 
     return branchResources.filter((resource) => {
+      /* -----------------------------------------------
+         SEARCH
+      ------------------------------------------------ */
+
       const matchesSearch =
-        !searchText ||
-        resource.title
-          ?.toLowerCase()
-          .includes(searchText) ||
-        resource.description
-          ?.toLowerCase()
-          .includes(searchText) ||
-        resource.subject
-          ?.toLowerCase()
-          .includes(searchText) ||
-        resource.semester
-          ?.toLowerCase()
-          .includes(searchText) ||
-        resource.branch
-          ?.toLowerCase()
-          .includes(searchText) ||
-        resource.fileName
-          ?.toLowerCase()
-          .includes(searchText);
+        !searchValue ||
+        normalize(resource.title).includes(
+          searchValue
+        ) ||
+        normalize(resource.description).includes(
+          searchValue
+        ) ||
+        normalize(resource.subject).includes(
+          searchValue
+        ) ||
+        normalize(resource.branch).includes(
+          searchValue
+        ) ||
+        normalize(resource.semester).includes(
+          searchValue
+        ) ||
+        normalize(resource.category).includes(
+          searchValue
+        ) ||
+        normalize(resource.fileName).includes(
+          searchValue
+        );
 
-      let matchesBranch = true;
+      /* -----------------------------------------------
+         BRANCH
+      ------------------------------------------------ */
 
-      if (branchFilter) {
-        const filter = branchFilter
-          .trim()
-          .toLowerCase();
+      const matchesSelectedBranch =
+        !branchFilter ||
+        matchesBranch(
+          resource.branch || "",
+          branchFilter
+        );
 
-        const currentBranch =
-          resource.branch
-            ?.trim()
-            .toLowerCase();
+      /* -----------------------------------------------
+         SEMESTER
+      ------------------------------------------------ */
 
-        const branchAliases: Record<
-          string,
-          string[]
-        > = {
-          "computer science": [
-            "computer science",
-          ],
-          "information technology": [
-            "information technology",
-          ],
-          "electronics & communication": [
-            "electronics",
-            "electronics & communication",
-          ],
-          electrical: ["electrical"],
-          mechanical: ["mechanical"],
-          "civil / ctm": [
-            "civil & ctm",
-            "civil / ctm",
-            "civil",
-          ],
-          electronics: ["electronics"],
-          "leather technology": [
-            "leather technology",
-          ],
-        };
-
-        const aliases =
-          branchAliases[filter] || [filter];
-
-        matchesBranch =
-          aliases.includes(
-            currentBranch || ""
-          );
-      }
-
-      const matchesSemester =
-        !semesterFilter ||
-        resource.semester
-          ?.toString()
-          .trim()
-          .toLowerCase() ===
+      const matchesSelectedSemester =
+        matchesSemester(
+          resource.semester || "",
           semesterFilter
-            .trim()
-            .toLowerCase();
+        );
 
-      const matchesCategory =
+      /* -----------------------------------------------
+         CATEGORY
+      ------------------------------------------------ */
+
+      const matchesSelectedCategory =
         !categoryFilter ||
-        resource.category
-          ?.trim()
-          .toLowerCase() ===
-          categoryFilter
-            .trim()
-            .toLowerCase();
+        normalize(resource.category) ===
+          normalize(categoryFilter);
 
       return (
         matchesSearch &&
-        matchesBranch &&
-        matchesSemester &&
-        matchesCategory
+        matchesSelectedBranch &&
+        matchesSelectedSemester &&
+        matchesSelectedCategory
       );
     });
   }, [
@@ -402,59 +574,40 @@ export default function BranchResources() {
     categoryFilter,
   ]);
 
-  /* =========================================================
-     SELECTED FOLDER RESOURCES
-  ========================================================= */
+  /* =======================================================
+     FOLDER RESOURCES
+  ======================================================= */
 
-  const folderResources = useMemo(() => {
+  const currentFolderResources = useMemo(() => {
     if (!selectedFolder) {
       return [];
     }
 
-    const selectedCategory =
-      selectedFolder
-        .trim()
-        .toLowerCase();
-
-    return filteredBranchResources.filter(
-      (resource) => {
-        const resourceCategory =
-          resource.category
-            ?.trim()
-            .toLowerCase();
-
-        return (
-          resourceCategory ===
-          selectedCategory
-        );
-      }
+    return filteredResources.filter(
+      (resource) =>
+        normalize(resource.category) ===
+        normalize(selectedFolder)
     );
   }, [
-    filteredBranchResources,
+    filteredResources,
     selectedFolder,
   ]);
 
-  /* =========================================================
+  /* =======================================================
      FOLDER COUNT
-  ========================================================= */
+  ======================================================= */
 
-  const getFolderCount = (
-    folderId: string
-  ) => {
-    const category =
-      folderId.trim().toLowerCase();
-
+  const getFolderCount = (folderId: string) => {
     return branchResources.filter(
       (resource) =>
-        resource.category
-          ?.trim()
-          .toLowerCase() === category
+        normalize(resource.category) ===
+        normalize(folderId)
     ).length;
   };
 
-  /* =========================================================
+  /* =======================================================
      CLEAR FILTERS
-  ========================================================= */
+  ======================================================= */
 
   const clearFilters = () => {
     setSearch("");
@@ -463,13 +616,11 @@ export default function BranchResources() {
     setCategoryFilter("");
   };
 
-  /* =========================================================
-     DATE FORMAT
-  ========================================================= */
+  /* =======================================================
+     FORMAT DATE
+  ======================================================= */
 
-  const formatDate = (
-    date?: string
-  ) => {
+  const formatDate = (date?: string) => {
     if (!date) {
       return "";
     }
@@ -488,106 +639,95 @@ export default function BranchResources() {
     }
   };
 
-  /* =========================================================
-     FOLDER INFORMATION
-  ========================================================= */
-
-  const selectedFolderInfo =
-    RESOURCE_FOLDERS.find(
-      (folder) =>
-        folder.id === selectedFolder
-    );
-
-  /* =========================================================
+  /* =======================================================
      OPEN PDF
-  ========================================================= */
+  ======================================================= */
 
-  const openPdf = (
-    fileUrl: string
-  ) => {
-    if (!fileUrl) {
+  const openPdf = (url?: string) => {
+    if (!url) {
       return;
     }
 
     window.open(
-      fileUrl,
+      url,
       "_blank",
       "noopener,noreferrer"
     );
   };
 
-  /* =========================================================
-     RESET WHEN BRANCH CHANGES
-  ========================================================= */
+  /* =======================================================
+     SELECTED FOLDER
+  ======================================================= */
 
-  useEffect(() => {
-    setSelectedFolder(null);
-    clearFilters();
-  }, [branch.id]);
+  const selectedFolderInfo =
+    resourceFolders.find(
+      (folder) =>
+        folder.id === selectedFolder
+    );
 
-  /* =========================================================
-     PAGE
-  ========================================================= */
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
   return (
     <>
       <Navbar />
 
-      {/* =====================================================
+      {/* ===================================================
           HERO
-      ===================================================== */}
+      =================================================== */}
 
       <section className="bg-gradient-to-r from-blue-700 via-blue-600 to-cyan-500 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 text-center">
+        <div className="mx-auto max-w-7xl px-4 py-12 text-center sm:px-6 sm:py-16">
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold">
-            {branch.name}
+          <h1 className="text-3xl font-extrabold sm:text-4xl md:text-5xl">
+            {currentBranch.name}
           </h1>
 
-          <p className="mt-4 text-base sm:text-lg text-blue-100 max-w-3xl mx-auto">
-            {branch.description}
+          <p className="mx-auto mt-4 max-w-3xl text-base text-blue-100 sm:text-lg">
+            {currentBranch.description}
           </p>
 
           {!loading && (
-            <div className="inline-block mt-6 bg-white/10 border border-white/30 px-5 sm:px-6 py-2 rounded-full font-semibold text-sm sm:text-base">
-              {branchResources.length > 0
-                ? `${branchResources.length} Resources Available`
-                : "Resources Section"}
+            <div className="mt-6 inline-block rounded-full border border-white/30 bg-white/10 px-5 py-2 text-sm font-semibold sm:px-6 sm:text-base">
+              {branchResources.length} Resources Available
             </div>
           )}
 
         </div>
       </section>
 
-      {/* =====================================================
+      {/* ===================================================
           BRANCH SELECTOR
-      ===================================================== */}
+      =================================================== */}
 
       <section className="bg-blue-50 py-10 sm:py-14">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
 
-          <div className="text-center mb-8 sm:mb-10">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-700">
+          <div className="mb-8 text-center sm:mb-10">
+
+            <h2 className="text-2xl font-bold text-blue-700 sm:text-3xl md:text-4xl">
               Select Your Branch
             </h2>
 
-            <p className="text-gray-600 mt-3 text-sm sm:text-base">
+            <p className="mt-3 text-sm text-gray-600 sm:text-base">
               Choose your engineering branch to access study resources.
             </p>
+
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
 
             {branches.map((item) => {
-              const isSelected =
-                item.id === branch.id;
+              const selected =
+                item.id === currentBranch.id;
 
               return (
                 <Link
                   key={item.id}
-                  to={`/branch/${item.id}`}
-                  className={`block rounded-2xl p-5 sm:p-6 transition duration-300 hover:-translate-y-1 sm:hover:-translate-y-2 ${
-                    isSelected
+                  to={`/branch-resources/${item.id}`}
+                  className={`block rounded-2xl p-5 transition duration-300 hover:-translate-y-1 sm:p-6 sm:hover:-translate-y-2 ${
+                    selected
                       ? "bg-blue-600 text-white shadow-2xl"
                       : "bg-white text-gray-800 shadow-lg hover:shadow-2xl"
                   }`}
@@ -598,8 +738,8 @@ export default function BranchResources() {
                   </h3>
 
                   <p
-                    className={`text-sm mt-2 ${
-                      isSelected
+                    className={`mt-2 text-sm ${
+                      selected
                         ? "text-blue-100"
                         : "text-gray-500"
                     }`}
@@ -608,17 +748,19 @@ export default function BranchResources() {
                   </p>
 
                   <div className="mt-5">
+
                     <span
-                      className={`inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${
-                        isSelected
+                      className={`inline-block rounded-full px-4 py-1.5 text-sm font-semibold ${
+                        selected
                           ? "bg-white/20 text-white"
                           : "bg-green-100 text-green-700"
                       }`}
                     >
-                      {isSelected
+                      {selected
                         ? "Selected"
                         : "View Resources"}
                     </span>
+
                   </div>
 
                 </Link>
@@ -629,23 +771,23 @@ export default function BranchResources() {
         </div>
       </section>
 
-      {/* =====================================================
-          MAIN RESOURCE SECTION
-      ===================================================== */}
+      {/* ===================================================
+          MAIN
+      =================================================== */}
 
       <section className="bg-white py-10 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
 
           {/* =================================================
               LOADING
           ================================================= */}
 
           {loading && (
-            <div className="text-center py-20">
+            <div className="py-20 text-center">
 
-              <div className="inline-block w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+              <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
 
-              <p className="mt-5 text-gray-600 font-medium">
+              <p className="mt-5 font-medium text-gray-600">
                 Resources load ho rahe hain...
               </p>
 
@@ -657,20 +799,20 @@ export default function BranchResources() {
           ================================================= */}
 
           {!loading && error && (
-            <div className="max-w-2xl mx-auto bg-red-50 border border-red-200 rounded-2xl p-6 sm:p-8 text-center">
+            <div className="mx-auto max-w-2xl rounded-2xl border border-red-200 bg-red-50 p-6 text-center sm:p-8">
 
               <h3 className="text-xl font-bold text-red-700">
                 Resources load nahi ho pa rahe
               </h3>
 
-              <p className="text-red-600 mt-3">
+              <p className="mt-3 text-red-600">
                 {error}
               </p>
 
               <button
                 type="button"
                 onClick={loadResources}
-                className="mt-6 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold"
+                className="mt-6 rounded-xl bg-red-600 px-6 py-3 font-semibold text-white hover:bg-red-700"
               >
                 Try Again
               </button>
@@ -685,248 +827,207 @@ export default function BranchResources() {
           {!loading && !error && (
             <>
 
-              {/* =================================================
-                  BEFORE FOLDER SELECTION
-              ================================================= */}
+              {/* =============================================
+                  FILTERS
+              ============================================== */}
 
-              {!selectedFolder && (
-                <>
+              <ResourceFilters
+                search={search}
+                branch={branchFilter}
+                semester={semesterFilter}
+                category={categoryFilter}
+                onSearchChange={setSearch}
+                onBranchChange={setBranchFilter}
+                onSemesterChange={
+                  setSemesterFilter
+                }
+                onCategoryChange={
+                  setCategoryFilter
+                }
+                onClear={clearFilters}
+                branchOptions={
+                  branchFilterOptions
+                }
+              />
 
-                  {branchResources.length > 0 && (
-                    <div className="mb-10">
+              {/* =============================================
+                  FILTER RESULT
+              ============================================== */}
 
-                      <ResourceFilters
-                        search={search}
-                        branch={branchFilter}
-                        semester={semesterFilter}
-                        category={categoryFilter}
-                        onSearchChange={setSearch}
-                        onBranchChange={setBranchFilter}
-                        onSemesterChange={setSemesterFilter}
-                        onCategoryChange={setCategoryFilter}
-                        onClear={clearFilters}
-                        branchOptions={[
-                          "Computer Science",
-                          "Information Technology",
-                          "Electronics & Communication",
-                          "Electrical",
-                          "Mechanical",
-                          "Civil / CTM",
-                          "Leather Technology",
-                        ]}
-                      />
+              <div className="mb-8 rounded-2xl border border-blue-100 bg-blue-50 p-4 sm:p-5">
 
-                    </div>
-                  )}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+                  <p className="text-sm text-gray-700 sm:text-base">
+                    <strong>
+                      {filteredResources.length}
+                    </strong>{" "}
+                    matching resources found
+                  </p>
 
                   {(search ||
                     branchFilter ||
                     semesterFilter ||
-                    categoryFilter) &&
-                    branchResources.length > 0 && (
-                      <div className="mb-8 rounded-2xl bg-blue-50 border border-blue-100 p-4 sm:p-5">
-
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-
-                          <p className="text-gray-700 text-sm sm:text-base">
-                            <strong>
-                              {filteredBranchResources.length}
-                            </strong>{" "}
-                            matching resources found
-                          </p>
-
-                          <button
-                            type="button"
-                            onClick={clearFilters}
-                            className="text-blue-700 font-semibold hover:text-blue-900 text-sm sm:text-base"
-                          >
-                            Clear Filters
-                          </button>
-
-                        </div>
-
-                      </div>
-                    )}
-
-                  {branchResources.length > 0 &&
-                    filteredBranchResources.length === 0 && (
-                      <div className="max-w-2xl mx-auto bg-gray-50 border border-gray-200 rounded-3xl p-8 sm:p-12 text-center">
-
-                        <div className="text-5xl mb-5">
-                          🔎
-                        </div>
-
-                        <h3 className="text-2xl font-bold text-gray-800">
-                          No Matching Resources
-                        </h3>
-
-                        <p className="text-gray-600 mt-3">
-                          Search ya filters change karke dobara try karo.
-                        </p>
-
-                        <button
-                          type="button"
-                          onClick={clearFilters}
-                          className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
-                        >
-                          Clear All Filters
-                        </button>
-
-                      </div>
-                    )}
-
-                  {filteredBranchResources.length > 0 && (
-                    <>
-
-                      <div className="text-center mb-10 sm:mb-12">
-
-                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-700">
-                          {branch.shortName} Resources
-                        </h2>
-
-                        <p className="text-gray-600 mt-3">
-                          Select a folder to view files.
-                        </p>
-
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-7">
-
-                        {RESOURCE_FOLDERS.map(
-                          (folder) => {
-                            const count =
-                              getFolderCount(
-                                folder.id
-                              );
-
-                            return (
-                              <button
-                                key={folder.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedFolder(
-                                    folder.id
-                                  );
-
-                                  /*
-                                   * Folder open karte waqt
-                                   * category filter reset kar dete hain,
-                                   * taaki Notes ke andar PYQ filter ki wajah
-                                   * se blank result na aaye.
-                                   */
-                                  setCategoryFilter("");
-                                }}
-                                className={`${folder.bg} ${folder.hover} ${folder.border} border-2 rounded-3xl p-6 sm:p-8 text-center shadow-lg hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 transition duration-300`}
-                              >
-
-                                <div
-                                  className={`w-20 h-20 mx-auto rounded-2xl flex items-center justify-center ${folder.iconBg}`}
-                                >
-                                  <span
-                                    className={`text-2xl font-bold ${folder.iconText}`}
-                                  >
-                                    PDF
-                                  </span>
-                                </div>
-
-                                <h3 className="text-2xl font-bold text-gray-800 mt-6">
-                                  {folder.name}
-                                </h3>
-
-                                <p className="text-gray-600 mt-3 text-sm">
-                                  {folder.description}
-                                </p>
-
-                                <div className="mt-6">
-                                  <span className="inline-block bg-white px-5 py-2 rounded-full text-sm font-bold text-gray-700 shadow">
-                                    {count}{" "}
-                                    {count === 1
-                                      ? "File"
-                                      : "Files"}
-                                  </span>
-                                </div>
-
-                                <div className="mt-5 text-blue-700 font-bold">
-                                  Open Folder →
-                                </div>
-
-                              </button>
-                            );
-                          }
-                        )}
-
-                      </div>
-
-                    </>
+                    categoryFilter) && (
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="text-left text-sm font-semibold text-blue-700 hover:text-blue-900 sm:text-right"
+                    >
+                      Clear Filters
+                    </button>
                   )}
 
-                </>
+                </div>
+
+              </div>
+
+              {/* =============================================
+                  NO RESULTS
+              ============================================== */}
+
+              {filteredResources.length === 0 && (
+                <div className="mx-auto max-w-2xl rounded-3xl border border-gray-200 bg-gray-50 p-8 text-center sm:p-12">
+
+                  <div className="mb-5 text-5xl">
+                    🔎
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-gray-800">
+                    No Matching Resources
+                  </h3>
+
+                  <p className="mt-3 text-gray-600">
+                    Branch, semester, category ya search change karke dobara try karo.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-6 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
+                  >
+                    Clear All Filters
+                  </button>
+
+                </div>
               )}
 
-              {/* =================================================
-                  INSIDE FOLDER
-              ================================================= */}
+              {/* =============================================
+                  FOLDERS
+              ============================================== */}
+
+              {filteredResources.length > 0 &&
+                !selectedFolder && (
+                  <>
+
+                    <div className="mb-10 text-center sm:mb-12">
+
+                      <h2 className="text-2xl font-bold text-blue-700 sm:text-3xl md:text-4xl">
+                        {currentBranch.shortName} Resources
+                      </h2>
+
+                      <p className="mt-3 text-gray-600">
+                        Select a folder to view files.
+                      </p>
+
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-7 lg:grid-cols-4">
+
+                      {resourceFolders.map(
+                        (folder) => {
+                          const count =
+                            getFolderCount(
+                              folder.id
+                            );
+
+                          return (
+                            <button
+                              key={folder.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedFolder(
+                                  folder.id
+                                );
+                              }}
+                              className={`rounded-3xl border-2 p-6 text-center shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-2xl sm:p-8 sm:hover:-translate-y-2 ${folder.cardBg} ${folder.cardHover} ${folder.border}`}
+                            >
+
+                              <div
+                                className={`mx-auto flex h-20 w-20 items-center justify-center rounded-2xl ${folder.iconBg}`}
+                              >
+                                <span
+                                  className={`text-2xl font-bold ${folder.iconText}`}
+                                >
+                                  PDF
+                                </span>
+                              </div>
+
+                              <h3 className="mt-6 text-2xl font-bold text-gray-800">
+                                {folder.name}
+                              </h3>
+
+                              <p className="mt-3 text-sm text-gray-600">
+                                {
+                                  folder.description
+                                }
+                              </p>
+
+                              <div className="mt-6">
+
+                                <span className="inline-block rounded-full bg-white px-5 py-2 text-sm font-bold text-gray-700 shadow">
+                                  {count}{" "}
+                                  {count === 1
+                                    ? "File"
+                                    : "Files"}
+                                </span>
+
+                              </div>
+
+                              <div className="mt-5 font-bold text-blue-700">
+                                Open Folder →
+                              </div>
+
+                            </button>
+                          );
+                        }
+                      )}
+
+                    </div>
+
+                  </>
+                )}
+
+              {/* =============================================
+                  FOLDER VIEW
+              ============================================== */}
 
               {selectedFolder && (
                 <>
-
-                  {/* BACK BUTTON */}
 
                   <button
                     type="button"
                     onClick={() => {
                       setSelectedFolder(null);
-                      clearFilters();
                     }}
-                    className="mb-6 bg-gray-100 hover:bg-gray-200 text-gray-800 px-5 py-3 rounded-xl font-semibold transition"
+                    className="mb-6 rounded-xl bg-gray-100 px-5 py-3 font-semibold text-gray-800 transition hover:bg-gray-200"
                   >
                     ← Back to Folders
                   </button>
 
-                  {/* =================================================
-                      FOLDER FILTERS
-                  ================================================= */}
-
-                  {branchResources.length > 0 && (
-                    <div className="mb-8">
-
-                      <ResourceFilters
-                        search={search}
-                        branch={branchFilter}
-                        semester={semesterFilter}
-                        category={categoryFilter}
-                        onSearchChange={setSearch}
-                        onBranchChange={setBranchFilter}
-                        onSemesterChange={setSemesterFilter}
-                        onCategoryChange={setCategoryFilter}
-                        onClear={clearFilters}
-                        branchOptions={[
-                          "Computer Science",
-                          "Information Technology",
-                          "Electronics & Communication",
-                          "Electrical",
-                          "Mechanical",
-                          "Civil / CTM",
-                          "Leather Technology",
-                        ]}
-                      />
-
-                    </div>
-                  )}
-
                   {/* FOLDER HEADER */}
 
-                  <div className="text-center mb-10 sm:mb-12">
+                  <div className="mb-10 text-center sm:mb-12">
 
                     <div
-                      className={`w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-3xl flex items-center justify-center ${
+                      className={`mx-auto flex h-20 w-20 items-center justify-center rounded-3xl sm:h-24 sm:w-24 ${
                         selectedFolderInfo?.iconBg ||
                         "bg-blue-100"
                       }`}
                     >
 
                       <span
-                        className={`text-2xl sm:text-3xl font-bold ${
+                        className={`text-2xl font-bold sm:text-3xl ${
                           selectedFolderInfo?.iconText ||
                           "text-blue-700"
                         }`}
@@ -936,68 +1037,34 @@ export default function BranchResources() {
 
                     </div>
 
-                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-700 mt-6">
+                    <h2 className="mt-6 text-2xl font-bold text-blue-700 sm:text-3xl md:text-4xl">
                       {selectedFolderInfo?.name}
                     </h2>
 
-                    <p className="text-gray-600 mt-3">
-                      {branch.name} ke{" "}
+                    <p className="mt-3 text-gray-600">
+                      {currentBranch.name} ke{" "}
                       {selectedFolderInfo?.name}{" "}
                       resources
                     </p>
 
-                    <p className="text-gray-500 mt-2">
+                    <p className="mt-2 text-gray-500">
                       Total Files:{" "}
                       <strong>
-                        {folderResources.length}
+                        {
+                          currentFolderResources.length
+                        }
                       </strong>
                     </p>
 
                   </div>
 
-                  {/* =================================================
-                      FILTER RESULT SUMMARY INSIDE FOLDER
-                  ================================================= */}
+                  {/* FOLDER EMPTY */}
 
-                  {(search ||
-                    branchFilter ||
-                    semesterFilter ||
-                    categoryFilter) && (
-                    <div className="mb-8 rounded-2xl bg-blue-50 border border-blue-100 p-4 sm:p-5">
+                  {currentFolderResources.length ===
+                    0 && (
+                    <div className="mx-auto max-w-2xl rounded-3xl bg-blue-50 p-8 text-center shadow-lg sm:p-10">
 
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-
-                        <p className="text-gray-700 text-sm sm:text-base">
-                          <strong>
-                            {folderResources.length}
-                          </strong>{" "}
-                          matching files found in{" "}
-                          <strong>
-                            {selectedFolderInfo?.name}
-                          </strong>
-                        </p>
-
-                        <button
-                          type="button"
-                          onClick={clearFilters}
-                          className="text-blue-700 font-semibold hover:text-blue-900 text-sm sm:text-base"
-                        >
-                          Clear Filters
-                        </button>
-
-                      </div>
-
-                    </div>
-                  )}
-
-                  {/* =================================================
-                      EMPTY / NO MATCHING FILES
-                  ================================================= */}
-
-                  {folderResources.length === 0 ? (
-                    <div className="max-w-2xl mx-auto bg-blue-50 rounded-3xl p-8 sm:p-10 text-center shadow-lg">
-
-                      <div className="text-5xl mb-4">
+                      <div className="mb-4 text-5xl">
                         🔎
                       </div>
 
@@ -1005,46 +1072,45 @@ export default function BranchResources() {
                         No Matching Files
                       </h3>
 
-                      <p className="text-gray-600 mt-3">
-                        Search ya filters change karke dobara try karo.
+                      <p className="mt-3 text-gray-600">
+                        Search ya semester filter change karke dobara try karo.
                       </p>
 
                       <button
                         type="button"
                         onClick={clearFilters}
-                        className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
+                        className="mt-6 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
                       >
                         Clear Filters
                       </button>
 
                     </div>
-                  ) : (
+                  )}
 
-                    /* =================================================
-                       RESOURCE CARDS
-                    ================================================= */
+                  {/* RESOURCE CARDS */}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+                  {currentFolderResources.length >
+                    0 && (
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
 
-                      {folderResources.map(
+                      {currentFolderResources.map(
                         (resource) => (
-
                           <div
                             key={resource._id}
-                            className="bg-gray-50 border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition duration-300 flex flex-col"
+                            className="flex flex-col rounded-2xl border border-gray-200 bg-gray-50 p-5 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-2xl sm:p-6"
                           >
 
-                            {/* FILE HEADER */}
+                            {/* HEADER */}
 
                             <div className="flex items-start justify-between gap-4">
 
-                              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
-                                <span className="text-red-700 font-bold">
+                              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-red-100 sm:h-16 sm:w-16">
+                                <span className="font-bold text-red-700">
                                   PDF
                                 </span>
                               </div>
 
-                              <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">
+                              <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
                                 PDF
                               </span>
 
@@ -1052,14 +1118,14 @@ export default function BranchResources() {
 
                             {/* TITLE */}
 
-                            <h3 className="text-lg sm:text-xl font-bold text-gray-800 mt-5 break-words">
+                            <h3 className="mt-5 break-words text-lg font-bold text-gray-800 sm:text-xl">
                               {resource.title}
                             </h3>
 
                             {/* FILE NAME */}
 
                             {resource.fileName && (
-                              <p className="text-xs text-gray-500 mt-2 break-all">
+                              <p className="mt-2 break-all text-xs text-gray-500">
                                 File:{" "}
                                 {resource.fileName}
                               </p>
@@ -1068,7 +1134,7 @@ export default function BranchResources() {
                             {/* SUBJECT */}
 
                             {resource.subject && (
-                              <p className="text-sm text-gray-600 mt-3">
+                              <p className="mt-3 text-sm text-gray-600">
                                 <strong>
                                   Subject:
                                 </strong>{" "}
@@ -1079,7 +1145,7 @@ export default function BranchResources() {
                             {/* SEMESTER */}
 
                             {resource.semester && (
-                              <p className="text-sm text-gray-600 mt-1">
+                              <p className="mt-1 text-sm text-gray-600">
                                 <strong>
                                   Semester:
                                 </strong>{" "}
@@ -1087,18 +1153,31 @@ export default function BranchResources() {
                               </p>
                             )}
 
+                            {/* BRANCH */}
+
+                            {resource.branch && (
+                              <p className="mt-1 text-sm text-gray-600">
+                                <strong>
+                                  Branch:
+                                </strong>{" "}
+                                {resource.branch}
+                              </p>
+                            )}
+
                             {/* DESCRIPTION */}
 
                             {resource.description && (
-                              <p className="text-sm text-gray-500 mt-3 line-clamp-3">
-                                {resource.description}
+                              <p className="mt-3 line-clamp-3 text-sm text-gray-500">
+                                {
+                                  resource.description
+                                }
                               </p>
                             )}
 
                             {/* DATE */}
 
                             {resource.createdAt && (
-                              <p className="text-xs text-gray-400 mt-4">
+                              <p className="mt-4 text-xs text-gray-400">
                                 Uploaded:{" "}
                                 {formatDate(
                                   resource.createdAt
@@ -1109,8 +1188,6 @@ export default function BranchResources() {
                             {/* ACTIONS */}
 
                             <div className="mt-auto pt-6">
-
-                              {/* BOOKMARK */}
 
                               <BookmarkButton
                                 resourceId={
@@ -1124,8 +1201,6 @@ export default function BranchResources() {
                                 }
                               />
 
-                              {/* OPEN / DOWNLOAD */}
-
                               <div className="mt-3 flex flex-col gap-3 sm:flex-row">
 
                                 {resource.fileUrl ? (
@@ -1137,7 +1212,7 @@ export default function BranchResources() {
                                           resource.fileUrl
                                         )
                                       }
-                                      className={`w-full sm:flex-1 text-white px-4 py-3 rounded-xl font-bold transition ${
+                                      className={`w-full rounded-xl px-4 py-3 font-bold text-white transition sm:flex-1 ${
                                         selectedFolderInfo?.button ||
                                         "bg-blue-600 hover:bg-blue-700"
                                       }`}
@@ -1151,17 +1226,13 @@ export default function BranchResources() {
                                       }
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      download={
-                                        resource.fileName ||
-                                        true
-                                      }
-                                      className="w-full sm:flex-1 bg-gray-900 hover:bg-gray-800 text-white px-4 py-3 rounded-xl font-bold text-center transition"
+                                      className="w-full rounded-xl bg-gray-900 px-4 py-3 text-center font-bold text-white transition hover:bg-gray-800 sm:flex-1"
                                     >
                                       Download
                                     </a>
                                   </>
                                 ) : (
-                                  <div className="w-full bg-gray-200 text-gray-500 text-center px-5 py-3 rounded-xl font-semibold">
+                                  <div className="w-full rounded-xl bg-gray-200 px-5 py-3 text-center font-semibold text-gray-500">
                                     PDF unavailable
                                   </div>
                                 )}
@@ -1171,41 +1242,13 @@ export default function BranchResources() {
                             </div>
 
                           </div>
-
                         )
                       )}
 
                     </div>
-
                   )}
 
                 </>
-              )}
-
-              {/* =================================================
-                  NO RESOURCES AT ALL
-              ================================================= */}
-
-              {branchResources.length === 0 && (
-                <div className="max-w-3xl mx-auto text-center bg-blue-50 rounded-3xl p-8 sm:p-10 md:p-14 shadow-xl">
-
-                  <h3 className="text-2xl sm:text-3xl font-bold text-gray-800">
-                    No Resources Available
-                  </h3>
-
-                  <p className="text-gray-600 text-base sm:text-lg mt-4">
-                    Abhi{" "}
-                    <strong>
-                      {branch.name}
-                    </strong>{" "}
-                    ke liye koi resource upload nahi hua hai.
-                  </p>
-
-                  <p className="text-gray-500 mt-3">
-                    Admin se resource upload hone ke baad yahan automatically dikhai dega.
-                  </p>
-
-                </div>
               )}
 
             </>

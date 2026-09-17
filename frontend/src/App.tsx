@@ -16,31 +16,68 @@ import Bookmarks from "./pages/Bookmarks";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 
-
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Home */}
         <Route path="/" element={<Home />} />
+
+        {/* Resources */}
         <Route path="/notes" element={<Notes />} />
         <Route path="/pyq" element={<Pyq />} />
         <Route path="/syllabus" element={<Syllabus />} />
         <Route path="/ebooks" element={<Ebooks />} />
-        <Route path="/branch-resources" element={<BranchResources />} />
-        <Route path="/branch/:branchId" element={<BranchResources />} />
+
+        {/* Branch Resources */}
+        <Route
+          path="/branch-resources"
+          element={<BranchResources />}
+        />
+
+        <Route
+          path="/branch-resources/:branchId"
+          element={<BranchResources />}
+        />
+
+        {/* Authentication */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/ai-question-paper" element={<AIQuestionPaper />} />
-        <Route path="/study-planner" element={<StudyPlanner />} />
-        <Route path="/bookmarks" element={<Bookmarks />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
 
-        {/* AI Study Assistant */}
+        {/* Admin */}
+        <Route path="/admin" element={<Admin />} />
+
+        {/* AI Features */}
+        <Route
+          path="/ai-question-paper"
+          element={<AIQuestionPaper />}
+        />
+
         <Route
           path="/study-assistant"
           element={<StudyAssistant />}
+        />
+
+        {/* Study Planner */}
+        <Route
+          path="/study-planner"
+          element={<StudyPlanner />}
+        />
+
+        {/* User Features */}
+        <Route
+          path="/bookmarks"
+          element={<Bookmarks />}
+        />
+
+        <Route
+          path="/dashboard"
+          element={<Dashboard />}
+        />
+
+        <Route
+          path="/profile"
+          element={<Profile />}
         />
       </Routes>
     </BrowserRouter>
