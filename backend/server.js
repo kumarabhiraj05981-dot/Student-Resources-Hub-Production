@@ -16,6 +16,7 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const bookmarkRoutes = require("./routes/bookmarkRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 
 // ==========================================
 // APP
@@ -125,6 +126,11 @@ app.get("/api/test", (req, res) => {
     message: "Student Resources Hub API is working",
   });
 });
+
+app.use(
+  "/api/admin/analytics",
+  analyticsRoutes
+);
 
 // ==========================================
 // AUTH ROUTES

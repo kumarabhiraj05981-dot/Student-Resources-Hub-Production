@@ -1,4 +1,9 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import api from "../services/api";
 
 interface Resource {
@@ -12,6 +17,48 @@ interface Resource {
   fileUrl: string;
   fileName?: string;
   createdAt: string;
+}
+
+interface AnalyticsOverview {
+  totalUsers: number;
+  totalAdmins: number;
+  totalResources: number;
+  totalBookmarks: number;
+  totalNotifications: number;
+  unreadNotifications: number;
+}
+
+interface AnalyticsItem {
+  _id: string;
+  count: number;
+}
+
+interface RecentResource {
+  _id: string;
+  title: string;
+  branch?: string;
+  semester?: string;
+  category?: string;
+  subject?: string;
+  createdAt: string;
+}
+
+interface MostBookmarkedResource {
+  _id: string;
+  title: string;
+  branch?: string;
+  semester?: string;
+  category?: string;
+  bookmarks: number;
+}
+
+interface AnalyticsData {
+  overview: AnalyticsOverview;
+  resourcesByBranch: AnalyticsItem[];
+  resourcesByCategory: AnalyticsItem[];
+  resourcesBySemester: AnalyticsItem[];
+  recentResources: RecentResource[];
+  mostBookmarked: MostBookmarkedResource[];
 }
 
 const BRANCHES = [
@@ -40,6 +87,8 @@ const SEMESTERS = [
   "6th Semester",
 ];
 
+const MAX_FILE_SIZE = 500 * 1024 * 1024;
+
 export default function Admin() {
   // ==========================================
   // UPLOAD STATES
@@ -53,9 +102,7 @@ export default function Admin() {
   const [subject, setSubject] = useState("");
 
   const [file, setFile] = useState<File | null>(null);
-
   const [fileInputKey, setFileInputKey] = useState(0);
-
   const [uploading, setUploading] = useState(false);
 
   // ==========================================
@@ -63,13 +110,17 @@ export default function Admin() {
   // ==========================================
 
   const [resources, setResources] = useState<Resource[]>([]);
-  const [loadingResources, setLoadingResources] = useState(true);
+  const [loadingResources, setLoadingResources] =
+    useState(true);
 
   const [search, setSearch] = useState("");
-  const [filterCategory, setFilterCategory] = useState("All");
-  const [filterBranch, setFilterBranch] = useState("All");
+  const [filterCategory, setFilterCategory] =
+    useState("All");
+  const [filterBranch, setFilterBranch] =
+    useState("All");
 
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] =
+    useState<string | null>(null);
 
   // ==========================================
   // EDIT STATES
@@ -79,19 +130,29 @@ export default function Admin() {
     useState<Resource | null>(null);
 
   const [editTitle, setEditTitle] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [editBranch, setEditBranch] = useState("Computer Science");
-  const [editSemester, setEditSemester] = useState("");
-  const [editCategory, setEditCategory] = useState("Notes");
-  const [editSubject, setEditSubject] = useState("");
+  const [editDescription, setEditDescription] =
+    useState("");
+  const [editBranch, setEditBranch] =
+    useState("Computer Science");
+  const [editSemester, setEditSemester] =
+    useState("");
+  const [editCategory, setEditCategory] =
+    useState("Notes");
+  const [editSubject, setEditSubject] =
+    useState("");
 
-  const [savingEdit, setSavingEdit] = useState(false);
+  const [savingEdit, setSavingEdit] =
+    useState(false);
 
   // ==========================================
-  // MAX FILE SIZE
+  // ANALYTICS STATES
   // ==========================================
 
-  const MAX_FILE_SIZE = 500 * 1024 * 1024;
+  const [analytics, setAnalytics] =
+    useState<AnalyticsData | null>(null);
+
+  const [loadingAnalytics, setLoadingAnalytics] =
+    useState(true);
 
   // ==========================================
   // LOAD RESOURCES
@@ -108,11 +169,14 @@ export default function Admin() {
         return;
       }
 
-      const res = await api.get("/api/resources", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await api.get(
+        "/api/resources",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       console.log("RESOURCES:", res.data);
 
@@ -137,11 +201,60 @@ export default function Admin() {
   };
 
   // ==========================================
+  // LOAD ADMIN ANALYTICS
+  // ==========================================
+
+  const loadAnalytics = async () => {
+    try {
+      setLoadingAnalytics(true);
+
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        return;
+      }
+
+      const res = await api.get(
+        "/api/admin/analytics",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log(
+        "ANALYTICS:",
+        res.data
+      );
+
+      if (!res.data?.success) {
+        throw new Error(
+          res.data?.message ||
+            "Failed to load analytics"
+        );
+      }
+
+      setAnalytics(res.data);
+    } catch (error: any) {
+      console.error(
+        "LOAD ANALYTICS ERROR:",
+        error.response?.data || error
+      );
+
+      setAnalytics(null);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
+  // ==========================================
   // LOAD ON PAGE OPEN
   // ==========================================
 
   useEffect(() => {
     loadResources();
+    loadAnalytics();
   }, []);
 
   // ==========================================
@@ -158,22 +271,22 @@ export default function Admin() {
   // ==========================================
 
   const handleFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: ChangeEvent<HTMLInputElement>
   ) => {
     console.log("FILE INPUT CHANGED");
 
-    const inputFile = e.currentTarget.files?.[0];
+    const inputFile =
+      e.currentTarget.files?.[0];
 
-    console.log("SELECTED FILE:", inputFile);
+    console.log(
+      "SELECTED FILE:",
+      inputFile
+    );
 
     if (!inputFile) {
       setFile(null);
       return;
     }
-
-    // ======================================
-    // PDF CHECK
-    // ======================================
 
     const isPDF =
       inputFile.type === "application/pdf" ||
@@ -190,22 +303,16 @@ export default function Admin() {
       return;
     }
 
-    // ======================================
-    // SIZE CHECK
-    // ======================================
-
     if (inputFile.size > MAX_FILE_SIZE) {
-      alert("File size must be less than 500MB");
+      alert(
+        "File size must be less than 500MB"
+      );
 
       e.currentTarget.value = "";
       setFile(null);
 
       return;
     }
-
-    // ======================================
-    // SAVE FILE
-    // ======================================
 
     setFile(inputFile);
 
@@ -220,13 +327,9 @@ export default function Admin() {
   // ==========================================
 
   const handleUpload = async (
-    e: React.FormEvent
+    e: FormEvent
   ) => {
     e.preventDefault();
-
-    // ======================================
-    // VALIDATION
-    // ======================================
 
     if (!title.trim()) {
       alert("Please enter resource title");
@@ -265,7 +368,9 @@ export default function Admin() {
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      alert("File size must be less than 500MB");
+      alert(
+        "File size must be less than 500MB"
+      );
       return;
     }
 
@@ -279,10 +384,6 @@ export default function Admin() {
         alert("Please login first");
         return;
       }
-
-      // ======================================
-      // FORM DATA
-      // ======================================
 
       const formData = new FormData();
 
@@ -322,19 +423,39 @@ export default function Admin() {
         file.name
       );
 
-      console.log("================================");
-      console.log("UPLOADING FILE");
-      console.log("Name:", file.name);
-      console.log("Type:", file.type);
-      console.log("Size:", file.size);
-      console.log("Branch:", branch);
-      console.log("Semester:", semester);
-      console.log("Category:", category);
-      console.log("================================");
-
-      // ======================================
-      // API REQUEST
-      // ======================================
+      console.log(
+        "================================"
+      );
+      console.log(
+        "UPLOADING FILE"
+      );
+      console.log(
+        "Name:",
+        file.name
+      );
+      console.log(
+        "Type:",
+        file.type
+      );
+      console.log(
+        "Size:",
+        file.size
+      );
+      console.log(
+        "Branch:",
+        branch
+      );
+      console.log(
+        "Semester:",
+        semester
+      );
+      console.log(
+        "Category:",
+        category
+      );
+      console.log(
+        "================================"
+      );
 
       const res = await api.post(
         "/api/upload",
@@ -369,10 +490,6 @@ export default function Admin() {
         `Resource uploaded successfully!\n\nBranch: ${branch}`
       );
 
-      // ======================================
-      // RESET FORM
-      // ======================================
-
       setTitle("");
       setDescription("");
       setBranch("Computer Science");
@@ -382,11 +499,10 @@ export default function Admin() {
 
       resetFileInput();
 
-      // ======================================
-      // RELOAD RESOURCES
-      // ======================================
-
-      await loadResources();
+      await Promise.all([
+        loadResources(),
+        loadAnalytics(),
+      ]);
     } catch (error: any) {
       console.error(
         "UPLOAD ERROR:",
@@ -407,22 +523,32 @@ export default function Admin() {
   // OPEN EDIT MODAL
   // ==========================================
 
-  const handleEdit = (resource: Resource) => {
+  const handleEdit = (
+    resource: Resource
+  ) => {
     setEditingResource(resource);
 
-    setEditTitle(resource.title || "");
+    setEditTitle(
+      resource.title || ""
+    );
+
     setEditDescription(
       resource.description || ""
     );
+
     setEditBranch(
-      resource.branch || "Computer Science"
+      resource.branch ||
+        "Computer Science"
     );
+
     setEditSemester(
       resource.semester || ""
     );
+
     setEditCategory(
       resource.category || "Notes"
     );
+
     setEditSubject(
       resource.subject || ""
     );
@@ -439,7 +565,9 @@ export default function Admin() {
 
     setEditTitle("");
     setEditDescription("");
-    setEditBranch("Computer Science");
+    setEditBranch(
+      "Computer Science"
+    );
     setEditSemester("");
     setEditCategory("Notes");
     setEditSubject("");
@@ -450,15 +578,11 @@ export default function Admin() {
   // ==========================================
 
   const handleSaveEdit = async (
-    e: React.FormEvent
+    e: FormEvent
   ) => {
     e.preventDefault();
 
     if (!editingResource) return;
-
-    // ======================================
-    // VALIDATION
-    // ======================================
 
     if (!editTitle.trim()) {
       alert("Please enter resource title");
@@ -490,10 +614,6 @@ export default function Admin() {
         alert("Please login first");
         return;
       }
-
-      // ======================================
-      // UPDATE REQUEST
-      // ======================================
 
       const res = await api.put(
         `/api/resources/${editingResource._id}`,
@@ -532,10 +652,6 @@ export default function Admin() {
         );
       }
 
-      // ======================================
-      // UPDATE LOCAL LIST
-      // ======================================
-
       if (res.data?.resource) {
         setResources((prev) =>
           prev.map((item) =>
@@ -548,6 +664,8 @@ export default function Admin() {
       } else {
         await loadResources();
       }
+
+      await loadAnalytics();
 
       alert(
         "Resource updated successfully!"
@@ -632,6 +750,8 @@ export default function Admin() {
           (item) => item._id !== id
         )
       );
+
+      await loadAnalytics();
     } catch (error: any) {
       console.error(
         "DELETE ERROR:",
@@ -680,7 +800,8 @@ export default function Admin() {
 
       const matchesBranch =
         filterBranch === "All" ||
-        resource.branch === filterBranch;
+        resource.branch ===
+          filterBranch;
 
       return (
         matchesSearch &&
@@ -722,25 +843,25 @@ export default function Admin() {
   ) => {
     switch (branchName) {
       case "Computer Science":
-        return "";
+        return "💻";
 
       case "Electrical":
-        return "";
+        return "⚡";
 
       case "Mechanical":
-        return "";
+        return "⚙️";
 
       case "Civil & CTM":
-        return "";
+        return "🏗️";
 
       case "Electronics":
-        return "";
+        return "🔌";
 
       case "Leather Technology":
-        return "";
+        return "👜";
 
       default:
-        return "";
+        return "📚";
     }
   };
 
@@ -753,12 +874,414 @@ export default function Admin() {
       <div className="max-w-7xl mx-auto">
 
         {/* ======================================
+            ADMIN ANALYTICS
+        ====================================== */}
+
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-10">
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+                📊 Admin Analytics
+              </h2>
+
+              <p className="text-gray-500 mt-1">
+                Overview of students,
+                resources and activity.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={loadAnalytics}
+              disabled={loadingAnalytics}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold px-5 py-2.5 rounded-lg transition"
+            >
+              {loadingAnalytics
+                ? "Loading..."
+                : "Refresh Analytics"}
+            </button>
+
+          </div>
+
+          {loadingAnalytics ? (
+            <div className="text-center py-10">
+              <p className="text-gray-500">
+                Loading analytics...
+              </p>
+            </div>
+          ) : analytics ? (
+            <>
+              {/* ==================================
+                  OVERVIEW CARDS
+              ================================== */}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
+                  <p className="text-sm font-semibold text-blue-600">
+                    👨‍🎓 Total Students
+                  </p>
+
+                  <p className="text-3xl font-bold text-blue-800 mt-2">
+                    {analytics.overview.totalUsers}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-green-200 bg-green-50 p-5">
+                  <p className="text-sm font-semibold text-green-600">
+                    📚 Total Resources
+                  </p>
+
+                  <p className="text-3xl font-bold text-green-800 mt-2">
+                    {analytics.overview.totalResources}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-purple-200 bg-purple-50 p-5">
+                  <p className="text-sm font-semibold text-purple-600">
+                    🔖 Total Bookmarks
+                  </p>
+
+                  <p className="text-3xl font-bold text-purple-800 mt-2">
+                    {analytics.overview.totalBookmarks}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-orange-200 bg-orange-50 p-5">
+                  <p className="text-sm font-semibold text-orange-600">
+                    🔔 Notifications
+                  </p>
+
+                  <p className="text-3xl font-bold text-orange-800 mt-2">
+                    {analytics.overview.totalNotifications}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-red-200 bg-red-50 p-5">
+                  <p className="text-sm font-semibold text-red-600">
+                    🔴 Unread Notifications
+                  </p>
+
+                  <p className="text-3xl font-bold text-red-800 mt-2">
+                    {analytics.overview.unreadNotifications}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+                  <p className="text-sm font-semibold text-gray-600">
+                    🛡️ Total Admins
+                  </p>
+
+                  <p className="text-3xl font-bold text-gray-800 mt-2">
+                    {analytics.overview.totalAdmins}
+                  </p>
+                </div>
+
+              </div>
+
+              {/* ==================================
+                  BRANCH + CATEGORY
+              ================================== */}
+
+              <div className="grid lg:grid-cols-2 gap-6 mt-8">
+
+                {/* BY BRANCH */}
+
+                <div className="border border-gray-200 rounded-xl p-5">
+
+                  <h3 className="text-xl font-bold text-gray-800 mb-5">
+                    📚 Resources by Branch
+                  </h3>
+
+                  <div className="space-y-3">
+
+                    {analytics.resourcesByBranch.length === 0 ? (
+                      <p className="text-gray-500">
+                        No branch data available.
+                      </p>
+                    ) : (
+                      analytics.resourcesByBranch.map(
+                        (item) => (
+                          <div
+                            key={item._id}
+                            className="flex items-center justify-between gap-4"
+                          >
+                            <span className="text-gray-700 font-medium">
+                              {getBranchIcon(
+                                item._id
+                              )}{" "}
+                              {item._id ||
+                                "Unknown"}
+                            </span>
+
+                            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-bold">
+                              {item.count}
+                            </span>
+                          </div>
+                        )
+                      )
+                    )}
+
+                  </div>
+
+                </div>
+
+                {/* BY CATEGORY */}
+
+                <div className="border border-gray-200 rounded-xl p-5">
+
+                  <h3 className="text-xl font-bold text-gray-800 mb-5">
+                    🗂️ Resources by Category
+                  </h3>
+
+                  <div className="space-y-3">
+
+                    {analytics.resourcesByCategory.length === 0 ? (
+                      <p className="text-gray-500">
+                        No category data available.
+                      </p>
+                    ) : (
+                      analytics.resourcesByCategory.map(
+                        (item) => (
+                          <div
+                            key={item._id}
+                            className="flex items-center justify-between gap-4"
+                          >
+                            <span className="text-gray-700 font-medium">
+                              {item._id ||
+                                "Unknown"}
+                            </span>
+
+                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-bold">
+                              {item.count}
+                            </span>
+                          </div>
+                        )
+                      )
+                    )}
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* ==================================
+                  BY SEMESTER
+              ================================== */}
+
+              <div className="border border-gray-200 rounded-xl p-5 mt-6">
+
+                <h3 className="text-xl font-bold text-gray-800 mb-5">
+                  🎓 Resources by Semester
+                </h3>
+
+                {analytics.resourcesBySemester.length === 0 ? (
+                  <p className="text-gray-500">
+                    No semester data available.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+
+                    {analytics.resourcesBySemester.map(
+                      (item) => (
+                        <div
+                          key={item._id}
+                          className="rounded-xl bg-purple-50 border border-purple-200 p-4 text-center"
+                        >
+                          <p className="text-sm font-semibold text-purple-700">
+                            {item._id ||
+                              "Unknown"}
+                          </p>
+
+                          <p className="text-2xl font-bold text-purple-900 mt-2">
+                            {item.count}
+                          </p>
+                        </div>
+                      )
+                    )}
+
+                  </div>
+                )}
+
+              </div>
+
+              {/* ==================================
+                  MOST BOOKMARKED
+              ================================== */}
+
+              <div className="border border-gray-200 rounded-xl p-5 mt-6">
+
+                <h3 className="text-xl font-bold text-gray-800 mb-5">
+                  ⭐ Most Bookmarked Resources
+                </h3>
+
+                {analytics.mostBookmarked.length === 0 ? (
+                  <p className="text-gray-500">
+                    No bookmarks available yet.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+
+                    {analytics.mostBookmarked.map(
+                      (resource, index) => (
+                        <div
+                          key={resource._id}
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-gray-50 border border-gray-200 p-4"
+                        >
+
+                          <div className="min-w-0">
+
+                            <p className="font-bold text-gray-800 break-words">
+                              {index + 1}.{" "}
+                              {resource.title}
+                            </p>
+
+                            <div className="flex flex-wrap gap-2 mt-2">
+
+                              {resource.branch && (
+                                <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                                  {resource.branch}
+                                </span>
+                              )}
+
+                              {resource.category && (
+                                <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                                  {resource.category}
+                                </span>
+                              )}
+
+                              {resource.semester && (
+                                <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                                  {resource.semester}
+                                </span>
+                              )}
+
+                            </div>
+
+                          </div>
+
+                          <span className="self-start sm:self-auto px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded-full text-sm font-bold whitespace-nowrap">
+                            🔖{" "}
+                            {resource.bookmarks}
+                          </span>
+
+                        </div>
+                      )
+                    )}
+
+                  </div>
+                )}
+
+              </div>
+
+              {/* ==================================
+                  RECENT RESOURCES
+              ================================== */}
+
+              <div className="border border-gray-200 rounded-xl p-5 mt-6">
+
+                <h3 className="text-xl font-bold text-gray-800 mb-5">
+                  🆕 Recent Resources
+                </h3>
+
+                {analytics.recentResources.length === 0 ? (
+                  <p className="text-gray-500">
+                    No resources available.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+
+                    {analytics.recentResources.map(
+                      (resource) => (
+                        <div
+                          key={resource._id}
+                          className="rounded-xl bg-gray-50 border border-gray-200 p-4"
+                        >
+
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+                            <div className="min-w-0">
+
+                              <p className="font-bold text-gray-800 break-words">
+                                {resource.title}
+                              </p>
+
+                              <div className="flex flex-wrap gap-2 mt-2">
+
+                                {resource.branch && (
+                                  <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                                    {resource.branch}
+                                  </span>
+                                )}
+
+                                {resource.category && (
+                                  <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                                    {resource.category}
+                                  </span>
+                                )}
+
+                                {resource.semester && (
+                                  <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                                    {resource.semester}
+                                  </span>
+                                )}
+
+                                {resource.subject && (
+                                  <span className="px-2.5 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
+                                    {resource.subject}
+                                  </span>
+                                )}
+
+                              </div>
+
+                            </div>
+
+                            <p className="text-xs text-gray-500 whitespace-nowrap">
+                              {new Date(
+                                resource.createdAt
+                              ).toLocaleDateString()}
+                            </p>
+
+                          </div>
+
+                        </div>
+                      )
+                    )}
+
+                  </div>
+                )}
+
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-gray-500">
+                Analytics unavailable.
+              </p>
+
+              <button
+                type="button"
+                onClick={loadAnalytics}
+                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
+        </div>
+
+        {/* ======================================
             UPLOAD SECTION
         ====================================== */}
 
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-10">
 
           <div className="mb-8">
+
             <h1 className="text-3xl md:text-4xl font-bold text-blue-700 mb-2">
               Admin Resource Upload
             </h1>
@@ -767,11 +1290,8 @@ export default function Admin() {
               Upload Notes, PYQs, Syllabus and
               E-books branch-wise.
             </p>
-          </div>
 
-          {/* ==================================
-              UPLOAD FORM
-          ================================== */}
+          </div>
 
           <form
             onSubmit={handleUpload}
@@ -781,6 +1301,7 @@ export default function Admin() {
             {/* TITLE */}
 
             <div>
+
               <label className="block font-semibold text-gray-700 mb-2">
                 Resource Title *
               </label>
@@ -795,11 +1316,13 @@ export default function Admin() {
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
+
             </div>
 
             {/* BRANCH */}
 
             <div>
+
               <label className="block font-semibold text-gray-700 mb-2">
                 Branch *
               </label>
@@ -812,6 +1335,7 @@ export default function Admin() {
                 className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
+
                 {BRANCHES.map(
                   (branchName) => (
                     <option
@@ -825,12 +1349,15 @@ export default function Admin() {
                     </option>
                   )
                 )}
+
               </select>
+
             </div>
 
             {/* DESCRIPTION */}
 
             <div>
+
               <label className="block font-semibold text-gray-700 mb-2">
                 Description
               </label>
@@ -846,11 +1373,13 @@ export default function Admin() {
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 rows={4}
               />
+
             </div>
 
             {/* SEMESTER */}
 
             <div>
+
               <label className="block font-semibold text-gray-700 mb-2">
                 Semester *
               </label>
@@ -863,6 +1392,7 @@ export default function Admin() {
                 className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
+
                 <option value="">
                   Select Semester
                 </option>
@@ -877,12 +1407,15 @@ export default function Admin() {
                     </option>
                   )
                 )}
+
               </select>
+
             </div>
 
             {/* SUBJECT */}
 
             <div>
+
               <label className="block font-semibold text-gray-700 mb-2">
                 Subject
               </label>
@@ -896,11 +1429,13 @@ export default function Admin() {
                 }
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+
             </div>
 
             {/* CATEGORY */}
 
             <div>
+
               <label className="block font-semibold text-gray-700 mb-2">
                 Category *
               </label>
@@ -913,6 +1448,7 @@ export default function Admin() {
                 className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
+
                 {CATEGORIES.map(
                   (categoryName) => (
                     <option
@@ -926,14 +1462,15 @@ export default function Admin() {
                     </option>
                   )
                 )}
+
               </select>
+
             </div>
 
-            {/* ==================================
-                PDF FILE
-            ================================== */}
+            {/* PDF FILE */}
 
             <div>
+
               <label className="block font-semibold text-gray-700 mb-2">
                 Select PDF *
               </label>
@@ -949,16 +1486,13 @@ export default function Admin() {
                 required={!file}
               />
 
-              {/* ==================================
-                  SELECTED FILE
-              ================================== */}
-
               {file ? (
                 <div className="mt-3 bg-green-50 border border-green-300 rounded-xl p-4">
 
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 
                     <div className="min-w-0">
+
                       <p className="text-xs text-green-700 font-semibold mb-1">
                         SELECTED FILE
                       </p>
@@ -966,6 +1500,7 @@ export default function Admin() {
                       <p className="text-sm text-green-800 font-bold break-all">
                         {file.name}
                       </p>
+
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -978,7 +1513,9 @@ export default function Admin() {
 
                       <button
                         type="button"
-                        onClick={resetFileInput}
+                        onClick={
+                          resetFileInput
+                        }
                         className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-semibold"
                       >
                         Remove
@@ -991,22 +1528,23 @@ export default function Admin() {
                 </div>
               ) : (
                 <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4">
+
                   <p className="text-sm text-gray-500">
                     No file selected
                   </p>
+
                 </div>
               )}
 
               <p className="text-xs text-gray-500 mt-2">
                 Maximum file size:{" "}
-                <strong>500MB</strong>. PDF files
-                only.
+                <strong>500MB</strong>.
+                PDF files only.
               </p>
+
             </div>
 
-            {/* ==================================
-                UPLOAD BUTTON
-            ================================== */}
+            {/* UPLOAD BUTTON */}
 
             <button
               type="submit"
@@ -1023,6 +1561,7 @@ export default function Admin() {
             </button>
 
           </form>
+
         </div>
 
         {/* ======================================
@@ -1034,6 +1573,7 @@ export default function Admin() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
 
             <div>
+
               <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
                 Manage Resources
               </h2>
@@ -1044,24 +1584,30 @@ export default function Admin() {
                   {resources.length}
                 </span>
               </p>
+
             </div>
 
             <button
               type="button"
-              onClick={loadResources}
-              disabled={loadingResources}
+              onClick={async () => {
+                await loadResources();
+                await loadAnalytics();
+              }}
+              disabled={
+                loadingResources ||
+                loadingAnalytics
+              }
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold px-5 py-2.5 rounded-lg transition"
             >
-              {loadingResources
+              {loadingResources ||
+              loadingAnalytics
                 ? "Loading..."
                 : "Refresh"}
             </button>
 
           </div>
 
-          {/* ======================================
-              FILTERS
-          ====================================== */}
+          {/* FILTERS */}
 
           <div className="mb-6">
 
@@ -1081,6 +1627,7 @@ export default function Admin() {
             {/* SEARCH */}
 
             <div>
+
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Search
               </label>
@@ -1094,11 +1641,13 @@ export default function Admin() {
                 }
                 className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
+
             </div>
 
             {/* CATEGORY */}
 
             <div>
+
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Category
               </label>
@@ -1112,6 +1661,7 @@ export default function Admin() {
                 }
                 className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500"
               >
+
                 <option value="All">
                   All Categories
                 </option>
@@ -1129,12 +1679,15 @@ export default function Admin() {
                     </option>
                   )
                 )}
+
               </select>
+
             </div>
 
             {/* BRANCH */}
 
             <div>
+
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Branch
               </label>
@@ -1148,6 +1701,7 @@ export default function Admin() {
                 }
                 className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500"
               >
+
                 <option value="All">
                   All Branches
                 </option>
@@ -1165,26 +1719,30 @@ export default function Admin() {
                     </option>
                   )
                 )}
+
               </select>
+
             </div>
 
           </div>
 
-          {/* ======================================
-              RESOURCE LIST
-          ====================================== */}
+          {/* RESOURCE LIST */}
 
           {loadingResources ? (
             <div className="text-center py-10">
+
               <p className="text-gray-500">
                 Loading resources...
               </p>
+
             </div>
           ) : filteredResources.length === 0 ? (
             <div className="text-center py-10">
+
               <p className="text-gray-500">
                 No resources found.
               </p>
+
             </div>
           ) : (
             <div className="space-y-4">
@@ -1234,21 +1792,22 @@ export default function Admin() {
 
                         {resource.fileName && (
                           <p className="text-xs text-gray-500 mt-3 break-all">
-                            File: {resource.fileName}
+                            File:{" "}
+                            {resource.fileName}
                           </p>
                         )}
 
                       </div>
 
-                      {/* ==================================
-                          ACTION BUTTONS
-                      ================================== */}
+                      {/* ACTION BUTTONS */}
 
                       <div className="flex flex-wrap gap-2">
 
                         {resource.fileUrl && (
                           <a
-                            href={resource.fileUrl}
+                            href={
+                              resource.fileUrl
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm"
@@ -1257,12 +1816,12 @@ export default function Admin() {
                           </a>
                         )}
 
-                        {/* EDIT */}
-
                         <button
                           type="button"
                           onClick={() =>
-                            handleEdit(resource)
+                            handleEdit(
+                              resource
+                            )
                           }
                           disabled={
                             deletingId ===
@@ -1272,8 +1831,6 @@ export default function Admin() {
                         >
                           Edit
                         </button>
-
-                        {/* DELETE */}
 
                         <button
                           type="button"
@@ -1318,7 +1875,8 @@ export default function Admin() {
           className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
           onMouseDown={(e) => {
             if (
-              e.target === e.currentTarget &&
+              e.target ===
+                e.currentTarget &&
               !savingEdit
             ) {
               closeEditModal();
@@ -1328,13 +1886,12 @@ export default function Admin() {
 
           <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl">
 
-            {/* ======================================
-                MODAL HEADER
-            ====================================== */}
+            {/* MODAL HEADER */}
 
             <div className="flex items-center justify-between gap-4 p-6 border-b border-gray-200">
 
               <div>
+
                 <h2 className="text-2xl font-bold text-gray-800">
                   Edit Resource
                 </h2>
@@ -1342,11 +1899,14 @@ export default function Admin() {
                 <p className="text-sm text-gray-500 mt-1">
                   Update resource information.
                 </p>
+
               </div>
 
               <button
                 type="button"
-                onClick={closeEditModal}
+                onClick={
+                  closeEditModal
+                }
                 disabled={savingEdit}
                 className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 disabled:bg-gray-100 text-gray-700 text-xl font-bold transition"
                 aria-label="Close"
@@ -1356,18 +1916,19 @@ export default function Admin() {
 
             </div>
 
-            {/* ======================================
-                EDIT FORM
-            ====================================== */}
+            {/* EDIT FORM */}
 
             <form
-              onSubmit={handleSaveEdit}
+              onSubmit={
+                handleSaveEdit
+              }
               className="p-6 space-y-5"
             >
 
-              {/* RESOURCE TITLE */}
+              {/* TITLE */}
 
               <div>
+
                 <label className="block font-semibold text-gray-700 mb-2">
                   Resource Title *
                 </label>
@@ -1384,11 +1945,13 @@ export default function Admin() {
                   className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
+
               </div>
 
               {/* BRANCH */}
 
               <div>
+
                 <label className="block font-semibold text-gray-700 mb-2">
                   Branch *
                 </label>
@@ -1403,6 +1966,7 @@ export default function Admin() {
                   className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 >
+
                   {BRANCHES.map(
                     (branchName) => (
                       <option
@@ -1413,18 +1977,23 @@ export default function Admin() {
                       </option>
                     )
                   )}
+
                 </select>
+
               </div>
 
               {/* DESCRIPTION */}
 
               <div>
+
                 <label className="block font-semibold text-gray-700 mb-2">
                   Description
                 </label>
 
                 <textarea
-                  value={editDescription}
+                  value={
+                    editDescription
+                  }
                   onChange={(e) =>
                     setEditDescription(
                       e.target.value
@@ -1434,17 +2003,21 @@ export default function Admin() {
                   rows={4}
                   className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+
               </div>
 
               {/* SEMESTER */}
 
               <div>
+
                 <label className="block font-semibold text-gray-700 mb-2">
                   Semester *
                 </label>
 
                 <select
-                  value={editSemester}
+                  value={
+                    editSemester
+                  }
                   onChange={(e) =>
                     setEditSemester(
                       e.target.value
@@ -1453,6 +2026,7 @@ export default function Admin() {
                   className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 >
+
                   <option value="">
                     Select Semester
                   </option>
@@ -1467,12 +2041,15 @@ export default function Admin() {
                       </option>
                     )
                   )}
+
                 </select>
+
               </div>
 
               {/* SUBJECT */}
 
               <div>
+
                 <label className="block font-semibold text-gray-700 mb-2">
                   Subject
                 </label>
@@ -1488,17 +2065,21 @@ export default function Admin() {
                   placeholder="Example: DBMS"
                   className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+
               </div>
 
               {/* CATEGORY */}
 
               <div>
+
                 <label className="block font-semibold text-gray-700 mb-2">
                   Category *
                 </label>
 
                 <select
-                  value={editCategory}
+                  value={
+                    editCategory
+                  }
                   onChange={(e) =>
                     setEditCategory(
                       e.target.value
@@ -1507,6 +2088,7 @@ export default function Admin() {
                   className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 >
+
                   {CATEGORIES.map(
                     (categoryName) => (
                       <option
@@ -1520,10 +2102,12 @@ export default function Admin() {
                       </option>
                     )
                   )}
+
                 </select>
+
               </div>
 
-              {/* EXISTING FILE INFO */}
+              {/* EXISTING FILE */}
 
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
 
@@ -1537,20 +2121,21 @@ export default function Admin() {
                 </p>
 
                 <p className="text-xs text-blue-600 mt-2">
-                  The existing PDF will remain unchanged.
+                  The existing PDF will remain
+                  unchanged.
                 </p>
 
               </div>
 
-              {/* ==================================
-                  MODAL ACTIONS
-              ================================== */}
+              {/* MODAL ACTIONS */}
 
               <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t border-gray-200">
 
                 <button
                   type="button"
-                  onClick={closeEditModal}
+                  onClick={
+                    closeEditModal
+                  }
                   disabled={savingEdit}
                   className="px-5 py-3 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-100 text-gray-700 rounded-lg font-semibold transition"
                 >
